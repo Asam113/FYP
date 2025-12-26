@@ -1,0 +1,81 @@
+/* Dashboard Container */
+.dashboard-container {
+    padding-bottom: 2rem;
+}
+
+/* Stats Cards */
+.stats-card {
+    border-radius: 16px;
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: #fff;
+    overflow: hidden;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+/* Tour/Trip Cards - reused as needed */
+.tour-card {
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.tour-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* List Groups */
+.list-group-item.hover-bg:hover {
+    background-color: #f8fafc;
+    cursor: pointer;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
+}
+
+/* Utility */
+.text-primary {
+    color: #2563eb !important;
+}
+
+.bg-primary-subtle {
+    background-color: #dbeafe !important;
+}
+
+.start-0 {
+    left: 0 !important;
+}
+
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
+}

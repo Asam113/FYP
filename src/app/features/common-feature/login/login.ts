@@ -35,7 +35,7 @@ export class Login {
           this.router.navigate(['/driver']);
           break;
         case 'manager':
-          this.router.navigate(['/manager']);
+          this.router.navigate(['/restaurant']);
           break;
         case 'admin':
           this.router.navigate(['/admin']);

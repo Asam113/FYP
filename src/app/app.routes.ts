@@ -6,7 +6,7 @@ import { Login } from './features/common-feature/login/login';
 import { Signup } from './features/common-feature/signup/signup';
 import { TouristLayout } from './features/tourist/layout/tourist-layout';
 import { DriverLayout } from './features/driver/layout/driver-layout';
-import { ManagerLayout } from './features/manager/layout/manager-layout';
+import { RestaurantLayout } from './features/restaurant/layout/restaurant-layout';
 import { AdminLayout } from './features/admin/layout/admin-layout';
 
 export const routes: Routes = [
@@ -35,10 +35,10 @@ export const routes: Routes = [
       import('./features/driver/driver-module').then(m => m.DriverModule),
   },
   {
-    path: 'manager',
-    component: ManagerLayout,
+    path: 'restaurant',
+    component: RestaurantLayout,
     loadChildren: () =>
-      import('./features/manager/manager-module').then(m => m.ManagerModule),
+      import('./features/restaurant/restaurant-module').then(m => m.RestaurantModule),
   },
   {
     path: 'admin',
