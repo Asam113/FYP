@@ -3,41 +3,7 @@
     padding-bottom: 2rem;
 }
 
-/* Hero Card Styling */
-.hero-card {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    border-radius: 24px;
-    min-height: 300px;
-    display: flex;
-    align-items: center;
-}
 
-.hero-content {
-    z-index: 2;
-}
-
-/* Decorative background circles for hero */
-.circle-1,
-.circle-2 {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    z-index: 1;
-}
-
-.circle-1 {
-    width: 400px;
-    height: 400px;
-    top: -100px;
-    right: -50px;
-}
-
-.circle-2 {
-    width: 250px;
-    height: 250px;
-    bottom: -50px;
-    right: 200px;
-}
 
 /* Tour Cards */
 .tour-card {
