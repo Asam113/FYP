@@ -12,6 +12,7 @@ const routes: Routes = [
 
   { path: 'dashboard', component: Dashboard },
   { path: 'explore', component: Explore },
+  { path: 'tour-details/:id', loadComponent: () => import('./tour-details/tour-details').then(m => m.TourDetailsComponent) },
   { path: 'submit-plan', component: SubmitPlan },
   { path: 'finalized-tours', component: FinalizedTours },
   { path: 'payments', component: Payments },

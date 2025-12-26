@@ -16,6 +16,16 @@
             <label for="signupEmail">Email address</label>
           </div>
 
+          <div class="form-floating mb-3">
+            <select class="form-select" id="roleSelect" [(ngModel)]="role" name="role">
+              <option value="tourist">Tourist</option>
+              <option value="driver">Driver</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+            <label for="roleSelect">Select Role</label>
+          </div>
+
           <div class="row">
             <div class="col-md-6">
               <div class="form-floating mb-3">
@@ -50,12 +60,12 @@
       </div>
     </div>
 
-   
+
     <div class="signup-visual p-5 text-white d-flex flex-column justify-content-center align-items-center text-center">
       <div class="visual-content animate-slide-in">
         <h1 class="fw-bold mb-3 display-5">Join Us Today!</h1>
         <p class="lead mb-4 opacity-75">Connect with millions of travelers and providers worldwide.</p>
-       
+
         <div class="icon-circle mb-3">
           <i class="bi bi-globe display-1"></i>
         </div>

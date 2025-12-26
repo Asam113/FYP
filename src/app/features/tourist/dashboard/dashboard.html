@@ -1,124 +1,171 @@
-<div class="container-fluid">
-    <div class="row mb-4">
+<div class="container-fluid dashboard-container">
+
+    <!-- Hero Section -->
+    <div class="row mb-5">
         <div class="col-12">
-            <h2 class="fw-bold">Explore the World</h2>
-            <p class="text-muted">Plan your next adventure with AI-powered recommendations.</p>
+            <div class="hero-card shadow-lg position-relative overflow-hidden">
+                <div class="hero-content position-relative z-1 p-5">
+                    <h1 class="display-4 fw-bold text-white mb-3">Keep Exploring the World, <br> User!</h1>
+                    <p class="lead text-white-50 mb-4" style="max-width: 500px;">
+                        Ready for your next adventure? Let AI find the perfect trip for you or start planning from
+                        scratch.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-light btn-lg text-primary fw-bold px-4 rounded-pill shadow-sm">
+                            <i class="bi bi-plus-circle me-2"></i> Plan New Tour
+                        </button>
+                        <button class="btn btn-outline-light btn-lg fw-bold px-4 rounded-pill">
+                            <i class="bi bi-file-text me-2"></i> View Proposals
+                        </button>
+                    </div>
+                </div>
+                <!-- Decorative Circles -->
+                <div class="circle-1"></div>
+                <div class="circle-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Recommended Tours -->
+    <div class="row mb-5">
+        <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-dark section-title">
+                <i class="bi bi-stars text-primary me-2"></i> AI Recommended Tours
+            </h4>
+            <a href="#" class="btn btn-link text-decoration-none fw-bold">View All</a>
+        </div>
+
+        <div class="col-12">
+            <div class="d-flex overflow-auto gap-4 py-2 custom-scrollbar">
+
+                <div *ngFor="let tour of tours" class="card tour-card border-0 shadow-sm" style="min-width: 300px;">
+                    <div class="card-img-wrapper position-relative">
+                        <img [src]="tour.imageUrl" class="card-img-top" alt="{{ tour.name }}"
+                            onerror="this.src='https://placehold.co/600x400/0d6efd/FFF?text=Tour'">
+                        <span
+                            class="badge bg-white text-dark position-absolute top-0 end-0 m-3 py-2 px-3 rounded-pill fw-bold shadow-sm">
+                            <i class="bi bi-star-fill text-warning me-1"></i> {{ tour.rating }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold mb-0">{{ tour.name }}</h5>
+                            <small class="text-secondary">{{ tour.duration }}</small>
+                        </div>
+                        <p class="text-muted small mb-3"><i class="bi bi-geo-alt me-1"></i> {{ tour.destination }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="text-primary fw-bold mb-0">Rs. {{ tour.price | number }}</h6>
+                            <button class="btn btn-sm btn-primary rounded-pill px-3" (click)="viewDetails(tour.id)">View
+                                Details</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-12 mb-5">
-            <div class="card shadow-sm border-0 bg-primary text-white"
-                style="border-radius: 15px; background: linear-gradient(45deg, #0d6efd, #0dcaf0);">
-                <div class="card-body p-5">
-                    <h1 class="fw-bold display-5">Where do you want to go?</h1>
-                    <p class="lead">Discover new places and experiences.</p>
-                    <div class="input-group mt-4" style="max-width: 600px;">
-                        <input type="text" class="form-control form-control-lg border-0"
-                            placeholder="Search destinations, hotels, or activities...">
-                        <button class="btn btn-light text-primary fw-bold px-4">Search</button>
+        <!-- Upcoming Tours List -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Upcoming Tours</h5>
+                    <button class="btn btn-sm btn-light">View All</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+
+                        <div class="list-group-item border-0 py-3 px-4 d-flex align-items-center hover-bg">
+                            <div class="rounded-3 bg-light d-flex align-items-center justify-content-center me-3"
+                                style="width: 50px; height: 50px;">
+                                <i class="bi bi-calendar-event text-primary fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1">Swat Valley Expedition</h6>
+                                <p class="text-muted small mb-0"><i class="bi bi-clock me-1"></i> Starting in 2 days</p>
+                            </div>
+                            <div class="text-end me-4">
+                                <div
+                                    class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                                    Confirmed</div>
+                            </div>
+                            <button class="btn btn-icon btn-light rounded-circle"><i
+                                    class="bi bi-chevron-right"></i></button>
+                        </div>
+
+                        <div class="list-group-item border-0 py-3 px-4 d-flex align-items-center hover-bg">
+                            <div class="rounded-3 bg-light d-flex align-items-center justify-content-center me-3"
+                                style="width: 50px; height: 50px;">
+                                <i class="bi bi-calendar-range text-warning fs-4"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold mb-1">Lahore City Tour</h6>
+                                <p class="text-muted small mb-0"><i class="bi bi-clock me-1"></i> Awaiting confirmation
+                                </p>
+                            </div>
+                            <div class="text-end me-4">
+                                <div
+                                    class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill">
+                                    Pending</div>
+                            </div>
+                            <button class="btn btn-icon btn-light rounded-circle"><i
+                                    class="bi bi-chevron-right"></i></button>
+                        </div>
+
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row mb-4">
-        <div class="col-12 d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold">Popular Destinations</h4>
-            <a href="#" class="text-decoration-none">View All</a>
-        </div>
-
-        <div class="col-md-3 mb-4">
-            <div class="card shadow-sm border-0 h-100 trip-card">
-                <div class="card-img-top bg-secondary"
-                    style="height: 180px; position:text-center; display:flex; align-items:center; justify-content:center; color:white;">
-                    <span>Muree</span>
-                </div>
-                <div class="card-body">
-                    <h5 class="fw-bold">Muree,Nathiagali</h5>
-                    <p class="text-muted small">Starting from 1500</p>
-                    <button class="btn btn-sm btn-outline-primary w-100">Explore</button>
+        <!-- Sidebar / Stats -->
+        <div class="col-lg-4 mb-4">
+            <!-- Ratings -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-star-fill text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="fw-bold mb-0">4.8</h2>
+                            <span class="text-muted small">Average Rating</span>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-0">Based on your recent feedback to guides.</p>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3 mb-4">
-            <div class="card shadow-sm border-0 h-100 trip-card">
-                <div class="card-img-top bg-secondary"
-                    style="height: 180px; position:text-center; display:flex; align-items:center; justify-content:center; color:white;">
-                    <span>Naran</span>
-                </div>
-                <div class="card-body">
-                    <h5 class="fw-bold">Naran</h5>
-                    <p class="text-muted small">Starting from 2500</p>
-                    <button class="btn btn-sm btn-outline-primary w-100">Explore</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-4">
-            <div class="card shadow-sm border-0 h-100 trip-card">
-                <div class="card-img-top bg-secondary"
-                    style="height: 180px; position:text-center; display:flex; align-items:center; justify-content:center; color:white;">
-                    <span>Kashmir</span>
-                </div>
-                <div class="card-body">
-                    <h5 class="fw-bold">Kashmir, Neelum valley</h5>
-                    <p class="text-muted small">Starting from 2000</p>
-                    <button class="btn btn-sm btn-outline-primary w-100">Explore</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-4">
-            <div class="card shadow-sm border-0 h-100 trip-card">
-                <div class="card-img-top bg-secondary"
-                    style="height: 180px; position:text-center; display:flex; align-items:center; justify-content:center; color:white;">
-                    <span>Hunza</span>
-                </div>
-                <div class="card-body">
-                    <h5 class="fw-bold">Hunza</h5>
-                    <p class="text-muted small">Starting from 4000</p>
-                    <button class="btn btn-sm btn-outline-primary w-100">Explore</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0">
+            <!-- Recently Viewed -->
+            <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0 py-3">
-                    <h5 class="mb-0 fw-bold">My Recent Bookings</h5>
+                    <h6 class="mb-0 fw-bold">Recently Viewed</h6>
                 </div>
-                <div class="list-group list-group-flush">
-                    <a href="#" class="list-group-item list-group-item-action py-3">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1 fw-bold">Trip to Panjpeer</h6>
-                            <small class="text-success">Confirmed</small>
-                        </div>
-                        <small class="text-muted">Oct 12 - Oct 18, 2025</small>
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action py-3">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1 fw-bold">City Tour</h6>
-                            <small class="text-warning">Pending</small>
-                        </div>
-                        <small class="text-muted">Nov 05, 2025</small>
-                    </a>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action border-0 px-4 py-2">
+                            <div class="d-flex align-items-center">
+                                <img src="https://placehold.co/40x40/eee/999?text=K" class="rounded me-3" alt="">
+                                <div>
+                                    <small class="fw-bold d-block">Kashmir Tour</small>
+                                    <small class="text-primary">Rs. 20,000</small>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action border-0 px-4 py-2">
+                            <div class="d-flex align-items-center">
+                                <img src="https://placehold.co/40x40/eee/999?text=F" class="rounded me-3" alt="">
+                                <div>
+                                    <small class="fw-bold d-block">Fairy Meadows</small>
+                                    <small class="text-primary">Rs. 35,000</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0 bg-light">
-                <div class="card-body text-center p-5">
-                    <h4 class="fw-bold">AI Trip Planner</h4>
-                    <p class="text-muted">Let our AI build the perfect itinerary for you based on your preferences.</p>
-                    <button class="btn btn-primary btn-lg mt-3">Start Planning</button>
-                </div>
-            </div>
         </div>
     </div>
+
 </div>

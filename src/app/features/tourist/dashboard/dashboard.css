@@ -1,0 +1,133 @@
+/* Dashboard Container */
+.dashboard-container {
+    padding-bottom: 2rem;
+}
+
+/* Hero Card Styling */
+.hero-card {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-radius: 24px;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+}
+
+.hero-content {
+    z-index: 2;
+}
+
+/* Decorative background circles for hero */
+.circle-1,
+.circle-2 {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 1;
+}
+
+.circle-1 {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    right: -50px;
+}
+
+.circle-2 {
+    width: 250px;
+    height: 250px;
+    bottom: -50px;
+    right: 200px;
+}
+
+/* Tour Cards */
+.tour-card {
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.tour-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.card-img-wrapper {
+    height: 180px;
+    overflow: hidden;
+}
+
+.card-img-top {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.tour-card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+/* Custom Horizontal Scrollbar */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    padding-bottom: 10px;
+    /* Space for scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+}
+
+/* Upcoming Tours List */
+.list-group-item.hover-bg:hover {
+    background-color: #f8fafc;
+    cursor: pointer;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 1.25rem;
+    letter-spacing: -0.025em;
+}
+
+/* Utility / Helpers */
+.text-primary {
+    color: #2563eb !important;
+}
+
+.bg-primary {
+    background-color: #2563eb !important;
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.badge {
+    font-weight: 600;
+}
