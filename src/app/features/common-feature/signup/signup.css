@@ -77,3 +77,12 @@
         min-height: 200px;
     }
 }
+
+/* Password Checklist Transitions */
+.list-unstyled li {
+    transition: color 0.3s ease;
+}
+
+.list-unstyled li i {
+    transition: transform 0.3s ease;
+}

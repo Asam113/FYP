@@ -4,142 +4,170 @@
     <div class="row mb-4">
         <div class="col-12 mb-3">
             <h4 class="fw-bold text-dark section-title">
-                <i class="bi bi-bar-chart-fill text-primary me-2"></i> Overview
+                Overview
             </h4>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stats-card shadow-sm h-100 p-3">
+        <div class="col-md mb-3" *ngFor="let stat of stats">
+            <div class="card stats-card shadow-sm h-100 p-3 border-0">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="icon-box bg-success-subtle text-success">
-                        <i class="bi bi-cash fs-4"></i>
+                    <div class="icon-box text-{{stat.colorClass}} bg-{{stat.colorClass}}-subtle rounded-3 p-2">
+                        <i class="bi {{stat.icon}} fs-4"></i>
                     </div>
-                    <span class="badge bg-success-subtle text-success rounded-pill">+8%</span>
                 </div>
-                <h3 class="fw-bold mb-0">Rs. 85k</h3>
-                <small class="text-muted">Total Earnings</small>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stats-card shadow-sm h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="icon-box bg-primary-subtle text-primary">
-                        <i class="bi bi-clipboard-check-fill fs-4"></i>
-                    </div>
-                    <span class="badge bg-primary-subtle text-primary rounded-pill">Today</span>
-                </div>
-                <h3 class="fw-bold mb-0">15</h3>
-                <small class="text-muted">Completed Orders</small>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stats-card shadow-sm h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="icon-box bg-warning-subtle text-warning">
-                        <i class="bi bi-star-fill fs-4"></i>
-                    </div>
-                    <span class="badge bg-warning-subtle text-warning rounded-pill">4.5</span>
-                </div>
-                <h3 class="fw-bold mb-0">Rating</h3>
-                <small class="text-muted">Average Review</small>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stats-card shadow-sm h-100 p-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="icon-box bg-danger-subtle text-danger">
-                        <i class="bi bi-bell-fill fs-4"></i>
-                    </div>
-                    <span class="badge bg-danger-subtle text-danger rounded-pill">New</span>
-                </div>
-                <h3 class="fw-bold mb-0">3</h3>
-                <small class="text-muted">Pending Requests</small>
+                <h3 class="fw-bold mb-0 text-dark">{{stat.count}}</h3>
+                <small class="text-muted fw-medium">{{stat.title}}</small>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <!-- Recent Orders -->
+        <!-- Upcoming Tours Preview (Left Column) -->
         <div class="col-lg-8 mb-4">
             <div class="card border-0 shadow-sm h-100 rounded-4">
-                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi bi-receipt text-primary me-2"></i> Recent Orders
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-calendar-event me-2 text-primary"></i> Upcoming Tours
                     </h5>
-                    <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold">View All</button>
+                    <button class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3">View All</button>
                 </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item border-0 py-3 px-4 d-flex align-items-center hover-bg">
-                            <div class="rounded-3 bg-light d-flex align-items-center justify-content-center me-3"
-                                style="width: 50px; height: 50px;">
-                                <i class="bi bi-geo-alt-fill text-dark fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="fw-bold mb-1">Order #1023 - Ali Khan</h6>
-                                <p class="text-muted small mb-0"><i class="bi bi-cup-hot me-1"></i> 2x Karak Chai, 1x
-                                    Paratha</p>
-                            </div>
-                            <div class="text-end me-4">
-                                <span
-                                    class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">Completed</span>
-                            </div>
-                            <button class="btn btn-icon btn-light rounded-circle"><i
-                                    class="bi bi-chevron-right"></i></button>
-                        </div>
-
-                        <div class="list-group-item border-0 py-3 px-4 d-flex align-items-center hover-bg">
-                            <div class="rounded-3 bg-light d-flex align-items-center justify-content-center me-3"
-                                style="width: 50px; height: 50px;">
-                                <i class="bi bi-geo-alt-fill text-dark fs-4"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="fw-bold mb-1">Order #1024 - Sarah Ahmed</h6>
-                                <p class="text-muted small mb-0"><i class="bi bi-cup-hot me-1"></i> Family Platter</p>
-                            </div>
-                            <div class="text-end me-4">
-                                <span
-                                    class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill">Pending</span>
-                            </div>
-                            <button class="btn btn-icon btn-light rounded-circle"><i
-                                    class="bi bi-chevron-right"></i></button>
-                        </div>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 text-secondary small text-uppercase ps-4">Tour ID</th>
+                                <th class="border-0 text-secondary small text-uppercase">Route</th>
+                                <th class="border-0 text-secondary small text-uppercase">Arrival</th>
+                                <th class="border-0 text-secondary small text-uppercase text-center">Guests</th>
+                                <th class="border-0 text-secondary small text-uppercase text-center">Service</th>
+                                <th class="border-0 text-secondary small text-uppercase text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let tour of upcomingTours">
+                                <td class="ps-4 fw-bold text-primary">{{tour.id}}</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-dark">{{tour.departure}} <i
+                                                class="bi bi-arrow-right text-muted mx-1"></i>
+                                            {{tour.destination}}</span>
+                                    </div>
+                                </td>
+                                <td class="text-muted">{{tour.arrivalDate | date:'mediumDate'}}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3">
+                                        <i class="bi bi-people-fill me-1"></i> {{tour.tourists}}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span
+                                        class="badge bg-info-subtle text-info fw-normal border border-info-subtle px-2">{{tour.service}}</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3">View</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white border-0 py-3 text-center">
+                    <a href="#" class="text-decoration-none text-muted small fw-bold">Show More <i
+                            class="bi bi-chevron-down"></i></a>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions / Menu Status -->
-        <div class="col-lg-4 mb-4">
-            <div class="card border-0 shadow-sm h-100 rounded-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi bi-lightning-charge text-warning me-2"></i> Quick Actions
+        <!-- Right Side Panel -->
+        <div class="col-lg-4">
+
+            <!-- Ongoing Tours -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-success">
+                        <i class="bi bi-broadcast me-2"></i> Ongoing Tours
                     </h5>
+                    <div class="spinner-grow text-success spinner-grow-sm" role="status">
+                        <span class="visually-hidden">Live</span>
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        <button class="list-group-item list-group-item-action border-0 px-4 py-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-                                    <i class="bi bi-plus-lg text-primary"></i>
-                                </div>
-                                <div>
-                                    <small class="fw-bold d-block">Add Menu Item</small>
-                                    <small class="text-muted">Update your catalog</small>
-                                </div>
+                        <div class="list-group-item border-0 py-3 px-4 hover-bg" *ngFor="let tour of ongoingTours">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success text-white">ACTIVE</span>
+                                <small class="text-dark fw-bold"><i class="bi bi-clock me-1"></i>
+                                    {{tour.arrivalTime}}</small>
                             </div>
-                        </button>
-                        <button class="list-group-item list-group-item-action border-0 px-4 py-3">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
-                                    <i class="bi bi-power text-danger"></i>
-                                </div>
-                                <div>
-                                    <small class="fw-bold d-block">Close Restaurant</small>
-                                    <small class="text-muted">Temporarily offline</small>
-                                </div>
+                            <h6 class="fw-bold mb-1">{{tour.id}}</h6>
+                            <p class="mb-2 small text-muted"> <i class="bi bi-geo-alt me-1"></i> {{tour.departure}}
+                                &rarr; {{tour.destination}}</p>
+
+                            <div class="d-flex gap-2 mb-2">
+                                <span class="badge bg-light text-dark border"
+                                    *ngFor="let s of tour.servicesProvided">{{s}}</span>
                             </div>
-                        </button>
+
+                            <div class="mt-2 pt-2 border-top d-flex align-items-center justify-content-between">
+                                <small class="fw-bold text-primary"><i class="bi bi-people me-1"></i> Serving
+                                    {{tour.tourists}} Guests</small>
+                                <button class="btn btn-sm btn-light rounded-circle"><i
+                                        class="bi bi-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Service -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold text-dark">Today's Service</h5>
+                </div>
+                <div class="card-body px-4 py-3">
+                    <!-- Meals -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold text-dark">Meals Served</small>
+                            <small class="text-primary fw-bold">{{todayService.mealsServed}} /
+                                {{todayService.totalMeals}}</small>
+                        </div>
+                        <div class="progress bg-light" style="height: 10px;">
+                            <div class="progress-bar bg-warning rounded-pill" role="progressbar"
+                                [style.width.%]="getMealProgress()"></div>
+                        </div>
+                    </div>
+                    <!-- Rooms -->
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold text-dark">Rooms Occupied</small>
+                            <small class="text-info fw-bold">{{todayService.roomsOccupied}} /
+                                {{todayService.totalRooms}}</small>
+                        </div>
+                        <div class="progress bg-light" style="height: 10px;">
+                            <div class="progress-bar bg-info rounded-pill" role="progressbar"
+                                [style.width.%]="getRoomProgress()"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold text-dark">Alerts & Notifications</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item border-0 px-4 py-3 d-flex align-items-start"
+                        *ngFor="let alert of alerts">
+                        <div class="me-3 mt-1">
+                            <i class="bi bi-info-circle-fill text-info" *ngIf="alert.type === 'info'"></i>
+                            <i class="bi bi-exclamation-triangle-fill text-warning"
+                                *ngIf="alert.type === 'warning'"></i>
+                            <i class="bi bi-check-circle-fill text-success" *ngIf="alert.type === 'success'"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 small fw-bold text-dark">{{alert.message}}</p>
+                            <small class="text-muted" style="font-size: 0.75rem;">{{alert.time}}</small>
+                        </div>
                     </div>
                 </div>
             </div>

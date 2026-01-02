@@ -6,10 +6,8 @@
 /* Stats Cards */
 .stats-card {
     border-radius: 16px;
-    border: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     background: #fff;
-    overflow: hidden;
 }
 
 .stats-card:hover {
@@ -23,43 +21,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
 }
 
-/* Tour/Trip Cards - reused as needed */
-.tour-card {
-    border-radius: 16px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    overflow: hidden;
-    background: #ffffff;
-}
-
-.tour-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
-}
-
-/* List Groups */
-.list-group-item.hover-bg:hover {
+/* List Groups & Hover */
+.list-group-item.hover-bg:hover,
+.table-hover tbody tr:hover {
     background-color: #f8fafc;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-.btn-icon {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Section Titles */
-.section-title {
-    font-size: 1.25rem;
-    letter-spacing: -0.025em;
+/* Table Styling */
+.table th {
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    /* Slate-500 */
 }
 
 /* Utility */
+.rounded-4 {
+    border-radius: 1rem !important;
+}
+
 .text-primary {
     color: #2563eb !important;
 }
@@ -68,14 +52,34 @@
     background-color: #dbeafe !important;
 }
 
-.start-0 {
-    left: 0 !important;
+.text-success {
+    color: #16a34a !important;
 }
 
-.rounded-4 {
-    border-radius: 1rem !important;
+.bg-success-subtle {
+    background-color: #dcfce7 !important;
 }
 
-.shadow-sm {
-    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
+.text-warning {
+    color: #d97706 !important;
+}
+
+.bg-warning-subtle {
+    background-color: #fef3c7 !important;
+}
+
+.text-info {
+    color: #0891b2 !important;
+}
+
+.bg-info-subtle {
+    background-color: #cffafe !important;
+}
+
+.text-secondary {
+    color: #475569 !important;
+}
+
+.bg-secondary-subtle {
+    background-color: #f1f5f9 !important;
 }

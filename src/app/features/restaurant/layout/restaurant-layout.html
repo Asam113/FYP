@@ -28,7 +28,7 @@
             </button>
         </div>
 
-        <div class="px-2 mt-3 mb-3">
+        <div class="px-2 mt-3 mb-3 d-md-none">
             <div class="text-white-50 small mb-1">Welcome back, Partner</div>
             <div class="d-flex align-items-center">
                 <div class="bg-info rounded-circle d-flex align-items-center justify-content-center text-dark fw-bold me-2"
@@ -89,7 +89,32 @@
     </div>
 
     <!-- Main Content -->
-    <div class="content-wrapper d-flex flex-column flex-fill bg-light" style="overflow-y: auto; padding-top: 60px;">
+    <div class="content-wrapper d-flex flex-column flex-fill bg-light">
+
+        <!-- Desktop Header -->
+        <div class="d-none d-md-flex align-items-center justify-content-between py-3 px-4 bg-white border-bottom sticky-top"
+            style="z-index: 1000;">
+            <div class="d-flex align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">Restaurant Dashboard</h5>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="btn btn-light rounded-circle position-relative me-3">
+                    <i class="bi bi-bell fs-5"></i>
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span class="visually-hidden">New alerts</span>
+                    </span>
+                </div>
+                <div class="text-end me-3">
+                    <div class="fw-bold text-dark small">Chaaye Khana</div>
+                    <div class="text-muted small" style="font-size: 0.75rem;">Manager</div>
+                </div>
+                <div class="bg-warning-subtle rounded-circle d-flex align-items-center justify-content-center text-warning-emphasis fw-bold shadow-sm"
+                    style="width: 40px; height: 40px;">
+                    <i class="bi bi-shop fs-5"></i>
+                </div>
+            </div>
+        </div>
 
         <!-- Router Outlet Container -->
         <div class="p-4 animate-fade-in flex-grow-1">
@@ -97,5 +122,4 @@
         </div>
 
     </div>
-
 </div>

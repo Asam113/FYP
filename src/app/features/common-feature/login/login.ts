@@ -15,10 +15,22 @@ export class Login {
 
   email: string = '';
   password: string = '';
+  showPassword = false;
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
 
   constructor(private router: Router, private toastService: ToastService) { }
 
   login() {
+    // Check for hardcoded Admin credentials
+    if (this.email === 'admin@safarnama.com' && this.password === 'Admin@123') {
+      this.toastService.show("Welcome Admin!", "success");
+      this.router.navigate(['/admin']);
+      return;
+    }
+
     const savedEmail = localStorage.getItem('email');
     const savedPassword = localStorage.getItem('password');
 
