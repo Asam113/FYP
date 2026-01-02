@@ -17,8 +17,24 @@
     color: #00bfa5 !important;
 }
 
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
 .bg-success-subtle {
     background-color: #d1e7dd !important;
+}
+
+.text-profit {
+    color: #198754 !important;
+}
+
+.bg-orange {
+    background-color: #fd7e14 !important;
+}
+
+.text-orange {
+    color: #fd7e14 !important;
 }
 
 /* Card Styling */

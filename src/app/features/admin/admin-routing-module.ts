@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { Dashboard } from './dashboard/dashboard';
 import { PlanTour } from './plan-tour/plan-tour';
 import { ManageTours } from './manage-tours/manage-tours';
+import { FinalizedTours } from './finalized-tours/finalized-tours';
 import { ManageDrivers } from './manage-drivers/manage-drivers';
 import { ManageRestaurants } from './manage-restaurants/manage-restaurants';
 import { Payments } from './payments/payments';
@@ -15,6 +16,7 @@ const routes: Routes = [
   { path: 'dashboard', component: Dashboard },
   { path: 'plan-tour', component: PlanTour },
   { path: 'manage-tours', component: ManageTours },
+  { path: 'finalized-tours', component: FinalizedTours },
   { path: 'manage-drivers', component: ManageDrivers },
   { path: 'manage-restaurants', component: ManageRestaurants },
   { path: 'payments', component: Payments },

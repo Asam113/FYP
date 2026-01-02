@@ -4,12 +4,44 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold mb-1">Finalized Tours</h4>
-            <div class="text-muted">Tours that are confirmed and ready for execution</div>
+            <div class="text-muted">Tours published for tourist bookings with active reservations</div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                <div class="text-muted mb-2">Active Tours</div>
+                <h3 class="fw-bold mb-0">4</h3>
+                <div class="text-success small mt-1">Live for bookings</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                <div class="text-muted mb-2">Total Bookings</div>
+                <h3 class="fw-bold mb-0">10</h3>
+                <div class="text-teal small mt-1">Across all tours</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                <div class="text-muted mb-2">Booked Seats</div>
+                <h3 class="fw-bold mb-0">41</h3>
+                <div class="text-muted small mt-1">of 57 total</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                <div class="text-muted mb-2">Expected Revenue</div>
+                <h3 class="fw-bold mb-0">PKR 1.1M</h3>
+                <div class="text-success small mt-1">Current bookings</div>
+            </div>
         </div>
     </div>
 
     <!-- Tours List -->
-    <div class="d-flex flex-column gap-4">
+    <div class="d-flex flex-column gap-5">
 
         <!-- Tour Card -->
         <div class="card border-0 shadow-sm rounded-4 p-4" *ngFor="let tour of tours">
@@ -27,22 +59,13 @@
                 </div>
                 <div class="text-end">
                     <h4 class="fw-bold mb-0">{{tour.price}}</h4>
-                    <div class="text-muted small">{{tour.participants}} participants</div>
+                    <div class="text-profit small fw-bold">Profit: {{tour.profit}}</div>
                 </div>
             </div>
 
             <!-- Tour Details Grid -->
             <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-muted"><i class="bi bi-person"></i></div>
-                        <div>
-                            <div class="small text-muted">Client</div>
-                            <div class="fw-medium">{{tour.client}}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-muted"><i class="bi bi-geo-alt"></i></div>
                         <div>
@@ -51,7 +74,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-muted"><i class="bi bi-calendar"></i></div>
                         <div>
@@ -60,57 +83,103 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Services Status -->
-            <div class="row g-4 mb-4">
-
-                <!-- Transportation -->
-                <div class="col-md-6" *ngIf="tour.transport.hasService">
-                    <div class="border rounded-4 p-3 h-100">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex align-items-center gap-2 text-primary fw-medium">
-                                <i class="bi bi-truck fs-5"></i> Transportation
-                            </div>
-                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                        </div>
-
-                        <!-- Accepted Offer View -->
-                        <div class="bg-success-subtle rounded-3 p-3">
-                            <div class="text-muted small mb-1">Accepted Offer</div>
-                            <div class="fw-medium">{{tour.transport.provider}} - {{tour.transport.details}}</div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-muted"><i class="bi bi-tag"></i></div>
+                        <div>
+                            <div class="small text-muted">Price Per Person</div>
+                            <div class="fw-medium">{{tour.pricePerPerson}}</div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Accommodation -->
-                <div class="col-md-6" *ngIf="tour.accommodation.hasService">
-                    <div class="border rounded-4 p-3 h-100">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex align-items-center gap-2 text-teal fw-medium">
-                                <i class="bi bi-building fs-5"></i> Accommodation
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-muted"><i class="bi bi-people"></i></div>
+                        <div>
+                            <div class="small text-muted">Capacity</div>
+                            <div class="fw-medium">
+                                {{tour.participants}}/{{tour.totalSeats}}
+                                <span class="text-success small ms-1"
+                                    *ngIf="tour.availableSeats > 0">({{tour.availableSeats}} left)</span>
+                                <span class="text-danger small ms-1" *ngIf="tour.availableSeats === 0">(Full)</span>
                             </div>
-                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Accepted Offer View -->
-                        <div class="bg-success-subtle rounded-3 p-3">
-                            <div class="text-muted small mb-1">Accepted Offer</div>
-                            <div class="fw-medium">{{tour.accommodation.provider}} - {{tour.accommodation.details}}
-                            </div>
+            <!-- Booking Progress -->
+            <div class="mb-5">
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <div class="text-muted">Booking Progress</div>
+                    <div class="fw-bold">{{tour.bookingProgress}}%</div>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-teal" role="progressbar" [style.width.%]="tour.bookingProgress"></div>
+                </div>
+            </div>
+
+            <!-- Cost Breakdown -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="d-flex align-items-center gap-2 text-primary fw-medium mb-2">
+                            <i class="bi bi-truck fs-5"></i> Transportation
+                        </div>
+                        <div class="fw-medium">{{tour.transport.provider}}</div>
+                        <div class="text-muted small">{{tour.transport.cost}}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="d-flex align-items-center gap-2 text-primary fw-medium mb-2">
+                            <i class="bi bi-building fs-5"></i> Accommodation
+                        </div>
+                        <div class="fw-medium">{{tour.accommodation.provider}}</div>
+                        <div class="text-muted small">{{tour.accommodation.cost}}</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Current Bookings List -->
+            <div class="mb-5">
+                <h6 class="fw-bold mb-3">Current Bookings ({{tour.participants}})</h6>
+                <div class="d-flex flex-column gap-3">
+                    <div class="bg-light rounded-3 p-3 d-flex justify-content-between align-items-center"
+                        *ngFor="let booking of tour.bookings">
+                        <div>
+                            <div class="fw-medium mb-1">{{booking.name}}</div>
+                            <div class="text-muted small">{{booking.seats}} seats</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-medium mb-1">{{booking.total}}</div>
+                            <span class="badge rounded-pill fw-normal"
+                                [className]="'badge ' + booking.statusClass">{{booking.status}}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Footer Actions -->
-            <div class="d-flex justify-content-end gap-3 border-top pt-3">
-                <button class="btn btn-outline-dark px-4 d-flex align-items-center gap-2">
-                    <i class="bi bi-eye"></i> View Details
-                </button>
-                <button class="btn btn-primary px-4 d-flex align-items-center gap-2">
-                    <i class="bi bi-file-text"></i> Generate Itinerary
-                </button>
+            <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                <div class="d-flex align-items-center gap-2 text-success fw-medium"
+                    *ngIf="tour.status === 'Accepting Bookings'">
+                    <i class="bi bi-check2"></i> Available for new bookings
+                </div>
+                <div *ngIf="tour.status !== 'Accepting Bookings'"></div> <!-- Spacer -->
+
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-dark px-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-eye"></i> View Details
+                    </button>
+                    <button class="btn btn-outline-dark px-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-pencil-square"></i> Manage Bookings
+                    </button>
+                    <button class="btn btn-outline-danger px-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-x-circle"></i> Cancel Tour
+                    </button>
+                </div>
             </div>
 
         </div>

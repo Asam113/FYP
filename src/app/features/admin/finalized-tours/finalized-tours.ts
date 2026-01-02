@@ -1,26 +1,36 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-interface Tour {
+interface FinalizedTour {
     id: string;
     name: string;
-    status: 'Finalized';
+    status: 'Accepting Bookings' | 'Fully Booked';
     statusClass: string;
     price: string;
-    participants: number;
-    client: string;
+    profit: string;
+    pricePerPerson: string;
+    participants: number; // current bookings
+    totalSeats: number;
+    availableSeats: number;
+    bookingProgress: number; // percentage
+    client: string; // Organizer
     destination: string;
     duration: string;
     transport: {
-        hasService: boolean;
-        provider?: string;
-        details?: string;
+        provider: string;
+        cost: string;
     };
     accommodation: {
-        hasService: boolean;
-        provider?: string;
-        details?: string;
+        provider: string;
+        cost: string;
     };
+    bookings: {
+        name: string;
+        seats: number;
+        total: string;
+        status: 'Confirmed' | 'Pending Payment';
+        statusClass: string;
+    }[];
 }
 
 @Component({
@@ -32,48 +42,64 @@ interface Tour {
 })
 export class FinalizedTours {
 
-    tours: Tour[] = [
+    tours: FinalizedTour[] = [
         {
             id: 'T002',
             name: 'Lahore Heritage Tour',
-            status: 'Finalized',
-            statusClass: 'bg-primary text-white',
-            price: 'PKR 120,000',
+            status: 'Accepting Bookings',
+            statusClass: 'bg-success',
+            price: 'PKR 288,000',
+            profit: 'PKR 193,000',
+            pricePerPerson: 'PKR 24,000',
             participants: 12,
+            totalSeats: 15,
+            availableSeats: 3,
+            bookingProgress: 80,
             client: 'Sarah Khan',
-            destination: 'Lahore Walled City',
+            destination: 'Lahore',
             duration: '2025-02-10 to 2025-02-12',
             transport: {
-                hasService: true,
-                provider: 'Lahore Transport Co.',
-                details: 'PKR 30,000'
+                provider: 'Ahmed Raza',
+                cost: 'PKR 35,000'
             },
             accommodation: {
-                hasService: true,
-                provider: 'Pearl Continental',
-                details: 'PKR 60,000'
-            }
+                provider: 'Luxury Hotel Lahore',
+                cost: 'PKR 60,000'
+            },
+            bookings: [
+                { name: 'Sarah Khan', seats: 3, total: 'PKR 72,000', status: 'Confirmed', statusClass: 'bg-success text-white' },
+                { name: 'Ali Ahmed', seats: 2, total: 'PKR 48,000', status: 'Confirmed', statusClass: 'bg-success text-white' },
+                { name: 'Fatima Noor', seats: 4, total: 'PKR 96,000', status: 'Confirmed', statusClass: 'bg-success text-white' }
+            ]
         },
         {
-            id: 'T005',
-            name: 'Swat Valley Explorer',
-            status: 'Finalized',
-            statusClass: 'bg-primary text-white',
-            price: 'PKR 180,000',
-            participants: 6,
-            client: 'Michael Brown',
-            destination: 'Swat Valley',
-            duration: '2025-03-01 to 2025-03-05',
+            id: 'T004',
+            name: 'Murree Weekend Getaway',
+            status: 'Fully Booked',
+            statusClass: 'bg-purple',
+            price: 'PKR 400,000',
+            profit: 'PKR 280,000',
+            pricePerPerson: 'PKR 20,000',
+            participants: 20,
+            totalSeats: 20,
+            availableSeats: 0,
+            bookingProgress: 100,
+            client: 'Hassan Ali',
+            destination: 'Murree',
+            duration: '2025-02-15 to 2025-02-17',
             transport: {
-                hasService: true,
-                provider: 'Swat Travels',
-                details: 'PKR 45,000'
+                provider: 'Murree Transport Service',
+                cost: 'PKR 40,000'
             },
             accommodation: {
-                hasService: true,
-                provider: 'Swat Serena',
-                details: 'PKR 90,000'
-            }
+                provider: 'Murree Hills Hotel',
+                cost: 'PKR 80,000'
+            },
+            bookings: [
+                { name: 'Hassan Ali', seats: 3, total: 'PKR 72,000', status: 'Pending Payment', statusClass: 'bg-orange text-white' },
+                { name: 'Bilal Khan', seats: 5, total: 'PKR 100,000', status: 'Confirmed', statusClass: 'bg-success text-white' }
+                // ... more bookings
+            ]
         }
     ];
 
