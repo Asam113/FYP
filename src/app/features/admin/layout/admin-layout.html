@@ -1,20 +1,41 @@
 <div class="d-flex" style="height: 100vh; overflow: hidden;">
 
-    <!-- Sidebar -->
-    <div class="sidebar d-flex flex-column flex-shrink-0 p-3 text-white shadow-lg"
-        style="width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); z-index: 1000;">
+    <!-- Mobile Header -->
+    <div class="d-flex d-md-none align-items-center justify-content-between p-3 bg-white shadow-sm position-fixed top-0 w-100"
+        style="z-index: 1060; height: 60px;">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-airplane-engines-fill fs-4 me-2 text-info"></i>
+            <span class="fs-5 fw-bold tracking-tight text-dark">SAFARNAMA</span>
+        </div>
+        <button class="btn btn-light border-0" (click)="toggleSidebar()">
+            <i class="bi bi-list fs-2"></i>
+        </button>
+    </div>
 
-        <!-- Logo -->
-        <!-- <a href="/" class="d-flex align-items-center mb-4 me-md-auto text-white text-decoration-none px-2">
-            <i class="bi bi-airplane-engines-fill fs-3 me-2 text-info"></i>
-            <span class="fs-4 fw-bold tracking-tight">SAFARNAMA</span>
-        </a> -->
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay d-md-none" [class.show]="isSidebarOpen" (click)="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column flex-shrink-0 p-3 text-white shadow-lg" [class.show]="isSidebarOpen"
+        style="width: 260px; background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); z-index: 1070;">
+
+        <!-- Logo (Visible on Desktop) -->
+        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+            <a href="/" class="d-flex align-items-center text-white text-decoration-none">
+                <i class="bi bi-airplane-engines-fill fs-3 me-2 text-info"></i>
+                <span class="fs-4 fw-bold tracking-tight">SAFARNAMA</span>
+            </a>
+            <!-- Close Button (Visible only on Mobile) -->
+            <button class="btn btn-link text-white d-md-none p-0" (click)="toggleSidebar()">
+                <i class="bi bi-x fs-2"></i>
+            </button>
+        </div>
 
         <!-- Plan a Tour Button -->
         <div class="px-2 mb-4 mt-2">
             <button
                 class="btn btn-teal w-100 text-start text-white fw-bold py-2 d-flex align-items-center justify-content-center shadow-sm"
-                routerLink="/admin/plan-tour">
+                routerLink="/admin/plan-tour" (click)="toggleSidebar()">
                 <i class="bi bi-geo-alt-fill me-2"></i> Plan a Tour
             </button>
         </div>
@@ -25,25 +46,25 @@
 
             <li class="nav-item">
                 <a routerLink="/admin/manage-tours" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-cursor me-3 fs-5"></i> Intermediate Tours
                 </a>
             </li>
             <li class="nav-item">
-                <a routerLink="/admin/manage-tours" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                <a routerLink="/admin/finalized-tours" class="nav-link text-white-50 d-flex align-items-center py-2"
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-check-circle me-3 fs-5"></i> Finalized Tours
                 </a>
             </li>
             <li class="nav-item">
                 <a routerLink="/admin/manage-drivers" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-truck me-3 fs-5"></i> Manage Drivers
                 </a>
             </li>
             <li class="nav-item">
                 <a routerLink="/admin/manage-restaurants" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-egg-fried me-3 fs-5"></i>
                     <div class="d-flex flex-column lh-1">
                         <span>Manage</span>
@@ -53,19 +74,19 @@
             </li>
             <li class="nav-item">
                 <a routerLink="/admin/payments" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-credit-card me-3 fs-5"></i> Payments
                 </a>
             </li>
             <li class="nav-item">
                 <a routerLink="/admin/reports" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-bar-chart me-3 fs-5"></i> Reports
                 </a>
             </li>
             <li class="nav-item">
                 <a routerLink="/admin/settings" class="nav-link text-white-50 d-flex align-items-center py-2"
-                    routerLinkActive="active-link text-white bg-white-10">
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-gear me-3 fs-5"></i> Settings
                 </a>
             </li>
@@ -80,25 +101,6 @@
 
     <!-- Main Content -->
     <div class="content-wrapper d-flex flex-column flex-fill bg-light" style="overflow-y: auto;">
-
-        <!-- Top Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4 py-3 sticky-top">
-            <div class="container-fluid">
-                <button class="btn btn-link text-dark p-0 me-3"><i class="bi bi-list fs-4"></i></button>
-                <span class="navbar-text text-muted">Welcome back, Admin!</span>
-
-                <div class="collapse navbar-collapse justify-content-end">
-                    <div class="d-flex align-items-center gap-3">
-                        <button class="btn btn-light rounded-circle position-relative p-2">
-                            <i class="bi bi-bell"></i>
-                            <span
-                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-                        </button>
-                        <button class="btn btn-primary px-4 rounded-pill fw-bold btn-sm">New Booking</button>
-                    </div>
-                </div>
-            </div>
-        </nav>
 
         <!-- Router Outlet Container -->
         <div class="p-4 animate-fade-in">
