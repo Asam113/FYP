@@ -74,4 +74,8 @@
         opacity: 1;
         visibility: visible;
     }
+
+    .mobile-content-padding {
+        padding-top: 60px !important;
+    }
 }

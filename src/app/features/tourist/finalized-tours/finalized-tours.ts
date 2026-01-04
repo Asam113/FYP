@@ -9,34 +9,75 @@ import { Component } from '@angular/core';
 })
 export class FinalizedTours {
 
-  bookedTours = [
+  activeTab: 'confirmed' | 'pending' = 'confirmed';
+
+  confirmedTours = [
     {
       id: 1,
-      title: 'Swat Valley Expedition',
-      location: 'Swat, KPK',
-      date: 'Dec 28, 2025 - Dec 30, 2025',
+      title: 'Murree Hill Station Tour',
       status: 'Confirmed',
-      price: 'Rs. 18,500',
-      image: 'https://placehold.co/600x400/1e293b/FFF?text=Swat'
+      route: 'Islamabad → Murree → Ayubia',
+      date: 'Jan 10, 2026',
+      duration: '2 Days',
+      requirementsStatus: 'All requirements completed • Tour finalized',
+      requirementsStatusClass: 'success',
+      participants: 6,
+      price: 'Rs. 8,500'
     },
     {
       id: 2,
-      title: 'Lahore City Tour',
-      location: 'Lahore, Punjab',
-      date: 'Jan 05, 2026',
-      status: 'Pending',
-      price: 'Rs. 5,000',
-      image: 'https://placehold.co/600x400/0d6efd/FFF?text=Lahore'
+      title: 'Lahore Heritage Tour',
+      status: 'Confirmed',
+      route: 'Lahore → Badshahi Mosque → Lahore Fort',
+      date: 'Jan 20, 2026',
+      duration: '1 Day',
+      requirementsStatus: 'All requirements completed • Tour finalized',
+      requirementsStatusClass: 'success',
+      participants: 4,
+      price: 'Rs. 6,000'
     },
     {
       id: 3,
-      title: 'Fairy Meadows Trek',
-      location: 'Gilgit Baltistan',
-      date: 'Jun 15, 2026 - Jun 20, 2026',
-      status: 'Completed',
-      price: 'Rs. 45,000',
-      image: 'https://placehold.co/600x400/198754/FFF?text=Fairy+Meadows'
+      title: 'Taxila Historical Tour',
+      status: 'Confirmed',
+      route: 'Islamabad → Taxila → Khanpur',
+      date: 'Feb 5, 2026',
+      duration: '1 Day',
+      requirementsStatus: 'All requirements completed • Tour finalized',
+      requirementsStatusClass: 'success',
+      participants: 5,
+      price: 'Rs. 5,500'
     }
   ];
 
+  pendingTours = [
+    {
+      id: 4,
+      title: 'Northern Areas Explorer',
+      status: 'Pending Completion',
+      route: 'Islamabad → Hunza → Gilgit',
+      date: 'Jan 15, 2026',
+      duration: '6 Days',
+      requirementsStatus: 'Driver accepted • Awaiting accommodation confirmation',
+      requirementsStatusClass: 'warning',
+      participants: 12,
+      price: 'Rs. 25,000'
+    },
+    {
+      id: 5,
+      title: 'Neelum Valley Tour',
+      status: 'Pending Completion',
+      route: 'Muzaffarabad → Neelum Valley',
+      date: 'Jan 28, 2026',
+      duration: '4 Days',
+      requirementsStatus: 'Driver accepted • 1 more driver needed',
+      requirementsStatusClass: 'warning',
+      participants: 8,
+      price: 'Rs. 18,000'
+    }
+  ];
+
+  setActiveTab(tab: 'confirmed' | 'pending') {
+    this.activeTab = tab;
+  }
 }

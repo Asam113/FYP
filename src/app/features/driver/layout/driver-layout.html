@@ -18,7 +18,7 @@
 
   <!-- Sidebar -->
   <div class="sidebar d-flex flex-column flex-shrink-0 p-3 text-white shadow-lg" [class.show]="isSidebarOpen"
-    style="width: 260px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); z-index: 1070;">
+    style="width: 260px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); z-index: 1070; overflow-y: auto;">
     <div class="d-flex justify-content-between align-items-center mb-3 mb-md-0 px-2">
       <a href="/" class="d-flex align-items-center text-white text-decoration-none">
         <i class="bi bi-airplane-engines-fill fs-3 me-2 text-info"></i>
@@ -50,7 +50,13 @@
         <a routerLink="/driver/dashboard" class="nav-link text-white my-1 d-flex align-items-center"
           routerLinkActive="active bg-primary shadow-sm" [routerLinkActiveOptions]="{exact: true}"
           (click)="toggleSidebar()">
-          <i class="bi bi-speedometer2 me-3 fs-5"></i> Dashboard
+          <i class="bi bi-grid-fill me-3 fs-5"></i> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/requests" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-file-earmark-text me-3 fs-5"></i> Tour Requests
         </a>
       </li>
       <li class="nav-item">
@@ -62,13 +68,49 @@
       <li class="nav-item">
         <a routerLink="/driver/booked-tours" class="nav-link text-white my-1 d-flex align-items-center"
           routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
-          <i class="bi bi-calendar-check me-3 fs-5"></i> Booked Tours
+          <i class="bi bi-check-circle me-3 fs-5"></i> Booked Tours
         </a>
       </li>
       <li class="nav-item">
-        <a routerLink="/driver/statistics" class="nav-link text-white my-1 d-flex align-items-center"
+        <a routerLink="/driver/trip-history" class="nav-link text-white my-1 d-flex align-items-center"
           routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
-          <i class="bi bi-bar-chart-fill me-3 fs-5"></i> Statistics
+          <i class="bi bi-clock-history me-3 fs-5"></i> Trip History
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/earnings" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-currency-dollar me-3 fs-5"></i> Earnings
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/ratings" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-star me-3 fs-5"></i> Ratings & Reviews
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/performance-insights" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-graph-up me-3 fs-5"></i> Performance Insights (AI)
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/notifications" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-bell me-3 fs-5"></i> Notifications
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/profile" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-person me-3 fs-5"></i> My Profile
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/driver/settings" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-gear me-3 fs-5"></i> Settings
         </a>
       </li>
     </ul>
@@ -84,7 +126,7 @@
   </div>
 
   <!-- Main Content -->
-  <div class="content-wrapper d-flex flex-column flex-fill bg-light" style="overflow-y: auto; padding-top: 60px;">
+  <div class="content-wrapper d-flex flex-column flex-fill bg-light mobile-content-padding" style="overflow-y: auto;">
 
     <!-- Router Outlet Container -->
     <div class="p-4 animate-fade-in flex-grow-1">

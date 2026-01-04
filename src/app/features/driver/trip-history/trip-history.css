@@ -1,5 +1,10 @@
-.bg-success-subtle-custom {
-    background-color: #ecfdf5;
+.icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card {
@@ -9,10 +14,6 @@
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
-}
-
-.hover-shadow:hover {
-    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
 }
 
 .badge {
