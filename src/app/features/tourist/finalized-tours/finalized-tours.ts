@@ -1,6 +1,35 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 
+interface Tour {
+  id: number;
+  title: string;
+  location: string;
+  status: 'Upcoming' | 'Ongoing' | 'Completed';
+  startDate: string;
+  endDate: string;
+  duration: string;
+  daysRemaining?: number;
+  progress?: number; // 0-100
+  image: string;
+  totalCost: number;
+
+  // Details
+  driver: {
+    name: string;
+    phone?: string;
+  };
+  accommodation: {
+    name: string;
+  };
+  restaurant?: {
+    name: string;
+  };
+  transportation: {
+    type: string;
+  };
+}
+
 @Component({
   selector: 'app-finalized-tours',
   imports: [CommonModule],
@@ -9,75 +38,120 @@ import { Component } from '@angular/core';
 })
 export class FinalizedTours {
 
-  activeTab: 'confirmed' | 'pending' = 'confirmed';
-
-  confirmedTours = [
+  tours: Tour[] = [
     {
       id: 1,
-      title: 'Murree Hill Station Tour',
-      status: 'Confirmed',
-      route: 'Islamabad → Murree → Ayubia',
-      date: 'Jan 10, 2026',
-      duration: '2 Days',
-      requirementsStatus: 'All requirements completed • Tour finalized',
-      requirementsStatusClass: 'success',
-      participants: 6,
-      price: 'Rs. 8,500'
+      title: 'Beach Paradise Getaway',
+      location: 'Maldives',
+      status: 'Upcoming',
+      startDate: '2026-01-27', // starts in 22 days from mock current time roughly
+      endDate: '2026-02-02',
+      duration: '7 Days',
+      daysRemaining: 22,
+      image: 'assets/images/maldives.jpg', // Placeholder, in real app would use real url
+      totalCost: 5800,
+      driver: {
+        name: 'Ahmed Khan',
+        phone: '+960 123 4567'
+      },
+      accommodation: {
+        name: 'Ocean View Resort'
+      },
+      restaurant: {
+        name: 'Ocean View Restaurant'
+      },
+      transportation: {
+        type: 'Speedboat Transfer'
+      }
     },
     {
       id: 2,
-      title: 'Lahore Heritage Tour',
-      status: 'Confirmed',
-      route: 'Lahore → Badshahi Mosque → Lahore Fort',
-      date: 'Jan 20, 2026',
-      duration: '1 Day',
-      requirementsStatus: 'All requirements completed • Tour finalized',
-      requirementsStatusClass: 'success',
-      participants: 4,
-      price: 'Rs. 6,000'
+      title: 'Mountain Adventure Trek',
+      location: 'Swiss Alps',
+      status: 'Ongoing',
+      startDate: '2025-11-15', // dates from screenshot
+      endDate: '2025-11-25',
+      duration: '10 Days',
+      progress: 45,
+      daysRemaining: 6,
+      image: 'assets/images/swiss-alps.jpg',
+      totalCost: 6200,
+      driver: {
+        name: 'Hans Mueller',
+        phone: '+41 78 123 4567'
+      },
+      accommodation: {
+        name: 'Alpine Lodge'
+      },
+      restaurant: {
+        name: 'Alpine Bistro'
+      },
+      transportation: {
+        type: 'Mountain Transport Van'
+      }
     },
     {
       id: 3,
-      title: 'Taxila Historical Tour',
-      status: 'Confirmed',
-      route: 'Islamabad → Taxila → Khanpur',
-      date: 'Feb 5, 2026',
-      duration: '1 Day',
-      requirementsStatus: 'All requirements completed • Tour finalized',
-      requirementsStatusClass: 'success',
-      participants: 5,
-      price: 'Rs. 5,500'
-    }
-  ];
-
-  pendingTours = [
-    {
-      id: 4,
-      title: 'Northern Areas Explorer',
-      status: 'Pending Completion',
-      route: 'Islamabad → Hunza → Gilgit',
-      date: 'Jan 15, 2026',
+      title: 'Dubai City Exploration',
+      location: 'Dubai, UAE',
+      status: 'Completed',
+      startDate: '2025-10-01',
+      endDate: '2025-10-06',
       duration: '6 Days',
-      requirementsStatus: 'Driver accepted • Awaiting accommodation confirmation',
-      requirementsStatusClass: 'warning',
-      participants: 12,
-      price: 'Rs. 25,000'
+      image: 'assets/images/dubai.jpg',
+      totalCost: 3400,
+      driver: {
+        name: 'Mohammed Ali',
+        phone: '+971 50 123 4567'
+      },
+      accommodation: {
+        name: 'Emirates Palace Hotel'
+      },
+      transportation: {
+        type: 'Luxury SUV'
+      }
     },
     {
-      id: 5,
-      title: 'Neelum Valley Tour',
-      status: 'Pending Completion',
-      route: 'Muzaffarabad → Neelum Valley',
-      date: 'Jan 28, 2026',
-      duration: '4 Days',
-      requirementsStatus: 'Driver accepted • 1 more driver needed',
-      requirementsStatusClass: 'warning',
-      participants: 8,
-      price: 'Rs. 18,000'
+      id: 4,
+      title: 'Asian Cultural Experience',
+      location: 'Kyoto, Japan',
+      status: 'Upcoming',
+      startDate: '2026-01-10',
+      endDate: '2026-01-18',
+      duration: '9 Days',
+      daysRemaining: 62, // As per screenshot example (though dates might need adjustment to match exactly "starts in 62 days", using approx)
+      image: 'assets/images/kyoto.jpg',
+      totalCost: 4500,
+      driver: {
+        name: 'Takeshi Yamamoto',
+        phone: '+81 90 1234 5678'
+      },
+      accommodation: {
+        name: 'Ryokan Traditional Inn'
+      },
+      restaurant: {
+        name: 'Kaiseki Traditional'
+      },
+      transportation: {
+        type: 'Private Van'
+      }
     }
   ];
 
-  setActiveTab(tab: 'confirmed' | 'pending') {
-    this.activeTab = tab;
+  get completedCount(): number {
+    return this.tours.filter(t => t.status === 'Completed').length;
+  }
+
+  get ongoingCount(): number {
+    return this.tours.filter(t => t.status === 'Ongoing').length;
+  }
+
+  get upcomingCount(): number {
+    return this.tours.filter(t => t.status === 'Upcoming').length;
+  }
+
+  // Helper to format currency
+  formatCurrency(value: number): string {
+    return '$' + value.toLocaleString();
   }
 }

@@ -1,1 +1,78 @@
-<p>explore works!</p>
+<div class="container-fluid p-0">
+    <div class="mb-4">
+        <h1 class="fw-bold mb-2">Explore Tours</h1>
+        <p class="text-muted">Discover amazing destinations and book your next adventure</p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card border-0 shadow-sm mb-4 p-2">
+        <div class="card-body p-2 d-flex gap-2">
+            <div class="position-relative flex-grow-1">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                <input type="text" class="form-control form-control-lg border-light bg-light ps-5"
+                    placeholder="Search tours or destinations...">
+            </div>
+            <button class="btn btn-light btn-lg px-4 fw-bold">
+                <i class="bi bi-sliders me-2"></i> Filters
+            </button>
+        </div>
+    </div>
+
+    <!-- Tours Grid -->
+    <div class="row g-4">
+        <div *ngFor="let tour of tours" class="col-12 col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-img-wrapper position-relative">
+                    <!-- Use placeholder if no image, but we will try to use provided ones or placeholders -->
+                    <img [src]="tour.image" class="card-img-top" alt="{{ tour.title }}"
+                        style="height: 240px; object-fit: cover;"
+                        onerror="this.src='https://placehold.co/600x400/0d6efd/FFF?text=Tour'">
+
+                    <span *ngIf="tour.status === 'Available'"
+                        class="badge bg-success position-absolute top-0 end-0 m-3 py-2 px-3 rounded-pill">
+                        Available
+                    </span>
+                    <span *ngIf="tour.status === 'Limited Spots'"
+                        class="badge bg-warning text-dark position-absolute top-0 end-0 m-3 py-2 px-3 rounded-pill">
+                        Limited Spots
+                    </span>
+                </div>
+
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">{{ tour.title }}</h5>
+
+                    <div class="d-flex align-items-center text-secondary mb-3">
+                        <i class="bi bi-geo-alt me-2 text-primary"></i>
+                        <span>{{ tour.route }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3 text-secondary small">
+                        <div>
+                            <i class="bi bi-clock me-1 text-success"></i> {{ tour.duration }}
+                        </div>
+                        <div>
+                            <i class="bi bi-people me-1 text-purple"></i> Max {{ tour.maxPeople }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="bi bi-star-fill text-warning me-1"></i>
+                        <span class="fw-bold text-dark">{{ tour.rating }}</span>
+                        <span class="text-muted ms-1">({{ tour.reviews }} reviews)</span>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <div class="d-flex justify-content-between align-items-end mt-3">
+                        <div>
+                            <span class="text-muted small d-block">Starting from</span>
+                            <h5 class="fw-bold text-primary mb-0">PKR {{ tour.price | number }}</h5>
+                        </div>
+                        <button class="btn btn-primary px-4 fw-bold shadow-sm" style="background-color: #0d6efd;">Book
+                            Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

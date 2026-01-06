@@ -22,6 +22,10 @@ const routes: Routes = [
   {
     path: 'profile',
     loadComponent: () => import('./profile/profile').then(m => m.Profile)
+  },
+  {
+    path: 'notifications',
+    loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent)
   }
 ];
 

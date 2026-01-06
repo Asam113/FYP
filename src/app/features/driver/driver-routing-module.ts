@@ -10,12 +10,12 @@ import { Ratings } from './ratings/ratings';
 import { Earnings } from './earnings/earnings';
 import { Profile } from './profile/profile';
 import { PerformanceInsights } from './performance-insights/performance-insights';
-import { DriverNotifications } from './notifications/notifications';
+import { SharedNotificationsComponent } from '../../shared/components/notifications/notifications.component';
+
 import { DriverSettings } from './settings/settings';
 
 const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
   { path: 'dashboard', component: Dashboard },
   { path: 'requests', component: Requests },
   { path: 'upcoming-tours', component: UpcomingTours },
@@ -25,7 +25,7 @@ const routes: Routes = [
   { path: 'make-offer', component: MakeOffer },
   { path: 'earnings', component: Earnings },
   { path: 'performance-insights', component: PerformanceInsights },
-  { path: 'notifications', component: DriverNotifications },
+  { path: 'notifications', component: SharedNotificationsComponent },
   { path: 'profile', component: Profile },
   { path: 'settings', component: DriverSettings }
 ];

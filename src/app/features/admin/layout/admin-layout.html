@@ -85,6 +85,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a routerLink="/admin/notifications" class="nav-link text-white-50 d-flex align-items-center py-2"
+                    routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
+                    <i class="bi bi-bell me-3 fs-5"></i> Notifications
+                </a>
+            </li>
+            <li class="nav-item">
                 <a routerLink="/admin/settings" class="nav-link text-white-50 d-flex align-items-center py-2"
                     routerLinkActive="active-link text-white bg-white-10" (click)="toggleSidebar()">
                     <i class="bi bi-gear me-3 fs-5"></i> Settings
@@ -103,7 +109,7 @@
     <div class="content-wrapper d-flex flex-column flex-fill bg-light" style="overflow-y: auto;">
 
         <!-- Router Outlet Container -->
-        <div class="p-4 animate-fade-in">
+        <div class="animate-fade-in" style="padding: 30px;">
             <router-outlet></router-outlet>
         </div>
 

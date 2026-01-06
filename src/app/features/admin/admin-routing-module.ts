@@ -21,7 +21,9 @@ const routes: Routes = [
   { path: 'manage-restaurants', component: ManageRestaurants },
   { path: 'payments', component: Payments },
   { path: 'reports', component: Reports },
-  { path: 'settings', component: Settings }
+  { path: 'reports', component: Reports },
+  { path: 'settings', component: Settings },
+  { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) }
 ];
 
 @NgModule({

@@ -16,6 +16,9 @@ const routes: Routes = [
   { path: 'submit-plan', component: SubmitPlan },
   { path: 'finalized-tours', component: FinalizedTours },
   { path: 'payments', component: Payments },
+  { path: 'trip-history', loadComponent: () => import('./trip-history/trip-history').then(m => m.TripHistory) },
+  { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) },
+  { path: 'settings', loadComponent: () => import('./settings/settings').then(m => m.Settings) },
   { path: 'profile', component: Profile }
 ];
 

@@ -1,8 +1,8 @@
-<div class="container-fluid mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-2">
+<div class="container-fluid mb-5 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark mb-1">Notifications</h2>
-            <p class="text-muted mb-0">Stay updated with your tours and earnings</p>
+            <p class="text-muted mb-0">Stay updated with your latest activities</p>
         </div>
         <span class="badge bg-primary rounded-pill px-3 py-2" *ngIf="unreadCount > 0">{{ unreadCount }} New</span>
     </div>
@@ -14,7 +14,7 @@
     </div>
 
     <div class="d-flex flex-column gap-3" *ngIf="notifications.length > 0; else emptyState">
-        <div class="card border-0 shadow-sm" *ngFor="let notification of notifications">
+        <div class="card border-0 shadow-sm animate-fade-in" *ngFor="let notification of notifications">
             <div class="card-body p-4 d-flex align-items-start">
                 <div class="rounded-circle p-3 d-flex align-items-center justify-content-center me-3"
                     [ngClass]="getIconClass(notification.type)" style="width: 48px; height: 48px; flex-shrink: 0;">

@@ -1,99 +1,23 @@
-/* Dashboard Container */
 .dashboard-container {
-    padding-bottom: 2rem;
+    background-color: #f8f9fa;
+    min-height: 100vh;
 }
 
-
-
-/* Tour Cards */
-.tour-card {
-    border-radius: 16px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    overflow: hidden;
-    background: #ffffff;
+.bg-purple {
+    background-color: #6f42c1;
 }
 
-.tour-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+.text-purple {
+    color: #6f42c1;
 }
 
-.card-img-wrapper {
-    height: 180px;
-    overflow: hidden;
+/* Card hover effects if needed */
+.card {
+    transition: transform 0.2s ease-in-out;
 }
 
-.card-img-top {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+/*
+.card:hover {
+    transform: translateY(-2px);
 }
-
-.tour-card:hover .card-img-top {
-    transform: scale(1.05);
-}
-
-/* Custom Horizontal Scrollbar */
-.custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-    padding-bottom: 10px;
-    /* Space for scrollbar */
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-    height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 20px;
-}
-
-/* Upcoming Tours List */
-.list-group-item.hover-bg:hover {
-    background-color: #f8fafc;
-    cursor: pointer;
-}
-
-.btn-icon {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Section Titles */
-.section-title {
-    font-size: 1.25rem;
-    letter-spacing: -0.025em;
-}
-
-/* Utility / Helpers */
-.text-primary {
-    color: #2563eb !important;
-}
-
-.bg-primary {
-    background-color: #2563eb !important;
-}
-
-.btn-primary {
-    background-color: #2563eb;
-    border-color: #2563eb;
-}
-
-.btn-primary:hover {
-    background-color: #1d4ed8;
-    border-color: #1d4ed8;
-}
-
-.badge {
-    font-weight: 600;
-}
+*/
