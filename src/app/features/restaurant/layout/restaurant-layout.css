@@ -1,3 +1,10 @@
+.sidebar {
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
 .sidebar .nav-link {
     color: #cbd5e1 !important;
     /* Slate-300 */
@@ -24,20 +31,20 @@
 
 /* Scrollbar Styling for webkit browsers */
 ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: rgba(255, 255, 255, 0.4);
 }
 
 /* Mobile Sidebar Styling */

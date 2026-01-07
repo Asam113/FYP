@@ -17,11 +17,11 @@ const routes: Routes = [
   },
   {
     path: 'orders',
-    loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) // Placeholder
+    loadComponent: () => import('./orders/orders').then(m => m.Orders)
   },
   {
-    path: 'offer-services',
-    loadComponent: () => import('./offer-services/offer-services').then(m => m.OfferServices)
+    path: 'menu',
+    loadComponent: () => import('./menu/menu').then(mod => mod.Menu)
   },
   {
     path: 'earnings', // Kept for backward compatibility if needed, though removed from sidebar
@@ -33,7 +33,7 @@ const routes: Routes = [
   },
   {
     path: 'settings',
-    loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) // Placeholder
+    loadComponent: () => import('./settings/settings').then(m => m.Settings)
   },
   {
     path: 'notifications',
