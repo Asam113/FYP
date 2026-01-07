@@ -53,21 +53,27 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a routerLink="/restaurant/explore-tours" class="nav-link text-white my-1 d-flex align-items-center"
+                    routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+                    <i class="bi bi-compass me-3 fs-5"></i> Explore Tours
+                </a>
+            </li>
+            <li class="nav-item">
                 <a routerLink="/restaurant/requests" class="nav-link text-white my-1 d-flex align-items-center"
                     routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
-                    <i class="bi bi-clipboard-data me-3 fs-5"></i> Orders
+                    <i class="bi bi-ui-checks me-3 fs-5"></i> Tour Food Request
+                </a>
+            </li>
+            <li class="nav-item">
+                <a routerLink="/restaurant/orders" class="nav-link text-white my-1 d-flex align-items-center"
+                    routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+                    <i class="bi bi-check-circle me-3 fs-5"></i> Confirmed Orders
                 </a>
             </li>
             <li class="nav-item">
                 <a routerLink="/restaurant/offer-services" class="nav-link text-white my-1 d-flex align-items-center"
                     routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
                     <i class="bi bi-book me-3 fs-5"></i> My Menu
-                </a>
-            </li>
-            <li class="nav-item">
-                <a routerLink="/restaurant/earnings" class="nav-link text-white my-1 d-flex align-items-center"
-                    routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
-                    <i class="bi bi-wallet2 me-3 fs-5"></i> Earnings
                 </a>
             </li>
             <li class="nav-item">
@@ -80,6 +86,12 @@
                 <a routerLink="/restaurant/profile" class="nav-link text-white my-1 d-flex align-items-center"
                     routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
                     <i class="bi bi-person me-3 fs-5"></i> Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a routerLink="/restaurant/settings" class="nav-link text-white my-1 d-flex align-items-center"
+                    routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+                    <i class="bi bi-gear me-3 fs-5"></i> Settings
                 </a>
             </li>
         </ul>

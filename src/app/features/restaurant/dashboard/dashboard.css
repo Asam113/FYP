@@ -3,40 +3,76 @@
     padding-bottom: 2rem;
 }
 
-/* Stats Cards */
-.stats-card {
+/* Stat Cards */
+.stat-card {
     border-radius: 16px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     background: #fff;
 }
 
-.stats-card:hover {
+.stat-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
 }
 
-.icon-box {
+.stat-icon-wrapper {
     width: 48px;
     height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-/* List Groups & Hover */
-.list-group-item.hover-bg:hover,
-.table-hover tbody tr:hover {
-    background-color: #f8fafc;
-    cursor: pointer;
+/* Custom Colors */
+.bg-purple {
+    background-color: #a855f7 !important;
+    /* Purple-500 */
+}
+
+.text-purple {
+    color: #a855f7 !important;
+}
+
+/* Recent Activity */
+.activity-row {
     transition: background-color 0.2s ease;
 }
 
-/* Table Styling */
-.table th {
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    /* Slate-500 */
+.activity-row:hover {
+    background-color: #f8fafc;
+}
+
+.activity-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #2563eb;
+    /* Primary Blue */
+    border-radius: 50%;
+}
+
+/* Action Cards */
+.action-card {
+    transition: transform 0.2s ease;
+}
+
+.action-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Badge Styles Override */
+.badge.bg-warning-subtle {
+    background-color: #fef3c7 !important;
+    color: #d97706 !important;
+    border-color: #fcd34d !important;
+}
+
+.badge.bg-primary-subtle {
+    background-color: #dbeafe !important;
+    color: #2563eb !important;
+    border-color: #bfdbfe !important;
+}
+
+.badge.bg-success-subtle {
+    background-color: #dcfce7 !important;
+    color: #16a34a !important;
+    border-color: #86efac !important;
 }
 
 /* Utility */
@@ -44,42 +80,17 @@
     border-radius: 1rem !important;
 }
 
-.text-primary {
-    color: #2563eb !important;
+.section-title {
+    letter-spacing: -0.5px;
 }
 
-.bg-primary-subtle {
-    background-color: #dbeafe !important;
+/* Table overrides */
+.table> :not(caption)>*>* {
+    padding: 1rem 0;
+    background-color: transparent;
+    border-bottom-color: #f1f5f9;
 }
 
-.text-success {
-    color: #16a34a !important;
-}
-
-.bg-success-subtle {
-    background-color: #dcfce7 !important;
-}
-
-.text-warning {
-    color: #d97706 !important;
-}
-
-.bg-warning-subtle {
-    background-color: #fef3c7 !important;
-}
-
-.text-info {
-    color: #0891b2 !important;
-}
-
-.bg-info-subtle {
-    background-color: #cffafe !important;
-}
-
-.text-secondary {
-    color: #475569 !important;
-}
-
-.bg-secondary-subtle {
-    background-color: #f1f5f9 !important;
+.table tr:last-child td {
+    border-bottom: 0;
 }
