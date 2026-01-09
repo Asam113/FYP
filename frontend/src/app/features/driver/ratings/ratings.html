@@ -1,0 +1,146 @@
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-dark">Ratings & Reviews</h2>
+            <p class="text-muted">See what customers are saying about your service</p>
+        </div>
+    </div>
+
+    <!-- Rating Summary Cards -->
+    <div class="row g-4 mb-5">
+        <!-- Overall Rating -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 bg-warning-subtle-custom">
+                <div class="card-body p-4 text-center d-flex flex-column justify-content-center align-items-center">
+                    <div class="display-3 fw-bold text-dark mb-2">
+                        <i class="bi bi-star-fill text-warning fs-header"></i> {{ overallRating }}
+                    </div>
+
+                    <div class="mb-3">
+                        <i class="bi bi-star-fill text-warning mx-1"></i>
+                        <i class="bi bi-star-fill text-warning mx-1"></i>
+                        <i class="bi bi-star-fill text-warning mx-1"></i>
+                        <i class="bi bi-star-fill text-warning mx-1"></i>
+                        <i class="bi bi-star-fill text-warning mx-1"></i>
+                    </div>
+
+                    <div class="text-muted mb-3">Based on {{ totalReviews }} reviews</div>
+
+                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2">
+                        <i class="bi bi-graph-up-arrow me-1"></i> {{ ratingTrend }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating Breakdown -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-normal mb-4">Rating Breakdown</h5>
+
+                    <div *ngFor="let item of ratingBreakdown" class="d-flex align-items-center mb-3">
+                        <div class="d-flex align-items-center me-3" style="width: 40px;">
+                            <span class="text-muted small me-1">{{ item.stars }}</span>
+                            <i class="bi bi-star-fill text-warning small"></i>
+                        </div>
+                        <div class="progress flex-grow-1 me-3" style="height: 8px;">
+                            <div class="progress-bar bg-dark" role="progressbar" [style.width.%]="item.percentage">
+                            </div>
+                        </div>
+                        <div class="text-muted small text-end" style="width: 30px;">
+                            {{ item.count }}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Reviews Header -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <h5 class="fw-normal">Customer Reviews</h5>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div *ngFor="let review of reviews" class="card border-0 shadow-sm mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="fw-bold mb-0 d-inline-block me-2">{{ review.name }}</h6>
+                            <i class="bi bi-star-fill text-warning small"></i>
+                            <span class="fw-medium small ms-1">{{ review.rating }}</span>
+                        </div>
+                        <small class="text-muted">{{ review.date }}</small>
+                    </div>
+                    <div class="text-primary small mb-2">{{ review.tourName }}</div>
+
+                    <p class="text-muted mb-3">{{ review.comment }}</p>
+
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-link text-decoration-none text-muted p-0 small">
+                            <i class="bi bi-hand-thumbs-up me-1"></i> Helpful ({{ review.helpfulCount }})
+                        </button>
+                        <button class="btn btn-link text-decoration-none text-muted p-0 small">
+                            <i class="bi bi-chat me-1"></i> Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section: Strengths and Insights -->
+    <div class="row g-4">
+        <!-- Top Strengths -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-normal mb-4">Top Strengths</h5>
+
+                    <div *ngFor="let strength of strengths" class="row align-items-center mb-4">
+                        <div class="col-4 text-muted">{{ strength.name }}</div>
+                        <div class="col-6">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-dark" role="progressbar"
+                                    [style.width.%]="strength.percentage"></div>
+                            </div>
+                        </div>
+                        <div class="col-2 text-end fw-medium small">{{ strength.percentage }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Insights -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100 bg-primary-subtle-custom">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="bi bi-bar-chart-fill fs-4 me-2 text-dark"></i>
+                        <h5 class="fw-normal mb-0">Review Insights</h5>
+                    </div>
+
+                    <div class="mb-3 text-secondary">
+                        <span class="text-primary fw-medium">85%</span> of customers mention your professionalism
+                    </div>
+                    <div class="mb-3 text-secondary">
+                        <span class="text-primary fw-medium">92%</span> of reviews are 4 stars or higher
+                    </div>
+                    <div class="mb-3 text-secondary">
+                        Your rating has improved by <span class="text-success fw-medium">0.3 points</span> this month
+                    </div>
+                    <div class="text-secondary">
+                        Most appreciated for: <span class="text-primary fw-medium">Safe driving & punctuality</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

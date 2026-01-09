@@ -1,0 +1,213 @@
+<div class="container-fluid py-4 px-5">
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h4 class="mb-1 text-dark fw-bold">Plan a New Tour</h4>
+        <p class="text-muted">Create and customize tour packages for your clients</p>
+    </div>
+
+    <!-- Stepper -->
+    <div class="card border-0 shadow-sm mb-4 rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-center align-items-center text-center">
+
+                <!-- Step 1: Tour Details -->
+                <div class="step" [class.active]="currentStep >= 1">
+                    <div class="step-icon">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                </div>
+
+                <div class="line"></div>
+
+                <!-- Step 2: Itinerary -->
+                <div class="step" [class.active]="currentStep >= 2">
+                    <div class="step-icon">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                </div>
+
+                <div class="line"></div>
+
+                <!-- Step 3: Pricing -->
+                <div class="step" [class.active]="currentStep >= 3">
+                    <div class="step-icon">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Labels Row -->
+            <div class="d-flex justify-content-between text-center mx-auto mt-2" style="max-width: 450px;">
+                <span class="small fw-bold" [class.text-teal]="currentStep >= 1"
+                    [class.text-muted]="currentStep < 1">Tour<br>Details</span>
+                <span class="small fw-bold" [class.text-teal]="currentStep >= 2"
+                    [class.text-muted]="currentStep < 2">Itinerary</span>
+                <span class="small fw-bold" [class.text-teal]="currentStep >= 3"
+                    [class.text-muted]="currentStep < 3">Pricing</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 1: Basic Tour Information -->
+    <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 1">
+        <div class="card-body p-5">
+            <h5 class="fw-bold mb-1">Basic Tour Information</h5>
+            <p class="text-muted mb-4">Enter the main details about the tour package</p>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Tour Name</label>
+                    <input type="text" class="form-control bg-light border-0 py-2"
+                        placeholder="e.g., Northern Areas Adventure" [(ngModel)]="tourName">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Destination</label>
+                    <select class="form-select bg-light border-0 py-2" [(ngModel)]="destination">
+                        <option value="" selected disabled>Select destination</option>
+                        <option value="kashmir">Kashmir</option>
+                        <option value="northern_areas">Northern Areas</option>
+                        <option value="hunza">Hunza</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Start Date</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control bg-light border-0 py-2" [(ngModel)]="startDate">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">End Date</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control bg-light border-0 py-2" [(ngModel)]="endDate">
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Max Participants</label>
+                    <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 15"
+                        [(ngModel)]="maxParticipants">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Tour Type</label>
+                    <select class="form-select bg-light border-0 py-2" [(ngModel)]="tourType">
+                        <option value="" selected disabled>Select type</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="family">Family</option>
+                        <option value="honeymoon">Honeymoon</option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Description</label>
+                    <textarea class="form-control bg-light border-0" rows="4"
+                        placeholder="Describe the tour experience, highlights, and what makes it special..."
+                        [(ngModel)]="description"></textarea>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-3 mt-5">
+                <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as Draft</button>
+                <button class="btn btn-teal text-white px-4 fw-bold" (click)="nextStep()">Next: Itinerary</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Step 2: Itinerary -->
+    <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 2">
+        <div class="card-body p-5">
+            <h5 class="fw-bold mb-1">Tour Itinerary</h5>
+            <p class="text-muted mb-4">Plan the day-by-day activities</p>
+
+            <div class="mb-4" *ngFor="let item of itinerary; let i = index">
+                <h6 class="fw-bold mb-3">Day {{ item.day }}</h6>
+                <div class="p-4 bg-light rounded-3">
+                    <div class="mb-3">
+                        <input type="text" class="form-control border-0 shadow-sm py-2"
+                            placeholder="Day title (e.g., Arrival & City Tour)" [(ngModel)]="item.title">
+                    </div>
+                    <div>
+                        <textarea class="form-control border-0 shadow-sm" rows="3"
+                            placeholder="Detailed activities for this day..." [(ngModel)]="item.activities"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-outline-dark w-100 py-2 fw-bold mb-5 shadow-sm" (click)="addDay()">
+                + Add Another Day
+            </button>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-5">
+                <button class="btn btn-outline-secondary px-4 fw-bold" (click)="prevStep()">Previous</button>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as
+                        Draft</button>
+                    <button class="btn btn-teal text-white px-4 fw-bold" (click)="nextStep()">Next: Pricing</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Pricing & Finalize -->
+    <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 3">
+        <div class="card-body p-5">
+            <h5 class="fw-bold mb-1">Pricing & Finalize</h5>
+            <p class="text-muted mb-4">Set the pricing and complete the tour plan</p>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Base Price per Person</label>
+                    <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 25000"
+                        [(ngModel)]="basePrice">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Discount (%)</label>
+                    <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 10"
+                        [(ngModel)]="discount">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Required Deposit</label>
+                    <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 5000"
+                        [(ngModel)]="deposit">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Currency</label>
+                    <select class="form-select bg-light border-0 py-2" [(ngModel)]="currency">
+                        <option value="PKR">PKR</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Estimated Total Revenue -->
+            <div class="mt-5 p-4 rounded-3 d-flex justify-content-between align-items-center"
+                style="background-color: #cfe2ff;">
+                <div>
+                    <h6 class="mb-1 text-muted">Estimated Total Revenue</h6>
+                    <h4 class="mb-0 fw-bold" style="color: #084298;">PKR 375,000</h4>
+                </div>
+                <div>
+                    <i class="bi bi-currency-dollar fs-1" style="color: #0d6efd;"></i>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-5">
+                <button class="btn btn-outline-secondary px-4 fw-bold" (click)="prevStep()">Previous</button>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as
+                        Draft</button>
+                    <button class="btn btn-teal text-white px-4 fw-bold" (click)="createTourPlan()">Create Tour
+                        Plan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

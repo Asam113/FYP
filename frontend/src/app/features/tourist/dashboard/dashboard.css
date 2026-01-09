@@ -1,0 +1,23 @@
+.dashboard-container {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.bg-purple {
+    background-color: #6f42c1;
+}
+
+.text-purple {
+    color: #6f42c1;
+}
+
+/* Card hover effects if needed */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+/*
+.card:hover {
+    transform: translateY(-2px);
+}
+*/

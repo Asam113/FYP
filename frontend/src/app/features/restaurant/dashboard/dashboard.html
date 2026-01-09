@@ -1,0 +1,93 @@
+<div class="container-fluid dashboard-container">
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark section-title mb-1">
+            Dashboard Overview
+        </h2>
+        <p class="text-muted mb-0">Welcome back! Here's your restaurant activity summary</p>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3" *ngFor="let stat of stats">
+            <div class="card stat-card shadow-sm h-100 p-4 border-0">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="w-100">
+                        <small class="text-secondary fw-medium d-block mb-1">{{stat.title}}</small>
+                        <h2 class="fw-bold text-dark mb-1">{{stat.count}}</h2>
+                        <small class="text-muted" style="font-size: 0.8rem;">{{stat.subtext}}</small>
+                    </div>
+                    <div class="stat-icon-wrapper rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                        [ngClass]="'bg-' + stat.colorClass">
+                        <i class="bi {{stat.icon}} text-white fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Recent Activity Section -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 py-4 px-4">
+                    <h5 class="mb-0 fw-bold text-dark">Recent Activity</h5>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <tbody class="border-top-0">
+                                <tr *ngFor="let activity of recentActivities" class="activity-row">
+                                    <td class="ps-4" style="width: 50px;">
+                                        <div class="activity-dot"></div>
+                                    </td>
+                                    <td>
+                                        <h6 class="fw-bold text-dark mb-1">{{activity.tourName}}</h6>
+                                        <small class="text-muted d-block">{{activity.status}}</small>
+                                        <small class="text-muted mt-1 d-block"
+                                            style="font-size: 0.75rem;">{{activity.time}}</small>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="fw-bold text-dark mb-1">PKR {{activity.price | number}}</div>
+                                        <span class="badge rounded-pill border px-3"
+                                            [ngClass]="getBadgeClass(activity.badgeStatus)">
+                                            {{activity.badgeStatus}}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card action-card border-0 shadow-sm rounded-4 h-100 bg-primary">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <h5 class="fw-bold text-white mb-2">Explore New Tours</h5>
+                    <p class="text-white-50 mb-4">Find available tours and send your food offers</p>
+                    <div>
+                        <button class="btn btn-light fw-bold text-primary rounded-pill px-4">Browse Tours</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card action-card border-0 shadow-sm rounded-4 h-100 bg-purple">
+                <div class="card-body p-4 d-flex flex-column justify-content-center">
+                    <h5 class="fw-bold text-white mb-2">Manage Your Menu</h5>
+                    <p class="text-white-50 mb-4">Update your menu items and pricing</p>
+                    <div>
+                        <button class="btn btn-light fw-bold text-purple rounded-pill px-4">Go to Menu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

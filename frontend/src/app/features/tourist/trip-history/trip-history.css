@@ -1,0 +1,61 @@
+.card {
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Summary Card Hover */
+.col-md-4 .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Trip Card Styling */
+.card.shadow-sm {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.icon-box {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.badge {
+    font-size: 0.85rem;
+}
+
+/* Button Styling matches screenshot */
+.btn-primary {
+    background-color: #1a73e8;
+    border-color: #1a73e8;
+    border-radius: 8px;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+.btn-primary:hover {
+    background-color: #1557b0;
+    border-color: #1557b0;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
