@@ -1,0 +1,5 @@
+/* Add any necessary custom styles here.
+   Most styling is handled by Bootstrap utility classes. */
+.hover-bg-light:hover {
+    background-color: var(--bs-light);
+}

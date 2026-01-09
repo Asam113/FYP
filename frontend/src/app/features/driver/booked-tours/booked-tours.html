@@ -1,0 +1,137 @@
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold text-dark">Booked Tours</h2>
+            <p class="text-muted">Tours where your application has been accepted</p>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-inline-flex bg-light rounded-pill p-1">
+                <button class="btn rounded-pill px-4" [class.bg-white]="activeTab === 'confirmed'"
+                    [class.text-dark]="activeTab === 'confirmed'" [class.fw-bold]="activeTab === 'confirmed'"
+                    [class.shadow-sm]="activeTab === 'confirmed'" [class.text-muted]="activeTab !== 'confirmed'"
+                    (click)="setActiveTab('confirmed')">
+                    Confirmed Tours ({{confirmedTours.length}})
+                </button>
+                <button class="btn rounded-pill px-4" [class.bg-white]="activeTab === 'pending'"
+                    [class.text-dark]="activeTab === 'pending'" [class.fw-bold]="activeTab === 'pending'"
+                    [class.shadow-sm]="activeTab === 'pending'" [class.text-muted]="activeTab !== 'pending'"
+                    (click)="setActiveTab('pending')">
+                    Pending Completion ({{pendingTours.length}})
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmed Tours List -->
+    <div class="row" *ngIf="activeTab === 'confirmed'">
+        <div class="col-12">
+            <div *ngFor="let tour of confirmedTours" class="card border-0 shadow-sm mb-3">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <!-- Left Content -->
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="fw-medium mb-0 me-3">{{ tour.title }}</h5>
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Confirmed
+                                </span>
+                            </div>
+
+                            <div class="row text-muted small mb-3">
+                                <div class="col-md-5 d-flex align-items-center">
+                                    <i class="bi bi-geo-alt me-2"></i> {{ tour.route }}
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <i class="bi bi-calendar3 me-2"></i> {{ tour.date }}
+                                </div>
+                                <div class="col-md-3 d-flex align-items-center">
+                                    <i class="bi bi-clock me-2"></i> {{ tour.duration }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-normal">
+                                    <i class="bi bi-check-circle me-2"></i> {{ tour.requirementsStatus }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Right Content -->
+                        <div class="col-md-3 text-md-end">
+                            <h4 class="fw-bold mb-0">{{ tour.price }}</h4>
+                            <p class="text-muted small">Payment</p>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">{{ tour.participants }} participants</span>
+                        <a href="#" class="text-primary text-decoration-none small">
+                            View Details <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Tours List -->
+    <div class="row" *ngIf="activeTab === 'pending'">
+        <div class="col-12">
+            <div *ngFor="let tour of pendingTours" class="card border-0 shadow-sm mb-3">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <!-- Left Content -->
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="fw-medium mb-0 me-3">{{ tour.title }}</h5>
+                                <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-3">
+                                    <i class="bi bi-clock me-1"></i> Pending Completion
+                                </span>
+                            </div>
+
+                            <div class="row text-muted small mb-3">
+                                <div class="col-md-5 d-flex align-items-center">
+                                    <i class="bi bi-geo-alt me-2"></i> {{ tour.route }}
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <i class="bi bi-calendar3 me-2"></i> {{ tour.date }}
+                                </div>
+                                <div class="col-md-3 d-flex align-items-center">
+                                    <i class="bi bi-clock me-2"></i> {{ tour.duration }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <span
+                                    class="badge bg-warning-subtle text-warning-emphasis rounded-pill px-3 py-2 fw-normal border border-warning-subtle">
+                                    <i class="bi bi-exclamation-circle me-2"></i> {{ tour.requirementsStatus }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Right Content -->
+                        <div class="col-md-3 text-md-end">
+                            <h4 class="fw-bold mb-0">{{ tour.price }}</h4>
+                            <p class="text-muted small">Payment</p>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">{{ tour.participants }} participants</span>
+                        <a href="#" class="text-primary text-decoration-none small">
+                            View Details <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
