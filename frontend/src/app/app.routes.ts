@@ -3,7 +3,11 @@ import { Error404 } from './features/common-feature/error404/error404';
 import { Home } from './features/common-feature/home/home';
 import { MainLayout } from './features/common-feature/main-layout/main-layout';
 import { Login } from './features/common-feature/login/login';
-import { Signup } from './features/common-feature/signup/signup';
+import { RoleSelection } from './features/common-feature/role-selection/role-selection';
+import { TouristSignup } from './features/common-feature/tourist-signup/tourist-signup';
+import { DriverSignup } from './features/common-feature/driver-signup/driver-signup';
+import { RestaurantSignup } from './features/common-feature/restaurant-signup/restaurant-signup';
+import { OtpVerification } from './features/common-feature/otp-verification/otp-verification';
 import { TouristLayout } from './features/tourist/layout/tourist-layout';
 import { DriverLayout } from './features/driver/layout/driver-layout';
 import { RestaurantLayout } from './features/restaurant/layout/restaurant-layout';
@@ -13,7 +17,11 @@ export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: Login },
-  { path: 'signup', component: Signup },
+  { path: 'role-selection', component: RoleSelection },
+  { path: 'tourist-signup', component: TouristSignup },
+  { path: 'driver-signup', component: DriverSignup },
+  { path: 'restaurant-signup', component: RestaurantSignup },
+  { path: 'verify-otp', component: OtpVerification },
 
   {
     path: '',
