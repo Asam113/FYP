@@ -37,7 +37,7 @@
                         <th>CNIC</th>
                         <th>License</th>
                         <th>Vehicle</th>
-                        <th>Verification</th>
+                        <th>Documents</th>
                         <th>Rating</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -74,18 +74,12 @@
                             </div>
                         </td>
 
-                        <!-- Verification -->
+                        <!-- Documents -->
                         <td>
-                            <div class="verification-icons">
-                                <i class="bi bi-check-circle-fill success" *ngIf="driver.verification.documents"></i>
-                                <i class="bi bi-x-circle-fill danger" *ngIf="!driver.verification.documents"></i>
-
-                                <i class="bi bi-check-circle-fill success" *ngIf="driver.verification.vehicle"></i>
-                                <i class="bi bi-x-circle-fill danger" *ngIf="!driver.verification.vehicle"></i>
-
-                                <i class="bi bi-check-circle-fill success" *ngIf="driver.verification.background"></i>
-                                <i class="bi bi-x-circle-fill danger" *ngIf="!driver.verification.background"></i>
-                            </div>
+                            <button class="btn-icon view-docs-btn" (click)="viewDocuments(driver)"
+                                title="View Documents">
+                                <i class="bi bi-file-earmark-text"></i> View
+                            </button>
                         </td>
 
                         <!-- Rating -->
@@ -106,9 +100,6 @@
 
                         <!-- Actions/Status -->
                         <td class="actions-cell">
-                            <button class="btn-icon" title="View Details">
-                                <i class="bi bi-eye"></i>
-                            </button>
                             <ng-container *ngIf="driver.status === 'Pending' || driver.status === 'New'">
                                 <button class="btn-success" (click)="approveDriver(driver)">
                                     <i class="bi bi-check-lg"></i> Approve
@@ -117,15 +108,56 @@
                                     <i class="bi bi-x-lg"></i> Reject
                                 </button>
                             </ng-container>
+                            <ng-container *ngIf="driver.status === 'Verified'">
+                                <span class="action-text success">Active</span>
+                            </ng-container>
+                            <ng-container *ngIf="driver.status === 'Rejected'">
+                                <span class="action-text danger">Rejected</span>
+                            </ng-container>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Empty State -->
-        <div class="empty-state" *ngIf="filteredDrivers.length === 0">
+        <!-- Empty State: No Drivers in System -->
+        <div class="empty-state" *ngIf="drivers.length === 0">
+            <p>No drivers registered yet.</p>
+        </div>
+
+        <!-- Empty State: No Search Results -->
+        <div class="empty-state" *ngIf="drivers.length > 0 && filteredDrivers.length === 0">
             <p>No drivers found matching your criteria.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Documents Modal -->
+<div class="modal-backdrop" *ngIf="showDocumentModal" (click)="closeDocumentModal()">
+    <div class="modal-container docs-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Driver Documents</h3>
+            <button class="close-btn" (click)="closeDocumentModal()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="modal-body docs-body" *ngIf="selectedDriver">
+            <div class="doc-item">
+                <label>CNIC Front</label>
+                <div class="img-wrapper">
+                    <img [src]="selectedDriver.documents.cnicFront" alt="CNIC Front">
+                </div>
+            </div>
+            <div class="doc-item">
+                <label>CNIC Back</label>
+                <div class="img-wrapper">
+                    <img [src]="selectedDriver.documents.cnicBack" alt="CNIC Back">
+                </div>
+            </div>
+            <div class="doc-item">
+                <label>License</label>
+                <div class="img-wrapper">
+                    <img [src]="selectedDriver.documents.license" alt="License">
+                </div>
+            </div>
         </div>
     </div>
 </div>

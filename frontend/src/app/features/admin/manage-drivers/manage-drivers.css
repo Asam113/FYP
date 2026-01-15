@@ -468,3 +468,60 @@
         opacity: 1;
     }
 }
+
+/* Document Modal Specifics */
+.modal-container.docs-modal {
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.docs-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.doc-item label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.img-wrapper {
+    width: 100%;
+    height: 300px;
+    /* Fixed height for consistency */
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* Ensures full image is visible without cropping */
+}
+
+.modal-header .close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #9ca3af;
+    cursor: pointer;
+    margin-left: auto;
+    /* Push to right */
+    padding: 0;
+    display: flex;
+}
+
+.modal-header .close-btn:hover {
+    color: #4b5563;
+}

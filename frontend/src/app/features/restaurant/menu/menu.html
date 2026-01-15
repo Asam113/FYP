@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Manage your restaurant menus and items</p>
         </div>
         <div>
-            <button class="btn btn-primary fw-bold px-4 py-2 rounded-3" (click)="addMenu()">
+            <button type="button" class="btn btn-primary fw-bold px-4 py-2 rounded-3" (click)="addMenu()">
                 <i class="bi bi-plus-lg me-2"></i> Add Menu
             </button>
         </div>
@@ -32,17 +32,19 @@
 
                 <!-- Right: Actions -->
                 <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-light text-primary fw-bold px-3 py-2 rounded-3 border-0 bg-primary-subtle"
+                    <button type="button"
+                        class="btn btn-light text-primary fw-bold px-3 py-2 rounded-3 border-0 bg-primary-subtle"
                         (click)="openAddItemModal(category)">
                         <i class="bi bi-plus me-1"></i> Add Item
                     </button>
 
-                    <button class="btn btn-light text-danger border-0 rounded-circle p-2"
+                    <button type="button" class="btn btn-light text-danger border-0 rounded-circle p-2"
                         (click)="deleteCategory(category)" title="Delete Menu">
                         <i class="bi bi-trash"></i>
                     </button>
 
-                    <button class="btn btn-light border rounded-circle p-2" (click)="toggleCategory(category)">
+                    <button type="button" class="btn btn-light border rounded-circle p-2"
+                        (click)="toggleCategory(category)">
                         <i class="bi" [ngClass]="category.isOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                     </button>
                 </div>
@@ -50,7 +52,7 @@
 
             <!-- Expanded Items List -->
             <div class="border-top bg-light-subtle rounded-bottom-4 animate-slide-down" *ngIf="category.isOpen">
-                <div class="p-4 pt-2">
+                <div class="p-4 pt-2 menu-items-scroll-container">
                     <div class="d-flex flex-column gap-3">
                         <!-- Empty State -->
                         <div *ngIf="category.items.length === 0" class="text-center py-4 text-muted">
@@ -66,11 +68,11 @@
                                     <span class="fw-bold text-primary">PKR {{item.price}}</span>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-light text-secondary border-0" title="Edit"
-                                        (click)="openEditItemModal(category, item)">
+                                    <button type="button" class="btn btn-sm btn-light text-secondary border-0"
+                                        title="Edit" (click)="openEditItemModal(category, item)">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-light text-danger border-0"
+                                    <button type="button" class="btn btn-sm btn-light text-danger border-0"
                                         (click)="deleteItem(category, item)" title="Delete Item">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -93,7 +95,8 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-bold text-dark mb-0">Create New Menu</h5>
-            <button class="btn btn-sm btn-light border-0 text-muted rounded-circle" (click)="closeAddMenuModal()">
+            <button type="button" class="btn btn-sm btn-light border-0 text-muted rounded-circle"
+                (click)="closeAddMenuModal()">
                 <i class="bi bi-x fs-4"></i>
             </button>
         </div>
@@ -113,10 +116,11 @@
 
         <!-- Actions -->
         <div class="d-flex gap-3">
-            <button class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3" (click)="closeAddMenuModal()">
+            <button type="button" class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3"
+                (click)="closeAddMenuModal()">
                 Cancel
             </button>
-            <button class="btn btn-secondary w-100 fw-bold py-2 rounded-3"
+            <button type="button" class="btn btn-secondary w-100 fw-bold py-2 rounded-3"
                 [ngClass]="{'btn-primary': newMenu.title && newMenu.badge, 'btn-secondary disabled': !newMenu.title}"
                 (click)="submitAddMenu()" [disabled]="!newMenu.title || !newMenu.badge">
                 Create Menu
@@ -133,7 +137,8 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-bold text-dark mb-0">{{ isEditMode ? 'Edit Menu Item' : 'Add Menu Item' }}</h5>
-            <button class="btn btn-sm btn-light border-0 text-muted rounded-circle" (click)="closeAddItemModal()">
+            <button type="button" class="btn btn-sm btn-light border-0 text-muted rounded-circle"
+                (click)="closeAddItemModal()">
                 <i class="bi bi-x fs-4"></i>
             </button>
         </div>
@@ -155,12 +160,29 @@
                 [(ngModel)]="newItem.description"></textarea>
         </div>
 
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-dark">Item Image</label>
+            <input type="file" class="form-control" accept="image/*" (change)="onItemImageSelected($event)">
+            <div *ngIf="newItem.image" class="mt-2">
+                <img [src]="newItem.image" alt="Preview" style="height: 60px; border-radius: 8px;">
+            </div>
+        </div>
+
+        <div class="mb-4 d-flex align-items-center justify-content-between">
+            <label class="form-label fw-bold small text-dark mb-0">Is Available?</label>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="isAvailableSwitch"
+                    [(ngModel)]="newItem.isAvailable">
+            </div>
+        </div>
+
         <!-- Actions -->
         <div class="d-flex gap-3">
-            <button class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3" (click)="closeAddItemModal()">
+            <button type="button" class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3"
+                (click)="closeAddItemModal()">
                 Cancel
             </button>
-            <button class="btn btn-secondary w-100 fw-bold py-2 rounded-3"
+            <button type="button" class="btn btn-secondary w-100 fw-bold py-2 rounded-3"
                 [ngClass]="{'btn-primary': newItem.name && newItem.price, 'btn-secondary disabled': !newItem.name}"
                 (click)="submitAddItem()" [disabled]="!newItem.name || !newItem.price">
                 {{ isEditMode ? 'Update Item' : 'Add Item' }}
@@ -177,7 +199,8 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold text-danger mb-0">Confirm Deletion</h5>
-            <button class="btn btn-sm btn-light border-0 text-muted rounded-circle" (click)="closeDeleteModal()">
+            <button type="button" class="btn btn-sm btn-light border-0 text-muted rounded-circle"
+                (click)="closeDeleteModal()">
                 <i class="bi bi-x fs-4"></i>
             </button>
         </div>
@@ -193,10 +216,11 @@
 
         <!-- Actions -->
         <div class="d-flex gap-3">
-            <button class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3" (click)="closeDeleteModal()">
+            <button type="button" class="btn btn-outline-secondary w-100 fw-bold py-2 rounded-3"
+                (click)="closeDeleteModal()">
                 Cancel
             </button>
-            <button class="btn btn-danger w-100 fw-bold py-2 rounded-3" (click)="confirmDelete()">
+            <button type="button" class="btn btn-danger w-100 fw-bold py-2 rounded-3" (click)="confirmDelete()">
                 Delete
             </button>
         </div>

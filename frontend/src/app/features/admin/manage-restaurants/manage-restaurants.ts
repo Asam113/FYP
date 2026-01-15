@@ -1,11 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AdminService, RestaurantDto, RestaurantStatsDto } from '../../../core/services/admin.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface Partner {
   id: number;
   name: string;
   type: 'Hotel' | 'Restaurant';
-  status: 'Verified' | 'Pending';
+  status: 'Verified' | 'Pending' | 'Rejected';
   location: string;
   rating: number;
   phone: string;
@@ -13,78 +16,249 @@ interface Partner {
   capacity: string;
   specialOffer: string;
   imageUrl: string;
+  businessLicense: string | null;
 }
 
 @Component({
   selector: 'app-manage-restaurants',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './manage-restaurants.html',
   styleUrl: './manage-restaurants.css'
 })
-export class ManageRestaurants {
+export class ManageRestaurants implements OnInit {
+  searchTerm: string = '';
+  activeTab: 'all' | 'verified' | 'pending' | 'rejected' = 'all';
+
   stats = {
-    totalHotels: 78,
-    hotelGrowth: 5,
-    totalRestaurants: 65,
-    restaurantGrowth: 8,
-    pending: 12
+    totalHotels: 0,
+    hotelGrowth: 0,
+    totalRestaurants: 0,
+    restaurantGrowth: 0,
+    pending: 0
   };
 
-  partners: Partner[] = [
-    {
-      id: 1,
-      name: 'Pearl Continental Hotel',
-      type: 'Hotel',
-      status: 'Verified',
-      location: 'Lahore',
-      rating: 4.9,
-      phone: '+92 42 111 505 505',
-      email: 'info@pchotels.com',
-      capacity: '425 Rooms Available',
-      specialOffer: '15% discount for tour groups',
-      imageUrl: 'https://placehold.co/600x400/1a1a1a/FFF?text=Pearl+Continental'
-    },
-    {
-      id: 2,
-      name: 'Monal Restaurant',
-      type: 'Restaurant',
-      status: 'Verified',
-      location: 'Islamabad',
-      rating: 4.7,
-      phone: '+92 51 2278258',
-      email: 'reservations@monal.pk',
-      capacity: 'Capacity: 250 guests',
-      specialOffer: 'Special tour group menu at PKR 1,500/person',
-      imageUrl: 'https://placehold.co/600x400/f1f3f5/333?text=Monal+Restaurant'
-    },
-    {
-      id: 3,
-      name: 'Serena Hotel Swat',
-      type: 'Hotel',
-      status: 'Verified',
-      location: 'Swat Valley',
-      rating: 4.8,
-      phone: '+92 946 9230261',
-      email: 'swat@serena.com.pk',
-      capacity: '32 Rooms Available',
-      specialOffer: 'Complimentary breakfast for groups 10+',
-      imageUrl: 'https://placehold.co/600x400/2c3e50/FFF?text=Serena+Hotel'
-    },
-    {
-      id: 4,
-      name: 'Savour Foods',
-      type: 'Restaurant',
-      status: 'Pending',
-      location: 'Islamabad',
-      rating: 4.5,
-      phone: '+92 51 4863888',
-      email: 'contact@savourfoods.com',
-      capacity: 'Capacity: 180 guests',
-      specialOffer: '10% group discount, catering available',
-      imageUrl: 'https://placehold.co/600x400/e74c3c/FFF?text=Savour+Foods'
+  partners: Partner[] = [];
+  loading = true;
+  error: string | null = null;
+
+  // Confirmation Modal
+  showConfirmModal = false;
+  confirmMessage = '';
+  confirmType: 'approve' | 'reject' = 'approve';
+  private confirmCallback: (() => void) | null = null;
+
+  // License Modal
+  showLicenseModal = false;
+  selectedPartner: Partner | null = null;
+
+  constructor(
+    private adminService: AdminService,
+    private toastService: ToastService
+  ) { }
+
+  ngOnInit(): void {
+    this.loadRestaurants();
+    this.loadStats();
+  }
+
+  loadRestaurants(): void {
+    this.loading = true;
+    this.error = null;
+
+    this.adminService.getRestaurants().subscribe({
+      next: (restaurants: RestaurantDto[]) => {
+        this.partners = restaurants.map(r => this.mapToPartner(r));
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading restaurants:', err);
+        this.error = 'Failed to load restaurants. Please try again.';
+        this.loading = false;
+      }
+    });
+  }
+
+  loadStats(): void {
+    this.adminService.getRestaurantStats().subscribe({
+      next: (stats: RestaurantStatsDto) => {
+        this.stats = {
+          totalHotels: stats.totalHotels,
+          hotelGrowth: stats.hotelGrowthThisMonth,
+          totalRestaurants: stats.totalRestaurants,
+          restaurantGrowth: stats.restaurantGrowthThisMonth,
+          pending: stats.pendingVerification
+        };
+      },
+      error: (err) => {
+        console.error('Error loading stats:', err);
+      }
+    });
+  }
+
+  get filteredPartners() {
+    return this.partners.filter(partner => {
+      const matchesSearch =
+        partner.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        partner.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        partner.location.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        partner.phone.includes(this.searchTerm);
+
+      if (this.activeTab === 'all') return matchesSearch;
+
+      const status = partner.status.toLowerCase();
+      if (this.activeTab === 'verified') return matchesSearch && status === 'verified';
+      return matchesSearch && status === this.activeTab;
+    });
+  }
+
+  setActiveTab(tab: 'all' | 'verified' | 'pending' | 'rejected') {
+    this.activeTab = tab;
+  }
+
+  mapToPartner(restaurant: RestaurantDto): Partner {
+    const isHotel = restaurant.businessType?.toLowerCase() === 'hotel';
+    const status = this.mapStatus(restaurant.applicationStatus);
+
+    // Build location string with address and postal code if available
+    const location = restaurant.postalCode
+      ? `${restaurant.address}, ${restaurant.postalCode}`
+      : restaurant.address;
+
+    // Build capacity/owner info
+    const capacity = restaurant.ownerName || 'N/A';
+
+    // Build image URL - use profile picture from backend if available, otherwise use placeholder
+    let imageUrl = 'https://via.placeholder.com/600x400/1a1a1a/ffffff?text=' + encodeURIComponent(restaurant.restaurantName);
+
+    if (restaurant.profilePicture) {
+      // If profile picture exists, construct full backend URL
+      if (restaurant.profilePicture.startsWith('http')) {
+        imageUrl = restaurant.profilePicture;
+      } else {
+        imageUrl = `http://localhost:5238${restaurant.profilePicture}`;
+      }
     }
-  ];
+
+    // Build business license URL if available
+    let businessLicense: string | null = null;
+    if (restaurant.businessLicense) {
+      if (restaurant.businessLicense.startsWith('http')) {
+        businessLicense = restaurant.businessLicense;
+      } else {
+        businessLicense = `http://localhost:5238${restaurant.businessLicense}`;
+      }
+    }
+
+    return {
+      id: restaurant.restaurantId,
+      name: restaurant.restaurantName,
+      type: isHotel ? 'Hotel' : 'Restaurant',
+      status: status,
+      location: location,
+      rating: Number(restaurant.rating) || 0,
+      phone: restaurant.phoneNumber || 'Not provided',
+      email: restaurant.email,
+      capacity: capacity,
+      specialOffer: '',
+      imageUrl: imageUrl,
+      businessLicense: businessLicense
+    };
+  }
+
+  viewLicense(partner: Partner) {
+    this.selectedPartner = partner;
+    this.showLicenseModal = true;
+  }
+
+  closeLicenseModal() {
+    this.showLicenseModal = false;
+    this.selectedPartner = null;
+  }
+
+  mapStatus(status: string): 'Verified' | 'Pending' | 'Rejected' {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'Verified';
+      case 'submitted':
+        return 'Pending';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return 'Pending';
+    }
+  }
+
+  approveRestaurant(partnerId: number): void {
+    const partner = this.partners.find(p => p.id === partnerId);
+    if (!partner) return;
+
+    this.triggerConfirm(
+      `Are you sure you want to approve ${partner.name}?`,
+      'approve',
+      () => {
+        this.adminService.approveRestaurant(partnerId).subscribe({
+          next: (updatedRestaurant) => {
+            const index = this.partners.findIndex(p => p.id === partnerId);
+            if (index !== -1) {
+              this.partners[index] = this.mapToPartner(updatedRestaurant);
+            }
+            this.loadStats();
+            this.toastService.show(`Restaurant ${partner.name} approved successfully`, 'success');
+          },
+          error: (err) => {
+            console.error('Error approving restaurant:', err);
+            this.toastService.show('Failed to approve restaurant', 'error');
+          }
+        });
+      }
+    );
+  }
+
+  rejectRestaurant(partnerId: number): void {
+    const partner = this.partners.find(p => p.id === partnerId);
+    if (!partner) return;
+
+    this.triggerConfirm(
+      `Are you sure you want to reject ${partner.name}?`,
+      'reject',
+      () => {
+        this.adminService.rejectRestaurant(partnerId).subscribe({
+          next: (updatedRestaurant) => {
+            const index = this.partners.findIndex(p => p.id === partnerId);
+            if (index !== -1) {
+              this.partners[index] = this.mapToPartner(updatedRestaurant);
+            }
+            this.loadStats();
+            this.toastService.show(`Restaurant ${partner.name} rejected`, 'success');
+          },
+          error: (err) => {
+            console.error('Error rejecting restaurant:', err);
+            this.toastService.show('Failed to reject restaurant', 'error');
+          }
+        });
+      }
+    );
+  }
+
+  triggerConfirm(message: string, type: 'approve' | 'reject', callback: () => void) {
+    this.confirmMessage = message;
+    this.confirmType = type;
+    this.confirmCallback = callback;
+    this.showConfirmModal = true;
+  }
+
+  onConfirm() {
+    if (this.confirmCallback) {
+      this.confirmCallback();
+    }
+    this.closeModal();
+  }
+
+  closeModal() {
+    this.showConfirmModal = false;
+    this.confirmCallback = null;
+  }
 
   getStars(rating: number): number[] {
     return Array(5).fill(0).map((_, i) => i < Math.round(rating) ? 1 : 0);
