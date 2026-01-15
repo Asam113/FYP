@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-tourist-signup',
@@ -21,10 +22,12 @@ export class TouristSignup {
 
     showPassword = false;
     showConfirmPassword = false;
+    isLoading = false;
 
     constructor(
         private router: Router,
-        private toastService: ToastService
+        private toastService: ToastService,
+        private authService: AuthService
     ) { }
 
     togglePasswordVisibility() {
@@ -60,15 +63,36 @@ export class TouristSignup {
             return;
         }
 
-        // Save user data
-        localStorage.setItem('touristEmail', this.email);
-        localStorage.setItem('touristPassword', this.password);
-        localStorage.setItem('touristFullName', this.fullName);
-        localStorage.setItem('touristPhone', this.phoneNumber);
-        localStorage.setItem('role', 'tourist');
+        if (!this.acceptedTerms) {
+            this.toastService.show("Please accept the terms and conditions", "error");
+            return;
+        }
 
-        this.toastService.show("Account created successfully! Please verify your email.", "success");
-        this.router.navigate(['/verify-otp']);
+        // Call backend API
+        this.isLoading = true;
+
+        const formData = new FormData();
+        formData.append('Name', this.fullName);
+        formData.append('Email', this.email);
+        formData.append('Password', this.password);
+        formData.append('PhoneNumber', this.phoneNumber);
+        // formData.append('Role', 'Tourist'); // Role is inferred by endpoint or can be added if backend needs it, but DTO doesn't have Role property, it's hardcoded in backend.
+        // Backend TouristSignupDto doesn't have Role property. It is just basic info.
+
+        this.authService.signupTourist(formData).subscribe({
+            next: (response) => {
+                this.isLoading = false;
+                this.toastService.show("OTP Sent! Please verify your email.", "success");
+                // Navigate to verify-otp with email
+                this.router.navigate(['/verify-otp'], { queryParams: { email: this.email } });
+            },
+            error: (error) => {
+                this.isLoading = false;
+                console.error('Signup error:', error);
+                const errorMessage = error.error?.message || error.message || "Failed to create account. Please try again.";
+                this.toastService.show(errorMessage, "error");
+            }
+        });
     }
 
     goBack() {

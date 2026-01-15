@@ -79,6 +79,13 @@
     /* Slate-50 */
 }
 
+/* Expanded Items List Container */
+.menu-items-scroll-container {
+    max-height: 400px;
+    /* Adjust height as needed for "mini box" feel */
+    overflow-y: auto;
+}
+
 /* Buttons */
 .btn-primary {
     background-color: #1a56db;

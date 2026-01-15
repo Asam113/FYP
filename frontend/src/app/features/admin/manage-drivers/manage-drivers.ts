@@ -1,18 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DriverService } from '../../../core/services/driver.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface Driver {
-  id: string;
+  id: string;      // Display ID (e.g., D001)
+  realId: number;  // Backend Int ID
   name: string;
   contact: string;
   cnic: string;
   license: string;
   vehicle: string;
-  verification: {
-    documents: boolean;
-    vehicle: boolean;
-    background: boolean;
+  documents: {
+    cnicFront: string;
+    cnicBack: string;
+    license: string;
   };
   rating: number | null;
   totalTrips: number;
@@ -27,84 +30,82 @@ interface Driver {
   templateUrl: './manage-drivers.html',
   styleUrls: ['./manage-drivers.css']
 })
-export class ManageDrivers {
+export class ManageDrivers implements OnInit {
   searchTerm: string = '';
-  activeTab: 'all' | 'verified' | 'pending' = 'all';
+  activeTab: 'all' | 'verified' | 'pending' | 'rejected' = 'all';
+  drivers: Driver[] = [];
 
-  drivers: Driver[] = [
-    {
-      id: 'D001',
-      name: 'Ali Khan',
-      contact: '+92 300 1234567',
-      cnic: '42101-1234567-1',
-      license: 'LHR-ABC-123',
-      vehicle: 'Toyota Corolla',
-      verification: { documents: true, vehicle: true, background: true },
-      rating: 4.8,
-      totalTrips: 45,
-      status: 'Verified',
-      avatar: 'https://ui-avatars.com/api/?name=Ali+Khan&background=random'
-    },
-    {
-      id: 'D002',
-      name: 'Ahmed Raza',
-      contact: '+92 321 7654321',
-      cnic: '42201-9876543-2',
-      license: 'ISB-XYZ-789',
-      vehicle: 'Honda Civic',
-      verification: { documents: true, vehicle: true, background: true },
-      rating: 4.9,
-      totalTrips: 62,
-      status: 'Verified',
-      avatar: 'https://ui-avatars.com/api/?name=Ahmed+Raza&background=random'
-    },
-    {
-      id: 'D003',
-      name: 'Hassan Malik',
-      contact: '+92 333 5555555',
-      cnic: '42301-5555555-3',
-      license: 'KHI-DEF-456',
-      vehicle: 'Suzuki Alto',
-      verification: { documents: true, vehicle: true, background: false },
-      rating: 4.5,
-      totalTrips: 28,
-      status: 'Pending',
-      avatar: 'https://ui-avatars.com/api/?name=Hassan+Malik&background=random'
-    },
-    {
-      id: 'D004',
-      name: 'Bilal Ahmed',
-      contact: '+92 345 0000000',
-      cnic: '42401-8888888-4',
-      license: 'MUL-GHI-000',
-      vehicle: 'Toyota Vitz',
-      verification: { documents: true, vehicle: false, background: false },
-      rating: null,
-      totalTrips: 0,
-      status: 'Pending',
-      avatar: 'https://ui-avatars.com/api/?name=Bilal+Ahmed&background=random'
-    }
-  ];
+  constructor(private driverService: DriverService, private toastService: ToastService) { }
+
+  ngOnInit() {
+    this.loadDrivers();
+  }
+
+  loadDrivers() {
+    this.driverService.getAllDrivers().subscribe({
+      next: (data) => {
+        this.drivers = data.map((d: any) => ({
+          id: `D${d.driverId.toString().padStart(3, '0')}`,
+          realId: d.driverId,
+          name: d.name,
+          contact: d.contact,
+          cnic: d.cnic,
+          license: d.license,
+          vehicle: d.vehicle,
+          documents: {
+            cnicFront: d.documents.cnicFront ? `http://localhost:5238${d.documents.cnicFront}` : 'assets/images/placeholder_cnic_front.jpg',
+            cnicBack: d.documents.cnicBack ? `http://localhost:5238${d.documents.cnicBack}` : 'assets/images/placeholder_cnic_back.jpg',
+            license: d.documents.license ? `http://localhost:5238${d.documents.license}` : 'assets/images/placeholder_license.jpg',
+          },
+          rating: d.rating || null,
+          totalTrips: d.totalTrips,
+          status: d.accountStatus === 'Active' ? 'Verified' : d.accountStatus, // Map Backend 'Active' to Frontend 'Verified' if needed, or stick to Pending/Verified/Rejected
+          avatar: d.avatar && d.avatar.startsWith('http') ? d.avatar : `http://localhost:5238${d.avatar}`
+        }));
+      },
+      error: (err) => {
+        console.error('Failed to load drivers', err);
+        this.toastService.show('Failed to load drivers', 'error');
+      }
+    });
+  }
 
   get filteredDrivers() {
     return this.drivers.filter(driver => {
       const matchesSearch =
         driver.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         driver.id.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        driver.vehicle.toLowerCase().includes(this.searchTerm.toLowerCase());
+        driver.vehicle.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        driver.cnic.includes(this.searchTerm);
 
       if (this.activeTab === 'all') return matchesSearch;
-      if (this.activeTab === 'verified') return matchesSearch && driver.status === 'Verified';
-      if (this.activeTab === 'pending') return matchesSearch && (driver.status === 'Pending' || driver.status === 'New');
 
-      return matchesSearch;
+      // Handle the mapping: 'Verified' in UI might verify against 'Active' or 'Verified' in backend
+      const status = driver.status.toLowerCase();
+      if (this.activeTab === 'verified') return matchesSearch && (status === 'verified' || status === 'active');
+      return matchesSearch && status === this.activeTab;
     });
   }
 
-  setActiveTab(tab: 'all' | 'verified' | 'pending') {
+  setActiveTab(tab: 'all' | 'verified' | 'pending' | 'rejected') {
     this.activeTab = tab;
   }
 
+  // Document Modal logic
+  showDocumentModal = false;
+  selectedDriver: Driver | null = null;
+
+  viewDocuments(driver: Driver) {
+    this.selectedDriver = driver;
+    this.showDocumentModal = true;
+  }
+
+  closeDocumentModal() {
+    this.showDocumentModal = false;
+    this.selectedDriver = null;
+  }
+
+  // Confirmation Modal logic
   showConfirmModal = false;
   confirmMessage = '';
   confirmType: 'approve' | 'reject' = 'approve';
@@ -115,8 +116,13 @@ export class ManageDrivers {
       `Are you sure you want to approve ${driver.name}?`,
       'approve',
       () => {
-        driver.status = 'Verified';
-        driver.verification = { documents: true, vehicle: true, background: true };
+        this.driverService.updateDriverStatus(driver.realId, 'Verified').subscribe({
+          next: () => {
+            driver.status = 'Verified';
+            this.toastService.show(`Driver ${driver.name} approved successfully`, 'success');
+          },
+          error: () => this.toastService.show('Failed to approve driver', 'error')
+        });
       }
     );
   }
@@ -126,7 +132,13 @@ export class ManageDrivers {
       `Are you sure you want to reject ${driver.name}?`,
       'reject',
       () => {
-        driver.status = 'Rejected';
+        this.driverService.updateDriverStatus(driver.realId, 'Rejected').subscribe({
+          next: () => {
+            driver.status = 'Rejected';
+            this.toastService.show(`Driver ${driver.name} rejected`, 'success');
+          },
+          error: () => this.toastService.show('Failed to reject driver', 'error')
+        });
       }
     );
   }

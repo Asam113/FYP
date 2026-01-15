@@ -7,6 +7,7 @@ import { RoleSelection } from './features/common-feature/role-selection/role-sel
 import { TouristSignup } from './features/common-feature/tourist-signup/tourist-signup';
 import { DriverSignup } from './features/common-feature/driver-signup/driver-signup';
 import { RestaurantSignup } from './features/common-feature/restaurant-signup/restaurant-signup';
+import { VerifyOtp } from './features/common-feature/verify-otp/verify-otp';
 import { OtpVerification } from './features/common-feature/otp-verification/otp-verification';
 import { TouristLayout } from './features/tourist/layout/tourist-layout';
 import { DriverLayout } from './features/driver/layout/driver-layout';
@@ -21,7 +22,7 @@ export const routes: Routes = [
   { path: 'tourist-signup', component: TouristSignup },
   { path: 'driver-signup', component: DriverSignup },
   { path: 'restaurant-signup', component: RestaurantSignup },
-  { path: 'verify-otp', component: OtpVerification },
+  { path: 'verify-otp', component: VerifyOtp },
 
   {
     path: '',
