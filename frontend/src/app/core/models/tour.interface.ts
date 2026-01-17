@@ -16,4 +16,10 @@ export interface Tour {
     type: 'Single' | 'Multi';
     vehicles: number;
     destinations?: string[]; // For multi-destination tours
+
+    // New fields from Backend
+    pricePerHead?: number;
+    coupleDiscountPercentage?: number;
+    bulkDiscountPercentage?: number;
+    bulkBookingMinPersons?: number;
 }

@@ -29,6 +29,9 @@ public class Booking
     [Column(TypeName = "decimal(18,2)")]
     public decimal TotalAmount { get; set; }
 
+
+    public BookingType BookingType { get; set; } = BookingType.Individual;
+
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
 
     public DateTime? CancelledAt { get; set; }

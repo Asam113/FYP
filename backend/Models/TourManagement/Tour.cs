@@ -40,7 +40,12 @@ public class Tour
     public decimal PricePerHead { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
-    public decimal? PriceForCouple { get; set; }
+    public decimal? CoupleDiscountPercentage { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? BulkDiscountPercentage { get; set; }
+
+    public int? BulkBookingMinPersons { get; set; }
 
     [Required]
     public DateTime StartDate { get; set; }
