@@ -73,6 +73,12 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label class="form-label fw-bold small">Departure Location</label>
+                    <input type="text" class="form-control bg-light border-0 py-2" placeholder="e.g., Islamabad"
+                        [(ngModel)]="departureLocation">
+                </div>
+
+                <div class="col-md-6">
                     <label class="form-label fw-bold small">Start Date</label>
                     <div class="input-group">
                         <input type="date" class="form-control bg-light border-0 py-2" [(ngModel)]="startDate">
@@ -166,9 +172,16 @@
                         [(ngModel)]="basePrice">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">Discount (%)</label>
+                    <label class="form-label fw-bold small">Couple Discount (%)</label>
                     <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 10"
-                        [(ngModel)]="discount">
+                        [(ngModel)]="coupleDiscount">
+                    <small class="text-muted d-block mt-1">Suggestion: Shown on frontend</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Bulk Discount (%)</label>
+                    <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 15"
+                        [(ngModel)]="bulkDiscount">
+                    <small class="text-muted d-block mt-1">Suggestion: Shown for group bookings</small>
                 </div>
 
                 <div class="col-md-6">

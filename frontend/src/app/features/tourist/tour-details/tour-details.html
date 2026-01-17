@@ -93,8 +93,45 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm mb-3">Book This
-                        Tour</button>
+                    <!-- Booking Controls -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Booking Type</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off"
+                                [(ngModel)]="selectedBookingType" value="Individual" (change)="updatePrice()">
+                            <label class="btn btn-outline-primary btn-sm" for="btnradio1">Individual</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off"
+                                [(ngModel)]="selectedBookingType" value="Couple" (change)="updatePrice()">
+                            <label class="btn btn-outline-primary btn-sm" for="btnradio2">Couple</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off"
+                                [(ngModel)]="selectedBookingType" value="Bulk" (change)="updatePrice()">
+                            <label class="btn btn-outline-primary btn-sm" for="btnradio3">Bulk</label>
+                        </div>
+                        <small *ngIf="selectedBookingType === 'Couple'" class="text-info d-block mt-1 small">
+                            Includes {{ tour.coupleDiscountPercentage }}% discount!
+                        </small>
+                        <small *ngIf="selectedBookingType === 'Bulk'" class="text-info d-block mt-1 small">
+                            Includes {{ tour.bulkDiscountPercentage }}% discount for {{ tour.bulkBookingMinPersons }}+
+                            persons!
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Number of Persons</label>
+                        <input type="number" class="form-control" [(ngModel)]="numberOfPeople" (change)="updatePrice()"
+                            [min]="minPeople" [disabled]="selectedBookingType === 'Couple'">
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-4 mt-4 p-3 bg-light rounded-3">
+                        <span class="fw-bold">Total Price:</span>
+                        <span class="fw-bold text-primary fs-5">Rs. {{ totalPrice | number }}</span>
+                    </div>
+
+                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm mb-3" (click)="bookTour()">
+                        Book This Tour
+                    </button>
                     <button class="btn btn-outline-secondary w-100 py-2 fw-bold rounded-pill">Contact Organizer</button>
 
                 </div>

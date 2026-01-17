@@ -94,7 +94,11 @@ public class ApplicationDbContext : DbContext
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<Tour>()
-            .Property(t => t.PriceForCouple)
+            .Property(t => t.CoupleDiscountPercentage)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<Tour>()
+            .Property(t => t.BulkDiscountPercentage)
             .HasPrecision(18, 2);
     }
 }
