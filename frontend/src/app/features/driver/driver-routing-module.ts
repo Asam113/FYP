@@ -27,7 +27,8 @@ const routes: Routes = [
   { path: 'performance-insights', component: PerformanceInsights },
   { path: 'notifications', component: SharedNotificationsComponent },
   { path: 'profile', component: Profile },
-  { path: 'settings', component: DriverSettings }
+  { path: 'settings', component: DriverSettings },
+  { path: 'find-trips', loadComponent: () => import('./find-trips/find-trips').then(m => m.FindTrips) }
 ];
 
 @NgModule({

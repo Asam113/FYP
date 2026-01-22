@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Models.TourManagement;
 using backend.Models.Enums;
+using backend.Models.DTOs;
 
 namespace backend.Controllers;
 
@@ -21,14 +22,38 @@ public class ToursController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Tour>>> GetTours()
     {
-        return await _context.Tours.ToListAsync();
+        return await _context.Tours
+            .Include(t => t.ServiceRequirements)
+            .Include(t => t.DriverOffers)
+                .ThenInclude(offer => offer.Vehicle)
+            .Include(t => t.DriverOffers)
+                .ThenInclude(offer => offer.Driver)
+                    .ThenInclude(driver => driver.User)
+            .Include(t => t.ServiceRequirements)
+                .ThenInclude(req => req.RestaurantOffers)
+                    .ThenInclude(offer => offer.Restaurant)
+                        .ThenInclude(r => r.User)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
     }
 
     // GET: api/tours/5
     [HttpGet("{id}")]
     public async Task<ActionResult<Tour>> GetTour(int id)
     {
-        var tour = await _context.Tours.FindAsync(id);
+        var tour = await _context.Tours
+            .Include(t => t.DriverOffers)
+                .ThenInclude(offer => offer.Vehicle)
+            .Include(t => t.DriverOffers)
+                .ThenInclude(offer => offer.Driver)
+                    .ThenInclude(driver => driver.User)
+            .Include(t => t.ServiceRequirements)
+                .ThenInclude(req => req.RestaurantOffers)
+                    .ThenInclude(offer => offer.Restaurant)
+            .Include(t => t.ServiceRequirements)
+                .ThenInclude(req => req.RestaurantOffers)
+                    .ThenInclude(offer => offer.OfferMenuItems)
+            .FirstOrDefaultAsync(t => t.TourId == id);
 
         if (tour == null)
         {
@@ -40,12 +65,178 @@ public class ToursController : ControllerBase
 
     // POST: api/tours
     [HttpPost]
-    public async Task<ActionResult<Tour>> CreateTour(Tour tour)
+    public async Task<ActionResult<Tour>> CreateTour(CreateTourDto tourDto)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        // Create the tour entity
+        var tour = new Tour
+        {
+            Title = tourDto.Title,
+            Description = tourDto.Description,
+            DepartureLocation = tourDto.DepartureLocation,  // NEW
+            Destination = tourDto.Destination,              // NEW
+            DurationDays = (int)(tourDto.EndDate - tourDto.StartDate).TotalDays + 1,  // NEW
+            StartDate = tourDto.StartDate,
+            EndDate = tourDto.EndDate,
+            MaxCapacity = tourDto.MaxCapacity,
+            PricePerHead = tourDto.PricePerHead,
+            Status = TourStatus.Draft,
+            CoupleDiscountPercentage = tourDto.CoupleDiscountPercentage,
+            BulkDiscountPercentage = tourDto.BulkDiscountPercentage,
+            BulkBookingMinPersons = tourDto.BulkBookingMinPersons,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // Add tour to context
         _context.Tours.Add(tour);
+        await _context.SaveChangesAsync(); // Save to get TourId
+
+        // Create service requirements if provided
+        if (tourDto.ServiceRequirements != null && tourDto.ServiceRequirements.Any())
+        {
+            foreach (var reqDto in tourDto.ServiceRequirements)
+            {
+                var requirement = new ServiceRequirement
+                {
+                    TourId = tour.TourId,
+                    Type = reqDto.Type,
+                    Location = reqDto.Location,
+                    DateNeeded = reqDto.DateNeeded,
+                    Time = reqDto.Time,
+                    StayDurationDays = reqDto.StayDurationDays,
+                    EstimatedPeople = reqDto.EstimatedPeople,
+                    EstimatedBudget = reqDto.EstimatedBudget,
+                    Status = "Open",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.ServiceRequirements.Add(requirement);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        // Reload tour with requirements
+        var createdTour = await _context.Tours
+            .Include(t => t.ServiceRequirements)
+            .FirstOrDefaultAsync(t => t.TourId == tour.TourId);
+
+        return CreatedAtAction(nameof(GetTour), new { id = tour.TourId }, createdTour);
+    }
+
+    // POST: api/tours/{id}/finalize
+    [HttpPost("{id}/finalize")]
+    public async Task<IActionResult> FinalizeTour(int id)
+    {
+        var tour = await _context.Tours
+            .Include(t => t.DriverOffers)
+                .ThenInclude(o => o.Vehicle)
+            .Include(t => t.ServiceRequirements)
+                .ThenInclude(r => r.RestaurantOffers)
+            .FirstOrDefaultAsync(t => t.TourId == id);
+
+        if (tour == null)
+        {
+            return NotFound("Tour not found");
+        }
+
+        if (tour.Status == TourStatus.Finalized)
+        {
+            return BadRequest("Tour is already finalized");
+        }
+
+        // Validation 1: Check transport capacity
+        var totalCapacity = tour.MaxCapacity;
+        var approvedDriverCapacity = tour.DriverOffers
+            .Where(o => o.Status == OfferStatus.Accepted)
+            .Sum(o => o.Vehicle.Capacity);
+
+        if (approvedDriverCapacity < totalCapacity)
+        {
+            return BadRequest(new
+            {
+                message = "Insufficient transport capacity",
+                required = totalCapacity,
+                approved = approvedDriverCapacity,
+                remaining = totalCapacity - approvedDriverCapacity
+            });
+        }
+
+        // Validation 2: Check all service requirements are fulfilled
+        var unfulfilledRequirements = new List<string>();
+
+        foreach (var requirement in tour.ServiceRequirements)
+        {
+            var hasAcceptedOffer = requirement.RestaurantOffers
+                .Any(o => o.Status == OfferStatus.Accepted);
+
+            if (!hasAcceptedOffer)
+            {
+                unfulfilledRequirements.Add($"{requirement.Type} at {requirement.Location} on {requirement.DateNeeded:yyyy-MM-dd}");
+                continue;
+            }
+
+            // Validation 3: Check if accepted offer has an order created
+            var acceptedOffer = requirement.RestaurantOffers
+                .First(o => o.Status == OfferStatus.Accepted);
+
+            var assignment = await _context.RestaurantAssignments
+                .FirstOrDefaultAsync(a => a.RestaurantOfferId == acceptedOffer.OfferId);
+
+            if (assignment == null || !assignment.OrderId.HasValue)
+            {
+                unfulfilledRequirements.Add($"{requirement.Type} at {requirement.Location} - offer accepted but menu items not selected");
+            }
+        }
+
+        if (unfulfilledRequirements.Any())
+        {
+            return BadRequest(new
+            {
+                message = "Some requirements are not fulfilled",
+                unfulfilledRequirements
+            });
+        }
+
+        // All validations passed - finalize the tour
+        tour.Status = TourStatus.Finalized;
+        tour.FinalizedAt = DateTime.UtcNow;
+
+        // Update all accepted offers to Confirmed
+        foreach (var driverOffer in tour.DriverOffers.Where(o => o.Status == OfferStatus.Accepted))
+        {
+            driverOffer.Status = OfferStatus.Confirmed;
+            driverOffer.RespondedAt = DateTime.UtcNow;
+        }
+
+        foreach (var requirement in tour.ServiceRequirements)
+        {
+            var acceptedOffer = requirement.RestaurantOffers
+                .FirstOrDefault(o => o.Status == OfferStatus.Accepted);
+
+            if (acceptedOffer != null)
+            {
+                acceptedOffer.Status = OfferStatus.Confirmed;
+                requirement.Status = "Fulfilled";
+            }
+        }
+
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetTour), new { id = tour.TourId }, tour);
+        // TODO: Send notifications to drivers and restaurants
+
+        return Ok(new
+        {
+            message = "Tour finalized successfully",
+            tourId = tour.TourId,
+            finalizedAt = tour.FinalizedAt,
+            transportCapacity = new { total = totalCapacity, approved = approvedDriverCapacity },
+            requirementsFulfilled = tour.ServiceRequirements.Count
+        });
     }
 
     // Test endpoint to verify database connection

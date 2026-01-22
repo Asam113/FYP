@@ -54,17 +54,18 @@
         </a>
       </li>
       <li class="nav-item">
+        <a routerLink="/driver/find-trips" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-search me-3 fs-5"></i> Find Trips
+        </a>
+      </li>
+      <li class="nav-item">
         <a routerLink="/driver/requests" class="nav-link text-white my-1 d-flex align-items-center"
           routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
           <i class="bi bi-file-earmark-text me-3 fs-5"></i> Tour Requests
         </a>
       </li>
-      <li class="nav-item">
-        <a routerLink="/driver/upcoming-tours" class="nav-link text-white my-1 d-flex align-items-center"
-          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
-          <i class="bi bi-calendar-event me-3 fs-5"></i> Upcoming Tours
-        </a>
-      </li>
+
       <li class="nav-item">
         <a routerLink="/driver/booked-tours" class="nav-link text-white my-1 d-flex align-items-center"
           routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">

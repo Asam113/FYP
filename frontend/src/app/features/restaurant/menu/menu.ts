@@ -1,24 +1,39 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 interface MenuItem {
-  id: number;
-  name: string;
+  itemId: number;
+  itemName: string;
   description: string;
   price: number;
   image: string | null;
   isAvailable: boolean;
+  menuId: number;
 }
 
-interface MenuCategory {
-  id: number;
-  title: string;
-  badge: string;
+// Renamed to ApiMenu to avoid conflict with component class 'Menu'
+interface ApiMenu {
+  menuId: number;
+  menuName: string;
+  category: string;
+  description?: string;
+  menuItems: MenuItem[];
+}
+
+// UI Interface matching the HTML template's expectations
+interface MenuCategoryUI {
+  id: number;       // mapped from menuId
+  title: string;    // mapped from menuName
+  badge: string;    // mapped from category
   badgeClass: string;
   itemCount: number;
   isOpen?: boolean;
-  items: MenuItem[];
+  items: any[];
+
+  // Keep reference to original for API calls
+  originalMenuId: number;
 }
 
 @Component({
@@ -28,61 +43,91 @@ interface MenuCategory {
   templateUrl: './menu.html',
   styleUrl: './menu.css'
 })
-export class Menu {
+export class Menu implements OnInit {
 
-  categories: MenuCategory[] = [
-    {
-      id: 1,
-      title: 'Desi Cuisine',
-      badge: 'Traditional',
-      badgeClass: 'bg-primary-subtle text-primary border-primary-subtle',
-      itemCount: 3,
-      isOpen: true, // Open by default for demo
-      items: [
-        { id: 101, name: 'Chicken Biryani', description: 'Aromatic basmati rice with spiced chicken', price: 450, image: null, isAvailable: true },
-        { id: 102, name: 'Chicken Karahi', description: 'Traditional wok-cooked chicken curry', price: 400, image: null, isAvailable: true },
-        { id: 103, name: 'Seekh Kabab (2 pcs)', description: 'Grilled minced meat skewers', price: 300, image: null, isAvailable: true }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Fast Food',
-      badge: 'Western',
-      badgeClass: 'bg-indigo-subtle text-indigo border-indigo-subtle',
-      itemCount: 4,
-      isOpen: false,
-      items: [
-        { id: 201, name: 'Zinger Burger', description: 'Crispy fried chicken burger', price: 350, image: null, isAvailable: true },
-        { id: 202, name: 'Club Sandwich', description: 'Layered sandwich with chicken and egg', price: 300, image: null, isAvailable: true }
-      ]
-    },
-    {
-      id: 3,
-      title: 'BBQ',
-      badge: 'Grilled',
-      badgeClass: 'bg-info-subtle text-info border-info-subtle',
-      itemCount: 3,
-      isOpen: false,
-      items: []
-    }
-  ];
+  // HTML iterates over 'categories'
+  categories: MenuCategoryUI[] = [];
+  loading = false;
 
   // Modal State
   isAddItemModalOpen = false;
   isEditMode = false;
-  selectedCategoryForAdd: MenuCategory | null = null;
-  selectedItemOriginal: MenuItem | null = null;
-  newItem: Partial<MenuItem> = { name: '', description: '', price: 0, image: null, isAvailable: true };
+
+  // HTML uses 'selectedCategoryForAdd'
+  selectedCategoryForAdd: MenuCategoryUI | null = null;
+  selectedItemOriginal: any | null = null;
+
+  // HTML binds to 'newItem' object
+  newItem: {
+    name: string;
+    description: string;
+    price: number | null;
+    image: string | null;
+    isAvailable: boolean;
+    imageFile?: File;
+  } = { name: '', description: '', price: null, image: null, isAvailable: true };
 
   // Add Menu Modal State
   isAddMenuModalOpen = false;
-  newMenu = { title: '', badge: '' };
 
-  addMenu() {
-    this.openAddMenuModal();
+  // HTML binds to 'newMenu' object
+  newMenu = {
+    title: '',
+    badge: ''
+  };
+
+  // Delete Modal State
+  isDeleteModalOpen = false;
+  deleteTarget: { type: 'category' | 'item', category?: MenuCategoryUI, item?: any } | null = null;
+  deleteMessage = '';
+
+  private readonly API_URL = 'http://localhost:5238/api/RestaurantMenu';
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit(): void {
+    this.loadMenus();
   }
 
-  openAddMenuModal() {
+  loadMenus() {
+    this.loading = true;
+    this.http.get<ApiMenu[]>(this.API_URL).subscribe({
+      next: (data) => {
+        // Map Backend API Data to UI Structure
+        this.categories = data.map(m => ({
+          id: m.menuId,
+          originalMenuId: m.menuId,
+          title: m.menuName,
+          badge: m.category,
+          badgeClass: 'bg-primary-subtle text-primary border-primary-subtle',
+          itemCount: m.menuItems?.length || 0,
+          isOpen: false,
+          items: (m.menuItems || []).map(i => ({
+            id: i.itemId,
+            name: i.itemName,
+            description: i.description,
+            price: i.price,
+            image: i.image,
+            isAvailable: i.isAvailable
+          }))
+        }));
+
+        // Open first one by default if exists
+        if (this.categories.length > 0) {
+          this.categories[0].isOpen = true;
+        }
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading menus', err);
+        this.loading = false;
+      }
+    });
+  }
+
+  // --- MENU (CATEGORY) MANAGEMENT ---
+
+  addMenu() {
     this.newMenu = { title: '', badge: '' };
     this.isAddMenuModalOpen = true;
   }
@@ -92,37 +137,73 @@ export class Menu {
   }
 
   submitAddMenu() {
-    if (this.newMenu.title && this.newMenu.badge) {
-      const newCategory: MenuCategory = {
-        id: Date.now(),
-        title: this.newMenu.title,
-        badge: this.newMenu.badge,
-        badgeClass: 'bg-secondary-subtle text-secondary border-secondary-subtle', // Default style
-        itemCount: 0,
-        isOpen: true,
-        items: []
-      };
+    if (!this.newMenu.title || !this.newMenu.badge) return;
 
-      this.categories.unshift(newCategory); // Add to top
-      this.closeAddMenuModal();
-    }
+    const payload = {
+      menuName: this.newMenu.title,
+      category: this.newMenu.badge,
+      description: ''
+    };
+
+    this.http.post<ApiMenu>(this.API_URL, payload).subscribe({
+      next: (createdMenu) => {
+        // Add locally
+        const newCategory: MenuCategoryUI = {
+          id: createdMenu.menuId,
+          originalMenuId: createdMenu.menuId,
+          title: createdMenu.menuName,
+          badge: createdMenu.category,
+          badgeClass: 'bg-secondary-subtle text-secondary border-secondary-subtle',
+          itemCount: 0,
+          isOpen: true,
+          items: []
+        };
+
+        this.categories.unshift(newCategory);
+        this.closeAddMenuModal();
+      },
+      error: (err) => {
+        console.error('Error creating menu', err);
+        alert('Failed to create menu');
+      }
+    });
   }
 
-  // Open Add Item Modal
-  openAddItemModal(category: MenuCategory) {
+  deleteCategory(category: MenuCategoryUI) {
+    this.deleteTarget = { type: 'category', category };
+    this.deleteMessage = `Are you sure you want to delete "${category.title}" and all its items?`;
+    this.isDeleteModalOpen = true;
+  }
+
+  toggleCategory(category: MenuCategoryUI) {
+    category.isOpen = !category.isOpen;
+  }
+
+  // --- ITEM MANAGEMENT ---
+
+  openAddItemModal(category: MenuCategoryUI) {
     this.isEditMode = false;
     this.selectedCategoryForAdd = category;
     this.selectedItemOriginal = null;
-    this.newItem = { name: '', description: '', price: 0, image: null, isAvailable: true }; // Reset form
+
+    // Reset form
+    this.newItem = {
+      name: '',
+      description: '',
+      price: null,
+      image: null,
+      isAvailable: true
+    };
+
     this.isAddItemModalOpen = true;
   }
 
-  // Open Edit Item Modal
-  openEditItemModal(category: MenuCategory, item: MenuItem) {
+  openEditItemModal(category: MenuCategoryUI, item: any) {
     this.isEditMode = true;
     this.selectedCategoryForAdd = category;
     this.selectedItemOriginal = item;
-    // Clone the item data to the form
+
+    // Fill form
     this.newItem = {
       name: item.name,
       description: item.description,
@@ -130,79 +211,93 @@ export class Menu {
       image: item.image,
       isAvailable: item.isAvailable
     };
+
     this.isAddItemModalOpen = true;
   }
 
-  // Close Modal
   closeAddItemModal() {
     this.isAddItemModalOpen = false;
     this.selectedCategoryForAdd = null;
     this.selectedItemOriginal = null;
-    this.isEditMode = false;
   }
 
   onItemImageSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
-      // In a real app, you'd upload this. For mock, we'll just check existence or create a URL
+      this.newItem.imageFile = file;
+
+      // Preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.newItem.image = e.target.result; // Data URL for preview
+        this.newItem.image = e.target.result;
       };
       reader.readAsDataURL(file);
     }
   }
 
-  // Submit Item (Add or Edit)
   submitAddItem() {
-    if (this.selectedCategoryForAdd && this.newItem.name && this.newItem.price) {
+    if (!this.selectedCategoryForAdd || !this.newItem.name || this.newItem.price === null) return;
 
-      if (this.isEditMode && this.selectedItemOriginal) {
-        // Update existing item
-        this.selectedItemOriginal.name = this.newItem.name!;
-        this.selectedItemOriginal.description = this.newItem.description || '';
-        this.selectedItemOriginal.price = this.newItem.price!;
-        this.selectedItemOriginal.image = this.newItem.image || null;
-        this.selectedItemOriginal.isAvailable = this.newItem.isAvailable !== undefined ? this.newItem.isAvailable : true;
-      } else {
-        // Create new item
-        const item: MenuItem = {
-          id: Date.now(), // Simple ID generation
-          name: this.newItem.name!,
-          description: this.newItem.description || '',
-          price: this.newItem.price!,
-          image: this.newItem.image || null,
-          isAvailable: this.newItem.isAvailable !== undefined ? this.newItem.isAvailable : true
-        };
+    const formData = new FormData();
+    formData.append('ItemName', this.newItem.name);
+    formData.append('Price', this.newItem.price.toString());
+    formData.append('Description', this.newItem.description || '');
+    formData.append('IsAvailable', this.newItem.isAvailable.toString());
 
-        this.selectedCategoryForAdd.items.push(item);
-        this.selectedCategoryForAdd.itemCount = this.selectedCategoryForAdd.items.length;
-      }
+    if (this.newItem.imageFile) {
+      formData.append('ImageFile', this.newItem.imageFile);
+    }
 
-      this.closeAddItemModal();
+    if (this.isEditMode && this.selectedItemOriginal) {
+      // UPDATE
+      this.http.put<any>(`${this.API_URL}/items/${this.selectedItemOriginal.id}`, formData).subscribe({
+        next: (updatedItem) => {
+          // Update locally
+          this.selectedItemOriginal.name = updatedItem.itemName;
+          this.selectedItemOriginal.price = updatedItem.price;
+          this.selectedItemOriginal.description = updatedItem.description;
+          this.selectedItemOriginal.isAvailable = updatedItem.isAvailable;
+          if (updatedItem.image) this.selectedItemOriginal.image = updatedItem.image;
+
+          this.closeAddItemModal();
+        },
+        error: (err) => {
+          console.error('Error updating item', err);
+          alert('Failed to update item');
+        }
+      });
+    } else {
+      // CREATE
+      this.http.post<any>(`${this.API_URL}/${this.selectedCategoryForAdd.originalMenuId}/items`, formData).subscribe({
+        next: (createdItem) => {
+          const newItemUI = {
+            id: createdItem.itemId,
+            name: createdItem.itemName,
+            description: createdItem.description,
+            price: createdItem.price,
+            image: createdItem.image,
+            isAvailable: createdItem.isAvailable
+          };
+
+          this.selectedCategoryForAdd!.items.push(newItemUI);
+          this.selectedCategoryForAdd!.itemCount = this.selectedCategoryForAdd!.items.length;
+          this.closeAddItemModal();
+        },
+        error: (err) => {
+          console.error('Error creating item', err);
+          alert('Failed to create item');
+        }
+      });
     }
   }
 
-  // Delete Modal State
-  isDeleteModalOpen = false;
-  deleteTarget: { type: 'category' | 'item', category?: MenuCategory, item?: MenuItem } | null = null;
-  deleteMessage = '';
-
-  deleteCategory(category: MenuCategory) {
-    this.deleteTarget = { type: 'category', category };
-    this.deleteMessage = `Are you sure you want to delete ${category.title}?`;
-    this.isDeleteModalOpen = true;
-  }
-
-  toggleCategory(category: MenuCategory) {
-    category.isOpen = !category.isOpen;
-  }
-
-  deleteItem(category: MenuCategory, item: MenuItem) {
+  deleteItem(category: MenuCategoryUI, item: any) {
     this.deleteTarget = { type: 'item', category, item };
-    this.deleteMessage = `Are you sure you want to delete ${item.name}?`;
+    this.deleteMessage = `Are you sure you want to delete "${item.name}"?`;
     this.isDeleteModalOpen = true;
   }
+
+  // --- DELETE CONFIRMATION ---
 
   closeDeleteModal() {
     this.isDeleteModalOpen = false;
@@ -210,12 +305,35 @@ export class Menu {
   }
 
   confirmDelete() {
-    if (this.deleteTarget?.type === 'category' && this.deleteTarget.category) {
-      this.categories = this.categories.filter(c => c.id !== this.deleteTarget!.category!.id);
-    } else if (this.deleteTarget?.type === 'item' && this.deleteTarget.category && this.deleteTarget.item) {
-      this.deleteTarget.category.items = this.deleteTarget.category.items.filter(i => i.id !== this.deleteTarget!.item!.id);
-      this.deleteTarget.category.itemCount = this.deleteTarget.category.items.length;
+    if (!this.deleteTarget) return;
+
+    if (this.deleteTarget.type === 'category' && this.deleteTarget.category) {
+      const menuId = this.deleteTarget.category.originalMenuId;
+      this.http.delete(`${this.API_URL}/${menuId}`).subscribe({
+        next: () => {
+          this.categories = this.categories.filter(c => c.id !== menuId);
+          this.closeDeleteModal();
+        },
+        error: (err) => {
+          console.error('Error deleting menu', err);
+          alert('Failed to delete menu');
+        }
+      });
+    } else if (this.deleteTarget.type === 'item' && this.deleteTarget.item && this.deleteTarget.category) {
+      const itemId = this.deleteTarget.item.id;
+      this.http.delete(`${this.API_URL}/items/${itemId}`).subscribe({
+        next: () => {
+          if (this.deleteTarget?.category) {
+            this.deleteTarget.category.items = this.deleteTarget.category.items.filter(i => i.id !== itemId);
+            this.deleteTarget.category.itemCount = this.deleteTarget.category.items.length;
+          }
+          this.closeDeleteModal();
+        },
+        error: (err) => {
+          console.error('Error deleting item', err);
+          alert('Failed to delete item');
+        }
+      });
     }
-    this.closeDeleteModal();
   }
 }

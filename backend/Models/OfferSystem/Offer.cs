@@ -10,9 +10,8 @@ public abstract class Offer
     [Key]
     public int OfferId { get; set; }
 
-    [Required]
     [ForeignKey("Tour")]
-    public int TourId { get; set; }
+    public int? TourId { get; set; } // Made nullable for RestaurantOffers (they use RequirementId)
 
     [Required]
     public int ProviderId { get; set; } // DriverId or RestaurantId
@@ -34,5 +33,5 @@ public abstract class Offer
     public string? Notes { get; set; }
 
     // Navigation Properties
-    public virtual Tour Tour { get; set; } = null!;
+    public virtual Tour? Tour { get; set; }
 }

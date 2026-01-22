@@ -56,13 +56,20 @@ public class RestaurantMenuController : ControllerBase
 
     // POST: api/RestaurantMenu
     [HttpPost]
-    public async Task<ActionResult<Menu>> CreateMenu([FromBody] Menu menu)
+    public async Task<ActionResult<Menu>> CreateMenu([FromBody] CreateMenuDto dto)
     {
         try
         {
             var restaurantId = GetRestaurantId();
-            menu.RestaurantId = restaurantId;
-            menu.CreatedAt = DateTime.UtcNow;
+            
+            var menu = new Menu
+            {
+                RestaurantId = restaurantId,
+                MenuName = dto.MenuName,
+                Category = dto.Category,
+                Description = dto.Description,
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.Menus.Add(menu);
             await _context.SaveChangesAsync();
@@ -266,6 +273,13 @@ public class RestaurantMenuController : ControllerBase
 
         return $"/uploads/{folderName}/{uniqueFileName}";
     }
+}
+
+public class CreateMenuDto
+{
+    public string MenuName { get; set; } = string.Empty;
+    public string? Category { get; set; }
+    public string? Description { get; set; }
 }
 
 public class MenuItemDto

@@ -1,36 +1,68 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
-interface FinalizedTour {
-    id: string;
+interface Tour {
+    tourId: number;
+    title: string;
+    destination: string;
+    departureLocation: string;
+    startDate: string;
+    endDate: string;
+    maxCapacity: number;
+    basePrice: number;
+    serviceRequirements: ServiceRequirement[];
+    driverOffers: DriverOffer[];
+}
+
+interface ServiceRequirement {
+    requirementId: number;
+    type: string;
+    location: string;
+    dateNeeded: string;
+    restaurantOffers: RestaurantOffer[];
+}
+
+interface DriverOffer {
+    offerId: number;
+    transportationFare: number;
+    routeDetails: string;
+    includesFuel: boolean;
+    status: string;
+    driver: {
+        user: {
+            fullName: string;
+        };
+    };
+    vehicle: {
+        model: string;
+    };
+}
+
+interface RestaurantOffer {
+    offerId: number;
+    pricePerPerson: number;
+    status: string;
+    restaurant: {
+        user: {
+            fullName: string;
+        };
+        restaurantName: string;
+    };
+}
+
+interface DisplayTour {
+    id: number;
     name: string;
-    status: 'Accepting Bookings' | 'Fully Booked';
-    statusClass: string;
-    price: string;
-    profit: string;
-    pricePerPerson: string;
-    participants: number; // current bookings
-    totalSeats: number;
-    availableSeats: number;
-    bookingProgress: number; // percentage
-    client: string; // Organizer
     destination: string;
     duration: string;
-    transport: {
-        provider: string;
-        cost: string;
-    };
-    accommodation: {
-        provider: string;
-        cost: string;
-    };
-    bookings: {
-        name: string;
-        seats: number;
-        total: string;
-        status: 'Confirmed' | 'Pending Payment';
-        statusClass: string;
-    }[];
+    pricePerPerson: number;
+    totalSeats: number;
+    hasDriverOffer: boolean;
+    hasRestaurantOffer: boolean;
+    driverOffers: DriverOffer[];
+    restaurantOffers: RestaurantOffer[];
+    serviceRequirements: ServiceRequirement[];
 }
 
 @Component({
@@ -40,67 +72,57 @@ interface FinalizedTour {
     templateUrl: './finalized-tours.html',
     styleUrl: './finalized-tours.css'
 })
-export class FinalizedTours {
+export class FinalizedTours implements OnInit {
 
-    tours: FinalizedTour[] = [
-        {
-            id: 'T002',
-            name: 'Lahore Heritage Tour',
-            status: 'Accepting Bookings',
-            statusClass: 'bg-success',
-            price: 'PKR 288,000',
-            profit: 'PKR 193,000',
-            pricePerPerson: 'PKR 24,000',
-            participants: 12,
-            totalSeats: 15,
-            availableSeats: 3,
-            bookingProgress: 80,
-            client: 'Sarah Khan',
-            destination: 'Lahore',
-            duration: '2025-02-10 to 2025-02-12',
-            transport: {
-                provider: 'Ahmed Raza',
-                cost: 'PKR 35,000'
-            },
-            accommodation: {
-                provider: 'Luxury Hotel Lahore',
-                cost: 'PKR 60,000'
-            },
-            bookings: [
-                { name: 'Sarah Khan', seats: 3, total: 'PKR 72,000', status: 'Confirmed', statusClass: 'bg-success text-white' },
-                { name: 'Ali Ahmed', seats: 2, total: 'PKR 48,000', status: 'Confirmed', statusClass: 'bg-success text-white' },
-                { name: 'Fatima Noor', seats: 4, total: 'PKR 96,000', status: 'Confirmed', statusClass: 'bg-success text-white' }
-            ]
-        },
-        {
-            id: 'T004',
-            name: 'Murree Weekend Getaway',
-            status: 'Fully Booked',
-            statusClass: 'bg-purple',
-            price: 'PKR 400,000',
-            profit: 'PKR 280,000',
-            pricePerPerson: 'PKR 20,000',
-            participants: 20,
-            totalSeats: 20,
-            availableSeats: 0,
-            bookingProgress: 100,
-            client: 'Hassan Ali',
-            destination: 'Murree',
-            duration: '2025-02-15 to 2025-02-17',
-            transport: {
-                provider: 'Murree Transport Service',
-                cost: 'PKR 40,000'
-            },
-            accommodation: {
-                provider: 'Murree Hills Hotel',
-                cost: 'PKR 80,000'
-            },
-            bookings: [
-                { name: 'Hassan Ali', seats: 3, total: 'PKR 72,000', status: 'Pending Payment', statusClass: 'bg-orange text-white' },
-                { name: 'Bilal Khan', seats: 5, total: 'PKR 100,000', status: 'Confirmed', statusClass: 'bg-success text-white' }
-                // ... more bookings
-            ]
+    tours: DisplayTour[] = [];
+    loading = true;
+    error = '';
+
+    constructor(private http: HttpClient) { }
+
+    ngOnInit(): void {
+        this.loadTours();
+    }
+
+    loadTours(): void {
+        this.http.get<Tour[]>('http://localhost:5238/api/tours')
+            .subscribe({
+                next: (tours) => {
+                    // Filter to show only intermediate tours (newly created, waiting for offers)
+                    this.tours = tours.map(tour => {
+                        const allRestaurantOffers = tour.serviceRequirements
+                            .flatMap(req => req.restaurantOffers || []);
+
+                        return {
+                            id: tour.tourId,
+                            name: tour.title,
+                            destination: tour.destination,
+                            duration: `${new Date(tour.startDate).toLocaleDateString()} - ${new Date(tour.endDate).toLocaleDateString()}`,
+                            pricePerPerson: tour.basePrice,
+                            totalSeats: tour.maxCapacity,
+                            hasDriverOffer: (tour.driverOffers?.length || 0) > 0,
+                            hasRestaurantOffer: allRestaurantOffers.length > 0,
+                            driverOffers: tour.driverOffers || [],
+                            restaurantOffers: allRestaurantOffers,
+                            serviceRequirements: tour.serviceRequirements || []
+                        };
+                    });
+                    this.loading = false;
+                },
+                error: (err) => {
+                    console.error('Error loading tours:', err);
+                    this.error = 'Failed to load tours';
+                    this.loading = false;
+                }
+            });
+    }
+
+    getOfferStatusClass(status: string): string {
+        switch (status?.toLowerCase()) {
+            case 'accepted': return 'bg-success';
+            case 'pending': return 'bg-warning';
+            case 'rejected': return 'bg-danger';
+            default: return 'bg-secondary';
         }
-    ];
-
+    }
 }

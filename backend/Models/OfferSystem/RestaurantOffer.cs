@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.MealManagement;
 using backend.Models.Supporting;
 using backend.Models.Enums;
+using backend.Models.TourManagement;
+using backend.Models.UserManagement;
 
 namespace backend.Models.OfferSystem;
 
@@ -20,7 +22,14 @@ public class RestaurantOffer : Offer
 
     public bool IncludesBeverages { get; set; } = false;
 
+    [Required]
+    [ForeignKey("ServiceRequirement")]
+    public int RequirementId { get; set; } // KEY CHANGE: Link to requirement, not tour
+
     // Navigation Properties
+    public virtual ServiceRequirement ServiceRequirement { get; set; } = null!;
+    [ForeignKey("ProviderId")]
+    public virtual Restaurant Restaurant { get; set; } = null!;
     public virtual ICollection<OfferMenuItem> OfferMenuItems { get; set; } = new List<OfferMenuItem>();
     public virtual RestaurantAssignment? RestaurantAssignment { get; set; }
 }
