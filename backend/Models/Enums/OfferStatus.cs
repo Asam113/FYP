@@ -5,5 +5,6 @@ public enum OfferStatus
     Pending,
     Accepted,
     Rejected,
-    Withdrawn
+    Withdrawn,
+    Confirmed // Added for finalized tours
 }

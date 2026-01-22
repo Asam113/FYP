@@ -23,9 +23,9 @@ public class ApplicationDbContext : DbContext
 
     // Tour Management
     public DbSet<Tour> Tours { get; set; }
-    public DbSet<Itinerary> Itineraries { get; set; }
     public DbSet<TourImage> TourImages { get; set; }
     public DbSet<TourAssignment> TourAssignments { get; set; }
+    public DbSet<ServiceRequirement> ServiceRequirements { get; set; }
 
     // Offer System
     public DbSet<Offer> Offers { get; set; }
@@ -100,5 +100,21 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Tour>()
             .Property(t => t.BulkDiscountPercentage)
             .HasPrecision(18, 2);
+
+        // Configure Order-RestaurantAssignment relationship
+        // RestaurantAssignment has a collection of Orders (historical/legacy)
+        // But also has ONE specific Order linked via OrderId (the confirmed order from offer acceptance)
+        modelBuilder.Entity<RestaurantAssignment>()
+            .HasOne(ra => ra.Order)
+            .WithMany() // Order does NOT have a back-reference to this specific relationship
+            .HasForeignKey(ra => ra.OrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // The main relationship: Order belongs to RestaurantAssignment
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.RestaurantAssignment)
+            .WithMany(ra => ra.Orders) // The collection of all orders
+            .HasForeignKey(o => o.RestaurantAssignmentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

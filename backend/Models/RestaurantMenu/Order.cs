@@ -22,15 +22,8 @@ public class Order
     public int RestaurantAssignmentId { get; set; }
 
     [Required]
-    [ForeignKey("MealSchedule")]
-    public int MealScheduleId { get; set; }
-
-    [Required]
-    [ForeignKey("MealPackage")]
-    public int MealPackageId { get; set; }
-
-    [ForeignKey("Booking")]
-    public int? BookingId { get; set; }
+    [ForeignKey("ServiceRequirement")]
+    public int RequirementId { get; set; } // NEW: Which requirement this order fulfills
 
     public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
@@ -51,8 +44,6 @@ public class Order
     // Navigation Properties
     public virtual Tour Tour { get; set; } = null!;
     public virtual RestaurantAssignment RestaurantAssignment { get; set; } = null!;
-    public virtual MealSchedule MealSchedule { get; set; } = null!;
-    public virtual MealPackage MealPackage { get; set; } = null!;
-    public virtual Booking? Booking { get; set; }
+    public virtual ServiceRequirement ServiceRequirement { get; set; } = null!; // NEW
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

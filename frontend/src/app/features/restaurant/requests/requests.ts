@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface RequestSummary {
   title: string;
@@ -9,7 +11,7 @@ interface RequestSummary {
 
 interface RequestItem {
   tourName: string;
-  status: 'Pending' | 'Under Review';
+  status: string;
   submittedTime: string;
   tourDate: string;
   tourists: string;
@@ -26,76 +28,110 @@ interface RequestItem {
   templateUrl: './requests.html',
   styleUrl: './requests.css'
 })
-export class Requests {
+export class Requests implements OnInit {
 
   summaryStats: RequestSummary[] = [
-    { title: 'Total Pending Requests', value: 5 },
-    { title: 'Total Pending Value', value: 'PKR 293,250' },
-    { title: 'Under Review', value: 2 }
+    { title: 'Total Pending Requests', value: 0 },
+    { title: 'Total Pending Value', value: 'PKR 0' },
+    { title: 'Under Review', value: 0 }
   ];
 
-  requests: RequestItem[] = [
-    {
-      tourName: 'Murree Hill Station Tour',
-      status: 'Pending',
-      submittedTime: 'Submitted 2 hours ago',
-      tourDate: 'Jan 15, 2026',
-      tourists: '35 people',
-      mealType: 'Lunch',
-      pricePerHead: 1200,
-      totalAmount: 42000,
-      calculation: '1,200 × 35 tourists'
-    },
-    {
-      tourName: 'Hunza Valley Adventure',
-      status: 'Under Review',
-      submittedTime: 'Submitted 1 day ago',
-      tourDate: 'Jan 20, 2026',
-      tourists: '50 people',
-      mealType: 'Dinner',
-      pricePerHead: 1700,
-      totalAmount: 85000,
-      calculation: '1,700 × 50 tourists'
-    },
-    {
-      tourName: 'Swat Valley Exploration',
-      status: 'Pending',
-      submittedTime: 'Submitted 2 days ago',
-      tourDate: 'Jan 25, 2026',
-      tourists: '40 people',
-      mealType: 'Lunch & Dinner',
-      pricePerHead: 1550,
-      totalAmount: 62000, // Note: Screenshots might vary slightly, using estimated values based on screenshot context or placeholder if distinct
-      calculation: '1,550 × 40 tourists'
-    },
-    {
-      tourName: 'Naran Kaghan Trip', // Placeholder based on general tourism context as screenshot cuts off
-      status: 'Pending',
-      submittedTime: 'Submitted 3 days ago',
-      tourDate: 'Feb 1, 2026',
-      tourists: '45 people',
-      mealType: 'Dinner',
-      pricePerHead: 1450,
-      totalAmount: 65250,
-      calculation: '1,450 × 45 tourists'
-    },
-    {
-      tourName: 'Skardu Adventure',
-      status: 'Pending',
-      submittedTime: 'Submitted 4 days ago',
-      tourDate: 'Feb 5, 2026',
-      tourists: '30 people',
-      mealType: 'Lunch',
-      pricePerHead: 1300,
-      totalAmount: 39000,
-      calculation: '1,300 × 30 tourists'
+  requests: RequestItem[] = [];
+  loading = false;
+  restaurantId: number | null = null;
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
+
+  ngOnInit() {
+    // Get restaurant ID from auth service/token
+    const user = this.authService.getUser();
+    if (user && user.role === 'Restaurant') {
+      // Decode token to get RoleSpecificId (or assume it's in user object if stored there)
+      // For now, we'll try to get it from the decoded token logic or a service method
+      this.restaurantId = this.getRestaurantIdFromToken();
+      if (this.restaurantId) {
+        this.loadOffers();
+      }
     }
-  ];
+  }
+
+  getRestaurantIdFromToken(): number | null {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.RoleSpecificId ? parseInt(payload.RoleSpecificId) : null;
+      } catch (e) {
+        console.error('Error decoding token', e);
+        return null;
+      }
+    }
+    return null;
+  }
+
+  loadOffers() {
+    this.loading = true;
+    this.http.get<any[]>(`http://localhost:5238/api/restaurantoffers?restaurantId=${this.restaurantId}`)
+      .subscribe({
+        next: (data) => {
+          this.mapOffersToRequests(data);
+          this.calculateStats(data);
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Error loading offers', err);
+          this.loading = false;
+        }
+      });
+  }
+
+  mapOffersToRequests(offers: any[]) {
+    this.requests = offers.map(offer => {
+      // Calculate derived values
+      const totalAmount = offer.pricePerHead * offer.maximumPeople; // Or estimated average
+      const submittedDate = new Date(offer.createdAt);
+      const now = new Date();
+      const diffHrs = Math.floor((now.getTime() - submittedDate.getTime()) / (1000 * 60 * 60));
+      let timeString = '';
+      if (diffHrs < 24) timeString = `Submitted ${diffHrs} hours ago`;
+      else timeString = `Submitted ${Math.floor(diffHrs / 24)} days ago`;
+
+      return {
+        tourName: offer.serviceRequirement?.tour?.title || 'Unknown Tour',
+        status: offer.status,
+        submittedTime: timeString,
+        tourDate: new Date(offer.serviceRequirement?.dateNeeded).toLocaleDateString(),
+        tourists: `${offer.minimumPeople}-${offer.maximumPeople} people`,
+        mealType: offer.mealType || 'N/A',
+        pricePerHead: offer.pricePerHead,
+        totalAmount: totalAmount, // This is an estimate, actual amount depends on final pax
+        calculation: `${offer.pricePerHead} × ${offer.maximumPeople} pax (max)`
+      };
+    });
+  }
+
+  calculateStats(offers: any[]) {
+    const pending = offers.filter(o => o.status === 'Pending');
+    const underReview = offers.filter(o => o.status === 'UnderReview' || o.status === 'Accepted'); // Grouping accepted for now or separate
+
+    // Calculate total value of pending offers (using max people as estimate)
+    const pendingValue = pending.reduce((sum, o) => sum + (o.pricePerHead * o.maximumPeople), 0);
+
+    this.summaryStats = [
+      { title: 'Total Pending Requests', value: pending.length },
+      { title: 'Total Pending Value', value: 'PKR ' + pendingValue.toLocaleString() },
+      { title: 'Under Review / Status', value: underReview.length }
+    ];
+  }
 
   getBadgeClass(status: string): string {
     switch (status) {
       case 'Pending': return 'bg-warning-subtle text-warning border-warning-subtle';
-      case 'Under Review': return 'bg-primary-subtle text-primary border-primary-subtle';
+      case 'Accepted': return 'bg-success-subtle text-success border-success-subtle';
+      case 'Rejected': return 'bg-danger-subtle text-danger border-danger-subtle';
       default: return 'bg-secondary-subtle text-secondary';
     }
   }
@@ -103,7 +139,8 @@ export class Requests {
   getIconClass(status: string): string {
     switch (status) {
       case 'Pending': return 'bi-clock-history';
-      case 'Under Review': return 'bi-hourglass-split';
+      case 'Accepted': return 'bi-check-circle';
+      case 'Rejected': return 'bi-x-circle';
       default: return 'bi-circle';
     }
   }

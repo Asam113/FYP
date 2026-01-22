@@ -3,97 +3,178 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import {
+    ServiceRequest,
+    ServiceType,
+    ServiceRequestStatus
+} from '../../../core/models/service-request';
 
 @Component({
     selector: 'app-plan-tour',
+    standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './plan-tour.html',
     styleUrl: './plan-tour.css'
 })
 export class PlanTour {
 
-    tourName: string = '';
-    destination: string = '';
-    departureLocation: string = '';
-    startDate: string = '';
-    endDate: string = '';
-    maxParticipants: number | null = null;
-    tourType: string = '';
-    description: string = '';
+    /* =======================
+       STEP CONTROL (UI)
+    ======================== */
+    currentStep: number = 1; // 1=Details, 2=Pricing, 3=Requirements
 
-    currentStep: number = 1;
-
-    itinerary: { day: number, title: string, activities: string }[] = [
-        { day: 1, title: '', activities: '' }
-    ];
-
-    // Pricing Fields
-    basePrice: number | null = null;
-    coupleDiscount: number | null = null;
-    bulkDiscount: number | null = null;
-    deposit: number | null = null;
-    currency: string = 'PKR';
-
-    constructor(private router: Router, private http: HttpClient) { }
-
-    saveAsDraft() {
-        console.log('Saved as draft');
-        // Implement draft saving logic
-    }
-
-    nextStep() {
+    nextStep(): void {
         if (this.currentStep < 3) {
             this.currentStep++;
         }
     }
 
-    prevStep() {
+    prevStep(): void {
         if (this.currentStep > 1) {
             this.currentStep--;
         }
     }
 
-    addDay() {
-        const nextDay = this.itinerary.length + 1;
-        this.itinerary.push({ day: nextDay, title: '', activities: '' });
+    /* =======================
+       TOUR DETAILS
+    ======================== */
+    tourName = '';
+    destination = '';
+    departureLocation = '';
+    startDate = '';
+    endDate = '';
+    maxParticipants: number | null = null;
+    tourType = '';
+    description = '';
+
+    /* =======================
+       PRICING
+    ======================== */
+    basePrice: number | null = null;
+    coupleDiscount: number | null = null;
+    bulkDiscount: number | null = null;
+
+    /* =======================
+       SERVICE REQUIREMENTS
+    ======================== */
+    featureRequirements: ServiceRequest[] = [];
+
+    newReqType: ServiceType = ServiceType.Meal;
+    newReqLocation = '';
+    newReqDate = '';
+    newReqTime = '';
+    newReqDuration = 1;
+
+    constructor(
+        private router: Router,
+        private http: HttpClient
+    ) { }
+
+    /* =======================
+       ACTIONS
+    ======================== */
+    saveAsDraft(): void {
+        console.log('Tour saved as draft');
     }
 
-    createTourPlan() {
-        console.log('Creating Tour Plan...');
+    addRequirement(): void {
+        if (!this.newReqLocation || !this.newReqDate) {
+            alert('Please fill in Location and Date');
+            return;
+        }
 
-        const tourData = {
-            Title: this.tourName,
-            Destination: this.destination,
-            DepartureLocation: this.departureLocation,
-            StartDate: this.startDate,
-            EndDate: this.endDate,
-            DurationDays: this.calculateDuration(),
-            MaxCapacity: this.maxParticipants || 0,
-            PricePerHead: this.basePrice || 0,
-            CoupleDiscountPercentage: this.coupleDiscount,
-            BulkDiscountPercentage: this.bulkDiscount,
-            BulkBookingMinPersons: 3, // Default suggestion
-            Description: this.description,
-            Status: 1 // Draft or Published? Assuming 0=Draft, 1=Published? Enum is Draft=0. Let's send Draft first.
+        const request: ServiceRequest = {
+            serviceType: this.newReqType,
+            location: this.newReqLocation,
+            dateNeeded: this.newReqDate,
+            time: this.newReqType === ServiceType.Meal ? this.newReqTime : undefined,
+            stayDurationDays:
+                this.newReqType === ServiceType.Accommodation
+                    ? this.newReqDuration
+                    : undefined,
+            status: ServiceRequestStatus.Open
         };
 
-        this.http.post('http://localhost:5238/api/tours', tourData).subscribe({
-            next: (res) => {
-                console.log('Tour created successfully', res);
-                this.router.navigate(['/admin/manage-tours']);
-            },
-            error: (err) => {
-                console.error('Error creating tour', err);
-                alert('Failed to create tour');
-            }
-        });
+        this.featureRequirements.push(request);
+        this.resetRequirementForm();
+    }
+
+    removeRequirement(index: number): void {
+        this.featureRequirements.splice(index, 1);
+    }
+
+    createTourPlan(): void {
+
+        if (
+            !this.tourName ||
+            !this.destination ||
+            !this.departureLocation ||
+            !this.startDate ||
+            !this.endDate ||
+            !this.maxParticipants ||
+            !this.basePrice
+        ) {
+            alert('Please fill in all required tour and pricing details');
+            return;
+        }
+
+        const createTourDto = {
+            title: this.tourName,
+            description: this.description,
+            departureLocation: this.departureLocation,
+            destination: this.destination,
+            startDate: this.startDate,
+            endDate: this.endDate,
+            maxCapacity: this.maxParticipants,
+            pricePerHead: this.basePrice,
+            coupleDiscountPercentage: this.coupleDiscount ?? 0,
+            bulkDiscountPercentage: this.bulkDiscount ?? 0,
+            bulkBookingMinPersons: 10,
+            serviceRequirements: this.featureRequirements.map(req => ({
+                type: req.serviceType,
+                location: req.location,
+                dateNeeded: req.dateNeeded,
+                time: req.time,
+                stayDurationDays: req.stayDurationDays,
+                estimatedPeople: this.maxParticipants,
+                estimatedBudget: null
+            }))
+        };
+
+        this.http.post<any>('http://localhost:5238/api/tours', createTourDto)
+            .subscribe({
+                next: () => {
+                    alert('Tour created successfully');
+                    this.router.navigate(['/admin/manage-tours']);
+                },
+                error: (err) => {
+                    console.error(err);
+                    alert(err.error?.message || 'Failed to create tour');
+                }
+            });
+    }
+
+    /* =======================
+       UTILITIES
+    ======================== */
+    resetRequirementForm(): void {
+        this.newReqLocation = '';
+        this.newReqDate = '';
+        this.newReqTime = '';
+        this.newReqDuration = 1;
+    }
+
+    getEndDate(startDate: string, nights: number): Date {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + nights);
+        return date;
     }
 
     calculateDuration(): number {
         if (!this.startDate || !this.endDate) return 0;
         const start = new Date(this.startDate);
         const end = new Date(this.endDate);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const diff = end.getTime() - start.getTime();
+        return Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
     }
 }

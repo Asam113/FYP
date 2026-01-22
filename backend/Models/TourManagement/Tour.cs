@@ -60,14 +60,15 @@ public class Tour
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public DateTime? FinalizedAt { get; set; }
+
     // Navigation Properties
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-    public virtual ICollection<Itinerary> Itineraries { get; set; } = new List<Itinerary>();
     public virtual ICollection<TourImage> TourImages { get; set; } = new List<TourImage>();
     public virtual ICollection<TourAssignment> TourAssignments { get; set; } = new List<TourAssignment>();
     public virtual ICollection<RestaurantAssignment> RestaurantAssignments { get; set; } = new List<RestaurantAssignment>();
     public virtual ICollection<Accommodation> Accommodations { get; set; } = new List<Accommodation>();
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
     public virtual ICollection<DriverOffer> DriverOffers { get; set; } = new List<DriverOffer>();
-    public virtual ICollection<RestaurantOffer> RestaurantOffers { get; set; } = new List<RestaurantOffer>();
+    public virtual ICollection<ServiceRequirement> ServiceRequirements { get; set; } = new List<ServiceRequirement>();
 }

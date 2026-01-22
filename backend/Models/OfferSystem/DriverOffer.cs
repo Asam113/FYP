@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.Supporting;
 using backend.Models.TourManagement;
+using backend.Models.UserManagement;
 
 namespace backend.Models.OfferSystem;
 
@@ -20,6 +21,8 @@ public class DriverOffer : Offer
     public bool IncludesFuel { get; set; } = true;
 
     // Navigation Properties
+    [ForeignKey("ProviderId")]
+    public virtual Driver Driver { get; set; } = null!;
     public virtual Vehicle Vehicle { get; set; } = null!;
     public virtual TourAssignment? TourAssignment { get; set; }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260119163059_RequirementBasedOfferSystem")]
+    partial class RequirementBasedOfferSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -834,6 +837,50 @@ namespace backend.Migrations
                     b.ToTable("Vehicles");
                 });
 
+            modelBuilder.Entity("backend.Models.TourManagement.Itinerary", b =>
+                {
+                    b.Property<int>("ItineraryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ItineraryId"));
+
+                    b.Property<string>("Activities")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DayNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<TimeSpan?>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<TimeSpan?>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("TourId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ItineraryId");
+
+                    b.HasIndex("TourId");
+
+                    b.ToTable("Itineraries");
+                });
+
             modelBuilder.Entity("backend.Models.TourManagement.ServiceRequirement", b =>
                 {
                     b.Property<int>("RequirementId")
@@ -847,6 +894,10 @@ namespace backend.Migrations
 
                     b.Property<DateTime>("DateNeeded")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<decimal?>("EstimatedBudget")
                         .HasColumnType("decimal(18,2)");
@@ -862,13 +913,6 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("StayDurationDays")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Time")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("TourId")
                         .HasColumnType("int");
@@ -1612,6 +1656,17 @@ namespace backend.Migrations
                     b.Navigation("Driver");
                 });
 
+            modelBuilder.Entity("backend.Models.TourManagement.Itinerary", b =>
+                {
+                    b.HasOne("backend.Models.TourManagement.Tour", "Tour")
+                        .WithMany("Itineraries")
+                        .HasForeignKey("TourId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Tour");
+                });
+
             modelBuilder.Entity("backend.Models.TourManagement.ServiceRequirement", b =>
                 {
                     b.HasOne("backend.Models.TourManagement.Tour", "Tour")
@@ -1824,6 +1879,8 @@ namespace backend.Migrations
                     b.Navigation("Bookings");
 
                     b.Navigation("DriverOffers");
+
+                    b.Navigation("Itineraries");
 
                     b.Navigation("RestaurantAssignments");
 

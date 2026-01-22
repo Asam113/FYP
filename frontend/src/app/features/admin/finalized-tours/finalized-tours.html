@@ -3,159 +3,156 @@
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="fw-bold mb-1">Finalized Tours</h4>
-            <div class="text-muted">Tours published for tourist bookings with active reservations</div>
+            <h4 class="fw-bold mb-1">Intermediate Tours</h4>
+            <div class="text-muted">Newly created tours waiting for vendor offers</div>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-5">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="text-muted mb-2">Active Tours</div>
-                <h3 class="fw-bold mb-0">4</h3>
-                <div class="text-success small mt-1">Live for bookings</div>
-            </div>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="text-muted mb-2">Total Bookings</div>
-                <h3 class="fw-bold mb-0">10</h3>
-                <div class="text-teal small mt-1">Across all tours</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="text-muted mb-2">Booked Seats</div>
-                <h3 class="fw-bold mb-0">41</h3>
-                <div class="text-muted small mt-1">of 57 total</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
-                <div class="text-muted mb-2">Expected Revenue</div>
-                <h3 class="fw-bold mb-0">PKR 1.1M</h3>
-                <div class="text-success small mt-1">Current bookings</div>
-            </div>
-        </div>
+        <p class="text-muted mt-3">Loading tours...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="alert alert-danger">
+        {{ error }}
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && tours.length === 0" class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="text-muted mt-3">No intermediate tours found</p>
     </div>
 
     <!-- Tours List -->
-    <div class="d-flex flex-column gap-5">
+    <div class="d-flex flex-column gap-4" *ngIf="!loading && !error && tours.length > 0">
 
         <!-- Tour Card -->
         <div class="card border-0 shadow-sm rounded-4 p-4" *ngFor="let tour of tours">
 
             <!-- Card Header -->
-            <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+            <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
-                    <div class="d-flex align-items-center gap-3 mb-2">
-                        <h5 class="fw-bold mb-0">{{tour.name}}</h5>
-                        <span class="badge rounded-pill px-3 py-2 fw-normal" [className]="'badge ' + tour.statusClass">
-                            {{tour.status}}
-                        </span>
-                    </div>
-                    <div class="text-muted">Tour ID: {{tour.id}}</div>
+                    <h5 class="fw-bold mb-2">{{tour.name}}</h5>
+                    <div class="text-muted small">Tour ID: #{{tour.id}}</div>
                 </div>
                 <div class="text-end">
-                    <h4 class="fw-bold mb-0">{{tour.price}}</h4>
-                    <div class="text-profit small fw-bold">Profit: {{tour.profit}}</div>
+                    <h5 class="fw-bold mb-0">PKR {{tour.pricePerPerson | number}}</h5>
+                    <div class="text-muted small">per person</div>
                 </div>
             </div>
 
             <!-- Tour Details Grid -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-muted"><i class="bi bi-geo-alt"></i></div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-geo-alt text-primary"></i>
                         <div>
                             <div class="small text-muted">Destination</div>
                             <div class="fw-medium">{{tour.destination}}</div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-muted"><i class="bi bi-calendar"></i></div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar text-primary"></i>
                         <div>
                             <div class="small text-muted">Duration</div>
                             <div class="fw-medium">{{tour.duration}}</div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-muted"><i class="bi bi-tag"></i></div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-people text-primary"></i>
                         <div>
-                            <div class="small text-muted">Price Per Person</div>
-                            <div class="fw-medium">{{tour.pricePerPerson}}</div>
+                            <div class="small text-muted">Capacity</div>
+                            <div class="fw-medium">{{tour.totalSeats}} seats</div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="text-muted"><i class="bi bi-people"></i></div>
-                        <div>
-                            <div class="small text-muted">Capacity</div>
-                            <div class="fw-medium">
-                                {{tour.participants}}/{{tour.totalSeats}}
-                                <span class="text-success small ms-1"
-                                    *ngIf="tour.availableSeats > 0">({{tour.availableSeats}} left)</span>
-                                <span class="text-danger small ms-1" *ngIf="tour.availableSeats === 0">(Full)</span>
+            </div>
+
+            <!-- Service Requirements -->
+            <div class="mb-4" *ngIf="tour.serviceRequirements.length > 0">
+                <h6 class="fw-bold mb-3">Service Requirements</h6>
+                <div class="row g-3">
+                    <div class="col-md-6" *ngFor="let req of tour.serviceRequirements">
+                        <div class="border rounded-3 p-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi" [class.bi-egg-fried]="req.type === 'Meal'"
+                                    [class.bi-house]="req.type === 'Accommodation'"></i>
+                                <span class="fw-medium">{{req.type}}</span>
+                            </div>
+                            <div class="small text-muted">{{req.location}}</div>
+                            <div class="small text-muted">{{req.dateNeeded | date:'short'}}</div>
+                            <div class="mt-2">
+                                <span class="badge bg-light text-dark">
+                                    {{req.restaurantOffers?.length || 0}} offers
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Booking Progress -->
-            <div class="mb-5">
-                <div class="d-flex justify-content-between align-items-end mb-2">
-                    <div class="text-muted">Booking Progress</div>
-                    <div class="fw-bold">{{tour.bookingProgress}}%</div>
-                </div>
-                <div class="progress" style="height: 8px;">
-                    <div class="progress-bar bg-teal" role="progressbar" [style.width.%]="tour.bookingProgress"></div>
-                </div>
-            </div>
-
-            <!-- Cost Breakdown -->
-            <div class="row g-4 mb-5">
+            <!-- Offers Section -->
+            <div class="row g-4 mb-4">
+                <!-- Driver Offers -->
                 <div class="col-md-6">
                     <div class="border rounded-4 p-3 h-100">
-                        <div class="d-flex align-items-center gap-2 text-primary fw-medium mb-2">
-                            <i class="bi bi-truck fs-5"></i> Transportation
+                        <div class="d-flex align-items-center gap-2 text-primary fw-medium mb-3">
+                            <i class="bi bi-truck fs-5"></i> Transportation Offers
                         </div>
-                        <div class="fw-medium">{{tour.transport.provider}}</div>
-                        <div class="text-muted small">{{tour.transport.cost}}</div>
+                        <div *ngIf="tour.driverOffers.length === 0" class="text-muted small">
+                            No driver offers yet
+                        </div>
+                        <div *ngIf="tour.driverOffers.length > 0" class="d-flex flex-column gap-2">
+                            <div *ngFor="let offer of tour.driverOffers"
+                                class="bg-light rounded-3 p-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-medium small">{{offer.driver.user.fullName}}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{offer.vehicle.model}}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-medium small">PKR {{offer.transportationFare | number}}</div>
+                                    <span class="badge" [ngClass]="getOfferStatusClass(offer.status)">
+                                        {{offer.status}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Restaurant Offers -->
                 <div class="col-md-6">
                     <div class="border rounded-4 p-3 h-100">
-                        <div class="d-flex align-items-center gap-2 text-primary fw-medium mb-2">
-                            <i class="bi bi-building fs-5"></i> Accommodation
+                        <div class="d-flex align-items-center gap-2 text-primary fw-medium mb-3">
+                            <i class="bi bi-egg-fried fs-5"></i> Restaurant Offers
                         </div>
-                        <div class="fw-medium">{{tour.accommodation.provider}}</div>
-                        <div class="text-muted small">{{tour.accommodation.cost}}</div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- Current Bookings List -->
-            <div class="mb-5">
-                <h6 class="fw-bold mb-3">Current Bookings ({{tour.participants}})</h6>
-                <div class="d-flex flex-column gap-3">
-                    <div class="bg-light rounded-3 p-3 d-flex justify-content-between align-items-center"
-                        *ngFor="let booking of tour.bookings">
-                        <div>
-                            <div class="fw-medium mb-1">{{booking.name}}</div>
-                            <div class="text-muted small">{{booking.seats}} seats</div>
+                        <div *ngIf="tour.restaurantOffers.length === 0" class="text-muted small">
+                            No restaurant offers yet
                         </div>
-                        <div class="text-end">
-                            <div class="fw-medium mb-1">{{booking.total}}</div>
-                            <span class="badge rounded-pill fw-normal"
-                                [className]="'badge ' + booking.statusClass">{{booking.status}}</span>
+                        <div *ngIf="tour.restaurantOffers.length > 0" class="d-flex flex-column gap-2">
+                            <div *ngFor="let offer of tour.restaurantOffers"
+                                class="bg-light rounded-3 p-2 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-medium small">{{offer.restaurant.restaurantName}}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        {{offer.restaurant.user.fullName}}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-medium small">PKR {{offer.pricePerPerson | number}}/person</div>
+                                    <span class="badge" [ngClass]="getOfferStatusClass(offer.status)">
+                                        {{offer.status}}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -163,21 +160,27 @@
 
             <!-- Footer Actions -->
             <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                <div class="d-flex align-items-center gap-2 text-success fw-medium"
-                    *ngIf="tour.status === 'Accepting Bookings'">
-                    <i class="bi bi-check2"></i> Available for new bookings
+                <div class="d-flex gap-2">
+                    <span class="badge bg-success" *ngIf="tour.hasDriverOffer">
+                        <i class="bi bi-check-circle"></i> Has Driver Offers
+                    </span>
+                    <span class="badge bg-success" *ngIf="tour.hasRestaurantOffer">
+                        <i class="bi bi-check-circle"></i> Has Restaurant Offers
+                    </span>
+                    <span class="badge bg-warning" *ngIf="!tour.hasDriverOffer">
+                        <i class="bi bi-exclamation-circle"></i> Needs Driver
+                    </span>
+                    <span class="badge bg-warning" *ngIf="!tour.hasRestaurantOffer">
+                        <i class="bi bi-exclamation-circle"></i> Needs Restaurant
+                    </span>
                 </div>
-                <div *ngIf="tour.status !== 'Accepting Bookings'"></div> <!-- Spacer -->
 
-                <div class="d-flex gap-3">
-                    <button class="btn btn-outline-dark px-3 d-flex align-items-center gap-2">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-eye"></i> View Details
                     </button>
-                    <button class="btn btn-outline-dark px-3 d-flex align-items-center gap-2">
-                        <i class="bi bi-pencil-square"></i> Manage Bookings
-                    </button>
-                    <button class="btn btn-outline-danger px-3 d-flex align-items-center gap-2">
-                        <i class="bi bi-x-circle"></i> Cancel Tour
+                    <button class="btn btn-primary btn-sm">
+                        <i class="bi bi-check2-circle"></i> Review Offers
                     </button>
                 </div>
             </div>

@@ -8,47 +8,42 @@
 
     <!-- Stepper -->
     <div class="card border-0 shadow-sm mb-4 rounded-4">
-        <div class="card-body p-4">
-            <div class="d-flex justify-content-center align-items-center text-center">
+        <div class="card-body py-4">
 
-                <!-- Step 1: Tour Details -->
-                <div class="step" [class.active]="currentStep >= 1">
-                    <div class="step-icon">
-                        <i class="bi bi-geo-alt-fill"></i>
+            <div class="stepper">
+
+                <!-- Progress Line -->
+                <div class="stepper-line"></div>
+
+                <!-- Step 1 -->
+                <div class="step-item" [class.active]="currentStep >= 1">
+                    <div class="step-circle">
+                        <i class="bi bi-geo-alt"></i>
                     </div>
+                    <span>Tour Details</span>
                 </div>
 
-                <div class="line"></div>
-
-                <!-- Step 2: Itinerary -->
-                <div class="step" [class.active]="currentStep >= 2">
-                    <div class="step-icon">
-                        <i class="bi bi-calendar-event"></i>
-                    </div>
-                </div>
-
-                <div class="line"></div>
-
-                <!-- Step 3: Pricing -->
-                <div class="step" [class.active]="currentStep >= 3">
-                    <div class="step-icon">
+                <!-- Step 2 -->
+                <div class="step-item" [class.active]="currentStep >= 2">
+                    <div class="step-circle">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
+                    <span>Pricing</span>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-item" [class.active]="currentStep >= 3">
+                    <div class="step-circle">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <span>Requirements</span>
                 </div>
 
             </div>
 
-            <!-- Labels Row -->
-            <div class="d-flex justify-content-between text-center mx-auto mt-2" style="max-width: 450px;">
-                <span class="small fw-bold" [class.text-teal]="currentStep >= 1"
-                    [class.text-muted]="currentStep < 1">Tour<br>Details</span>
-                <span class="small fw-bold" [class.text-teal]="currentStep >= 2"
-                    [class.text-muted]="currentStep < 2">Itinerary</span>
-                <span class="small fw-bold" [class.text-teal]="currentStep >= 3"
-                    [class.text-muted]="currentStep < 3">Pricing</span>
-            </div>
         </div>
     </div>
+
 
     <!-- Step 1: Basic Tour Information -->
     <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 1">
@@ -64,12 +59,8 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold small">Destination</label>
-                    <select class="form-select bg-light border-0 py-2" [(ngModel)]="destination">
-                        <option value="" selected disabled>Select destination</option>
-                        <option value="kashmir">Kashmir</option>
-                        <option value="northern_areas">Northern Areas</option>
-                        <option value="hunza">Hunza</option>
-                    </select>
+                    <input type="text" class="form-control bg-light border-0 py-2" placeholder="e.g., Hunza Valley"
+                        [(ngModel)]="destination">
                 </div>
 
                 <div class="col-md-6">
@@ -117,53 +108,17 @@
             <!-- Action Buttons -->
             <div class="d-flex justify-content-end gap-3 mt-5">
                 <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as Draft</button>
-                <button class="btn btn-teal text-white px-4 fw-bold" (click)="nextStep()">Next: Itinerary</button>
+                <button class="btn btn-primary px-4 fw-bold" (click)="nextStep()">Next: Pricing</button>
             </div>
 
         </div>
     </div>
 
-    <!-- Step 2: Itinerary -->
+    <!-- Step 2: Pricing -->
     <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 2">
         <div class="card-body p-5">
-            <h5 class="fw-bold mb-1">Tour Itinerary</h5>
-            <p class="text-muted mb-4">Plan the day-by-day activities</p>
-
-            <div class="mb-4" *ngFor="let item of itinerary; let i = index">
-                <h6 class="fw-bold mb-3">Day {{ item.day }}</h6>
-                <div class="p-4 bg-light rounded-3">
-                    <div class="mb-3">
-                        <input type="text" class="form-control border-0 shadow-sm py-2"
-                            placeholder="Day title (e.g., Arrival & City Tour)" [(ngModel)]="item.title">
-                    </div>
-                    <div>
-                        <textarea class="form-control border-0 shadow-sm" rows="3"
-                            placeholder="Detailed activities for this day..." [(ngModel)]="item.activities"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn btn-outline-dark w-100 py-2 fw-bold mb-5 shadow-sm" (click)="addDay()">
-                + Add Another Day
-            </button>
-
-            <!-- Action Buttons -->
-            <div class="d-flex justify-content-between mt-5">
-                <button class="btn btn-outline-secondary px-4 fw-bold" (click)="prevStep()">Previous</button>
-                <div class="d-flex gap-3">
-                    <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as
-                        Draft</button>
-                    <button class="btn btn-teal text-white px-4 fw-bold" (click)="nextStep()">Next: Pricing</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Step 3: Pricing & Finalize -->
-    <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 3">
-        <div class="card-body p-5">
-            <h5 class="fw-bold mb-1">Pricing & Finalize</h5>
-            <p class="text-muted mb-4">Set the pricing and complete the tour plan</p>
+            <h5 class="fw-bold mb-1">Pricing & Discounts</h5>
+            <p class="text-muted mb-4">Set the pricing for your tour</p>
 
             <div class="row g-4">
                 <div class="col-md-6">
@@ -182,19 +137,6 @@
                     <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 15"
                         [(ngModel)]="bulkDiscount">
                     <small class="text-muted d-block mt-1">Suggestion: Shown for group bookings</small>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">Required Deposit</label>
-                    <input type="number" class="form-control bg-light border-0 py-2" placeholder="e.g., 5000"
-                        [(ngModel)]="deposit">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">Currency</label>
-                    <select class="form-select bg-light border-0 py-2" [(ngModel)]="currency">
-                        <option value="PKR">PKR</option>
-                        <option value="USD">USD</option>
-                    </select>
                 </div>
             </div>
 
@@ -216,10 +158,107 @@
                 <div class="d-flex gap-3">
                     <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as
                         Draft</button>
-                    <button class="btn btn-teal text-white px-4 fw-bold" (click)="createTourPlan()">Create Tour
+                    <button class="btn btn-primary px-4 fw-bold" (click)="nextStep()">Next:
+                        Requirements</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Service Requirements (Marketplace) -->
+    <div class="card border-0 shadow-sm rounded-4" *ngIf="currentStep === 3">
+        <div class="card-body p-5">
+            <h5 class="fw-bold mb-1">Service Requirements</h5>
+            <p class="text-muted mb-4">Post specific needs for vendors (Transport, Meals, Rooms)</p>
+
+            <div class="row g-4">
+                <!-- Requirements List -->
+                <div class="col-12" *ngFor="let req of featureRequirements; let i = index">
+                    <div class="p-3 border rounded-3 bg-white position-relative">
+                        <button class="btn-close position-absolute top-0 end-0 m-2 small"
+                            (click)="removeRequirement(i)"></button>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="badge bg-primary p-2 rounded-2">
+                                <i class="bi" [class.bi-egg-fried]="req.serviceType === 'Meal'"
+                                    [class.bi-house]="req.serviceType === 'Accommodation'"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0">{{req.serviceType}} in {{req.location}}</h6>
+                                <p class="text-muted small mb-0" *ngIf="req.serviceType === 'Meal'">
+                                    {{req.dateNeeded | date:'MMM d, y'}}
+                                    <span *ngIf="req.time"> at {{req.time}}</span>
+                                </p>
+                                <p class="text-muted small mb-0"
+                                    *ngIf="req.serviceType === 'Accommodation' && req.stayDurationDays">
+                                    <span *ngIf="req.stayDurationDays === 1">{{req.dateNeeded | date:'MMM d, y'}}</span>
+                                    <span *ngIf="req.stayDurationDays && req.stayDurationDays > 1">
+                                        {{req.dateNeeded | date:'MMM d'}} - {{getEndDate(req.dateNeeded,
+                                        req.stayDurationDays) | date:'MMM d, y'}} ({{req.stayDurationDays}} nights)
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="ms-auto text-end">
+                                <div class="badge bg-light text-dark border">{{req.serviceType}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Requirement Form -->
+                <div class="col-12 mt-4 p-4 bg-light rounded-3">
+                    <h6 class="fw-bold mb-3">Add New Requirement</h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Type</label>
+                            <select class="form-select border-0 shadow-sm" [(ngModel)]="newReqType">
+                                <option value="Meal">Meal</option>
+                                <option value="Accommodation">Accommodation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Location</label>
+                            <input type="text" class="form-control border-0 shadow-sm" [(ngModel)]="newReqLocation"
+                                placeholder="e.g. Naran">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Date</label>
+                            <input type="date" class="form-control border-0 shadow-sm" [(ngModel)]="newReqDate">
+                        </div>
+
+                        <!-- Conditional: Time for Meal -->
+                        <div class="col-md-3" *ngIf="newReqType === 'Meal'">
+                            <label class="form-label small fw-bold">Time (Optional)</label>
+                            <input type="time" class="form-control border-0 shadow-sm" [(ngModel)]="newReqTime">
+                        </div>
+
+                        <!-- Conditional: Duration for Accommodation -->
+                        <div class="col-md-3" *ngIf="newReqType === 'Accommodation'">
+                            <label class="form-label small fw-bold">Nights</label>
+                            <input type="number" class="form-control border-0 shadow-sm" [(ngModel)]="newReqDuration"
+                                min="1" placeholder="e.g. 2">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">&nbsp;</label>
+                            <button class="btn btn-dark w-100 fw-bold shadow-sm" (click)="addRequirement()">+ Add
+                                Requirement</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-5">
+                <button class="btn btn-outline-secondary px-4 fw-bold" (click)="prevStep()">Previous</button>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-secondary px-4 fw-bold" (click)="saveAsDraft()">Save as
+                        Draft</button>
+                    <button class="btn btn-primary px-4 fw-bold" (click)="createTourPlan()">Create Tour
                         Plan</button>
                 </div>
             </div>
+
         </div>
     </div>
 
