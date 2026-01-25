@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Models.OfferSystem;
 using backend.Models.Enums;
+using backend.Models.TourManagement;
+using backend.Models.DTOs;
 
 namespace backend.Controllers;
 
@@ -67,8 +69,10 @@ public class DriverOffersController : ControllerBase
             TourId = dto.TourId,
             ProviderId = vehicle.DriverId, // Set from vehicle's driver
             VehicleId = dto.VehicleId,
-            TransportationFare = dto.QuotedPrice, // This is the correct property name
+            TransportationFare = dto.QuotedPrice, 
+            OfferedAmount = dto.QuotedPrice, // Set base class property
             RouteDetails = dto.AdditionalNotes,
+            OfferType = "Driver", // Required by base class
             Status = OfferStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -121,5 +125,85 @@ public class DriverOffersController : ControllerBase
 
         var offers = await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
         return Ok(offers);
+    }
+    [HttpPut("{id}/accept")]
+    public async Task<IActionResult> AcceptDriverOffer(int id)
+    {
+        var offer = await _context.DriverOffers.FindAsync(id);
+        if (offer == null) return NotFound();
+
+        offer.Status = OfferStatus.Accepted;
+        offer.RespondedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Driver offer accepted" });
+    }
+
+    [HttpPut("{id}/reject")]
+    public async Task<IActionResult> RejectDriverOffer(int id)
+    {
+        var offer = await _context.DriverOffers.FindAsync(id);
+        if (offer == null) return NotFound();
+
+        offer.Status = OfferStatus.Rejected;
+        offer.RespondedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Driver offer rejected" });
+    }
+
+    // GET: api/offers/driver/booked-tours/{driverId}
+    [HttpGet("booked-tours/{driverId}")]
+    public async Task<ActionResult<BookedToursResultDto>> GetBookedTours(int driverId)
+    {
+        var driverOffers = await _context.DriverOffers
+            .Include(o => o.Tour)
+                .ThenInclude(t => t.ServiceRequirements)
+            .Include(o => o.Vehicle)
+            .Where(o => o.ProviderId == driverId && 
+                       (o.Status == OfferStatus.Accepted || o.Status == OfferStatus.Confirmed))
+            .ToListAsync();
+
+        var result = new BookedToursResultDto();
+
+        foreach (var offer in driverOffers)
+        {
+            var tour = offer.Tour;
+            var isConfirmed = tour.Status == TourStatus.Finalized && tour.CurrentBookings >= tour.MaxCapacity;
+
+            var dto = new BookedTourDto
+            {
+                Id = tour.TourId,
+                Title = tour.Title,
+                Status = isConfirmed ? "Confirmed" : "Pending Completion",
+                Route = $"{tour.DepartureLocation} → {tour.Destination}",
+                Date = tour.StartDate.ToString("MMM dd, yyyy"),
+                Duration = $"{(tour.EndDate - tour.StartDate).Days + 1} Days",
+                Participants = tour.CurrentBookings,
+                Price = $"PKR {offer.TransportationFare:N0}",
+                RequirementsStatus = isConfirmed 
+                    ? "All requirements completed • Tour finalized" 
+                    : GetPendingStatus(tour, offer),
+                RequirementsStatusClass = isConfirmed ? "success" : "warning"
+            };
+
+            if (isConfirmed)
+                result.ConfirmedTours.Add(dto);
+            else
+                result.PendingTours.Add(dto);
+        }
+
+        return Ok(result);
+    }
+
+    private string GetPendingStatus(Tour tour, DriverOffer offer)
+    {
+        if (tour.Status != TourStatus.Finalized)
+        {
+            var unfulfilled = tour.ServiceRequirements.Count(r => r.Status != "Fulfilled" && r.Status != "Resolved");
+            if (unfulfilled > 0)
+                return $"Driver accepted • {unfulfilled} more requirement(s) pending";
+            return "Driver accepted • Awaiting tour finalization";
+        }
+        
+        return $"Tour finalized • Booking in progress ({tour.CurrentBookings}/{tour.MaxCapacity})";
     }
 }

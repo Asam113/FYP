@@ -53,12 +53,6 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a routerLink="/restaurant/explore-tours" class="nav-link text-white my-1 d-flex align-items-center"
-                    routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
-                    <i class="bi bi-compass me-3 fs-5"></i> Explore Tours
-                </a>
-            </li>
-            <li class="nav-item">
                 <a routerLink="/restaurant/tour-requests" class="nav-link text-white my-1 d-flex align-items-center"
                     routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
                     <i class="bi bi-ui-checks me-3 fs-5"></i> Tour Requests
@@ -135,7 +129,7 @@
         </div>
 
         <!-- Router Outlet Container -->
-        <div class="animate-fade-in flex-grow-1" style="padding: 30px;">
+        <div class="flex-grow-1" style="padding: 30px;">
             <router-outlet></router-outlet>
         </div>
 

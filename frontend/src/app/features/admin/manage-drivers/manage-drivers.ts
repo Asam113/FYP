@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { DriverService } from '../../../core/services/driver.service';
 import { ToastService } from '../../../core/services/toast.service';
 
@@ -26,7 +27,7 @@ interface Driver {
 @Component({
   selector: 'app-manage-drivers',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './manage-drivers.html',
   styleUrls: ['./manage-drivers.css']
 })

@@ -47,7 +47,9 @@
                         <td class="driver-info">
                             <img [src]="driver.avatar" [alt]="driver.name">
                             <div>
-                                <span class="name">{{ driver.name }}</span>
+                                <a [routerLink]="['/admin/driver-details', driver.realId]" class="name-link">
+                                    <span class="name">{{ driver.name }}</span>
+                                </a>
                                 <span class="id">{{ driver.id }}</span>
                             </div>
                         </td>

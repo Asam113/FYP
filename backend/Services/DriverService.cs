@@ -1,7 +1,7 @@
+using backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Models.UserManagement;
-using backend.Models.Enums;
 
 namespace backend.Services;
 
@@ -44,6 +44,44 @@ public class DriverService : IDriverService
                 }
             })
             .ToListAsync();
+    }
+
+    public async Task<object?> GetDriverByIdAsync(int driverId)
+    {
+        return await _context.Drivers
+            .Include(d => d.User)
+            .Include(d => d.Vehicles)
+            .Where(d => d.DriverId == driverId)
+            .Select(d => new
+            {
+                d.DriverId,
+                d.UserId,
+                Name = d.User.Name,
+                Contact = d.User.PhoneNumber,
+                Email = d.User.Email,
+                CNIC = d.CNIC,
+                License = d.Licence,
+                d.AccountStatus,
+                Rating = 0.0,
+                TotalTrips = d.TourAssignments.Count(t => t.Status == AssignmentStatus.Completed),
+                Avatar = d.User.ProfilePicture ?? "https://ui-avatars.com/api/?name=" + d.User.Name,
+                Documents = new
+                {
+                    CnicFront = d.CnicFront,
+                    CnicBack = d.CnicBack,
+                    License = d.LicenceImage
+                },
+                Vehicles = d.Vehicles.Select(v => new
+                {
+                    v.VehicleId,
+                    v.RegistrationNumber,
+                    v.VehicleType,
+                    v.Model,
+                    v.Capacity,
+                    v.Status
+                })
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<bool> UpdateDriverStatusAsync(int driverId, string status)

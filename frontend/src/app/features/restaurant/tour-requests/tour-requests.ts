@@ -2,12 +2,27 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ToastService } from '../../../core/services/toast.service';
+
+interface Tour {
+    tourId: number;
+    title: string;
+    destination: string;
+    startDate: string;
+    endDate: string;
+    durationDays: number;
+    mealRequirementsCount: number;
+    accommodationRequirementsCount: number;
+    requirements: ServiceRequirement[];
+}
 
 interface ServiceRequirement {
     requirementId: number;
     type: string; // "Meal" or "Accommodation"
     location: string;
     dateNeeded: string;
+    time?: string;
+    stayDurationDays?: number;
     details?: string;
     estimatedPeople: number;
     estimatedBudget?: number;
@@ -17,6 +32,8 @@ interface ServiceRequirement {
         title: string;
         startDate: string;
         endDate: string;
+        destination: string;
+        durationDays: number;
     };
 }
 
@@ -28,19 +45,21 @@ interface ServiceRequirement {
     styleUrl: './tour-requests.css'
 })
 export class TourRequests implements OnInit {
-    requirements: ServiceRequirement[] = [];
-    filteredRequirements: ServiceRequirement[] = [];
+    tours: Tour[] = [];
     isLoading = true;
 
+    // View state
+    showTourDetails = false;
+    selectedTour: Tour | null = null;
+
     // Filters
-    filterType: string = 'All';
     filterStatus: string = 'Open';
 
     // Modal state
     showOfferModal = false;
     selectedRequirement: ServiceRequirement | null = null;
 
-    // Offer form
+    // Meal offer form
     pricePerHead: number | null = null;
     minimumPeople: number | null = null;
     maximumPeople: number | null = null;
@@ -48,19 +67,23 @@ export class TourRequests implements OnInit {
     includesBeverages: boolean = false;
     offerDetails: string = '';
 
-    constructor(private http: HttpClient) { }
+    // Accommodation offer form
+    rentPerNight: number | null = null;
+    perRoomCapacity: number | null = null;
+    description: string = '';
+
+    constructor(private http: HttpClient, private toastService: ToastService) { }
 
     ngOnInit() {
-        this.loadRequirements();
+        this.loadTourRequirements();
     }
 
-    loadRequirements() {
+    loadTourRequirements() {
         const params = this.filterStatus !== 'All' ? `?status=${this.filterStatus}` : '';
 
         this.http.get<ServiceRequirement[]>(`http://localhost:5238/api/servicerequirements${params}`).subscribe({
             next: (data) => {
-                this.requirements = data;
-                this.applyFilters();
+                this.groupRequirementsByTour(data);
                 this.isLoading = false;
             },
             error: (err) => {
@@ -70,15 +93,55 @@ export class TourRequests implements OnInit {
         });
     }
 
-    applyFilters() {
-        this.filteredRequirements = this.requirements.filter(req => {
-            const typeMatch = this.filterType === 'All' || req.type === this.filterType;
-            return typeMatch;
+    groupRequirementsByTour(requirements: ServiceRequirement[]) {
+        const tourMap = new Map<number, Tour>();
+
+        requirements.forEach(req => {
+            if (req.tour) {
+                if (!tourMap.has(req.tour.tourId)) {
+                    tourMap.set(req.tour.tourId, {
+                        tourId: req.tour.tourId,
+                        title: req.tour.title,
+                        destination: req.tour.destination,
+                        startDate: req.tour.startDate,
+                        endDate: req.tour.endDate,
+                        durationDays: req.tour.durationDays,
+                        mealRequirementsCount: 0,
+                        accommodationRequirementsCount: 0,
+                        requirements: []
+                    });
+                }
+
+                const tour = tourMap.get(req.tour.tourId)!;
+                tour.requirements.push(req);
+
+                if (req.type === 'Meal') {
+                    tour.mealRequirementsCount++;
+                } else if (req.type === 'Accommodation') {
+                    tour.accommodationRequirementsCount++;
+                }
+            }
         });
+
+        this.tours = Array.from(tourMap.values());
     }
 
-    onFilterChange() {
-        this.applyFilters();
+    viewTourDetails(tour: Tour) {
+        this.selectedTour = tour;
+        this.showTourDetails = true;
+    }
+
+    backToTourList() {
+        this.showTourDetails = false;
+        this.selectedTour = null;
+    }
+
+    getMealRequirements(): ServiceRequirement[] {
+        return this.selectedTour?.requirements.filter(r => r.type === 'Meal') || [];
+    }
+
+    getAccommodationRequirements(): ServiceRequirement[] {
+        return this.selectedTour?.requirements.filter(r => r.type === 'Accommodation') || [];
     }
 
     openOfferModal(requirement: ServiceRequirement) {
@@ -86,9 +149,14 @@ export class TourRequests implements OnInit {
         this.showOfferModal = true;
         this.resetOfferForm();
 
-        // Set defaults based on requirement
-        this.minimumPeople = Math.floor(requirement.estimatedPeople * 0.5);
-        this.maximumPeople = requirement.estimatedPeople + 10;
+        if (requirement.type === 'Meal') {
+            // Set defaults for meal offers
+            this.minimumPeople = Math.floor(requirement.estimatedPeople * 0.5);
+            this.maximumPeople = requirement.estimatedPeople + 10;
+        } else if (requirement.type === 'Accommodation') {
+            // Set defaults for accommodation offers
+            this.perRoomCapacity = 2; // Default 2 people per room
+        }
     }
 
     closeOfferModal() {
@@ -98,49 +166,105 @@ export class TourRequests implements OnInit {
     }
 
     resetOfferForm() {
+        // Meal fields
         this.pricePerHead = null;
         this.minimumPeople = null;
         this.maximumPeople = null;
         this.mealType = '';
         this.includesBeverages = false;
+
+        // Accommodation fields
+        this.rentPerNight = null;
+        this.perRoomCapacity = null;
+        this.description = '';
+
+        // Common
         this.offerDetails = '';
     }
 
+    get calculatedTotalRooms(): number {
+        if (this.selectedRequirement && this.perRoomCapacity && this.perRoomCapacity > 0) {
+            return Math.ceil(this.selectedRequirement.estimatedPeople / this.perRoomCapacity);
+        }
+        return 0;
+    }
+
+    get calculatedTotalRent(): number {
+        if (this.rentPerNight && this.selectedRequirement?.stayDurationDays) {
+            return this.calculatedTotalRooms * this.rentPerNight * this.selectedRequirement.stayDurationDays;
+        }
+        return 0;
+    }
+
     submitOffer() {
-        if (!this.selectedRequirement || !this.pricePerHead || !this.minimumPeople || !this.maximumPeople) {
-            alert('Please fill in all required fields');
+        if (!this.selectedRequirement) {
+            this.toastService.show('No requirement selected', 'warning');
             return;
         }
 
         // TODO: Get actual restaurant ID from auth service
         const restaurantId = 1; // Mock for now
 
-        const offerData = {
+        let offerData: any = {
             requirementId: this.selectedRequirement.requirementId,
             restaurantId: restaurantId,
-            pricePerHead: this.pricePerHead,
-            minimumPeople: this.minimumPeople,
-            maximumPeople: this.maximumPeople,
-            mealType: this.mealType || null,
-            includesBeverages: this.includesBeverages,
-            details: this.offerDetails || null
+            notes: this.offerDetails || null
         };
+
+        if (this.selectedRequirement.type === 'Meal') {
+            if (!this.pricePerHead || !this.minimumPeople || !this.maximumPeople) {
+                this.toastService.show('Please fill in all required meal offer fields', 'warning');
+                return;
+            }
+
+            offerData = {
+                ...offerData,
+                pricePerHead: this.pricePerHead,
+                minimumPeople: this.minimumPeople,
+                maximumPeople: this.maximumPeople,
+                mealType: this.mealType || null,
+                includesBeverages: this.includesBeverages
+            };
+        } else if (this.selectedRequirement.type === 'Accommodation') {
+            if (!this.rentPerNight || !this.perRoomCapacity) {
+                this.toastService.show('Please fill in all required accommodation offer fields', 'warning');
+                return;
+            }
+
+            offerData = {
+                ...offerData,
+                rentPerNight: this.rentPerNight,
+                perRoomCapacity: this.perRoomCapacity,
+                totalRooms: this.calculatedTotalRooms,
+                totalRent: this.calculatedTotalRent,
+                stayDurationDays: this.selectedRequirement.stayDurationDays,
+                notes: this.description || this.offerDetails || null
+            };
+        }
 
         this.http.post('http://localhost:5238/api/restaurantoffers', offerData).subscribe({
             next: (response) => {
                 console.log('Offer submitted:', response);
-                alert(`Offer submitted successfully for "${this.selectedRequirement?.type}" requirement!`);
+                this.toastService.show(`Offer submitted successfully for "${this.selectedRequirement?.type}" requirement!`, 'success');
                 this.closeOfferModal();
-                this.loadRequirements(); // Refresh list
+                this.loadTourRequirements(); // Refresh list
             },
             error: (err) => {
                 console.error('Error submitting offer:', err);
-                alert('Failed to submit offer: ' + (err.error || err.message));
+                this.toastService.show('Failed to submit offer: ' + (err.error || err.message), 'error');
             }
         });
     }
 
     formatDate(dateString: string): string {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    formatDateTime(dateString: string): string {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',

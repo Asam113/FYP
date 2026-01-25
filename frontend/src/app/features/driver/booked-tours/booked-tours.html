@@ -1,13 +1,24 @@
 <div class="container-fluid py-4">
     <div class="row mb-4">
-        <div class="col-12">
+        <div class="col-12 text-center" *ngIf="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading your booked tours...</p>
+        </div>
+        <div class="col-12" *ngIf="!loading && error">
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+        </div>
+        <div class="col-12" *ngIf="!loading && !error">
             <h2 class="fw-bold text-dark">Booked Tours</h2>
             <p class="text-muted">Tours where your application has been accepted</p>
         </div>
     </div>
 
     <!-- Tabs -->
-    <div class="row mb-4">
+    <div class="row mb-4" *ngIf="!loading && !error">
         <div class="col-12">
             <div class="d-inline-flex bg-light rounded-pill p-1">
                 <button class="btn rounded-pill px-4" [class.bg-white]="activeTab === 'confirmed'"
@@ -27,8 +38,15 @@
     </div>
 
     <!-- Confirmed Tours List -->
-    <div class="row" *ngIf="activeTab === 'confirmed'">
+    <div class="row" *ngIf="activeTab === 'confirmed' && !loading && !error">
         <div class="col-12">
+            <div *ngIf="confirmedTours.length === 0" class="text-center py-5">
+                <div class="bg-light d-inline-block rounded-circle p-4 mb-3">
+                    <i class="bi bi-calendar-check text-muted fs-1"></i>
+                </div>
+                <h5>No confirmed tours yet</h5>
+                <p class="text-muted">Once bookings are complete and the tour is ready, it will show up here.</p>
+            </div>
             <div *ngFor="let tour of confirmedTours" class="card border-0 shadow-sm mb-3">
                 <div class="card-body p-4">
                     <div class="row">
@@ -63,15 +81,16 @@
                         <!-- Right Content -->
                         <div class="col-md-3 text-md-end">
                             <h4 class="fw-bold mb-0">{{ tour.price }}</h4>
-                            <p class="text-muted small">Payment</p>
+                            <p class="text-muted small">Transport Fare</p>
                         </div>
                     </div>
 
                     <hr class="text-muted opacity-25">
 
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">{{ tour.participants }} participants</span>
-                        <a href="#" class="text-primary text-decoration-none small">
+                        <span class="text-muted small">{{ tour.participants }} Bookings</span>
+                        <a [routerLink]="['/driver/tour-details', tour.id]"
+                            class="text-primary text-decoration-none small">
                             View Details <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -81,8 +100,15 @@
     </div>
 
     <!-- Pending Tours List -->
-    <div class="row" *ngIf="activeTab === 'pending'">
+    <div class="row" *ngIf="activeTab === 'pending' && !loading && !error">
         <div class="col-12">
+            <div *ngIf="pendingTours.length === 0" class="text-center py-5">
+                <div class="bg-light d-inline-block rounded-circle p-4 mb-3">
+                    <i class="bi bi-clock-history text-muted fs-1"></i>
+                </div>
+                <h5>No pending tours</h5>
+                <p class="text-muted">Accepted applications awaiting completion will appear here.</p>
+            </div>
             <div *ngFor="let tour of pendingTours" class="card border-0 shadow-sm mb-3">
                 <div class="card-body p-4">
                     <div class="row">
@@ -118,15 +144,16 @@
                         <!-- Right Content -->
                         <div class="col-md-3 text-md-end">
                             <h4 class="fw-bold mb-0">{{ tour.price }}</h4>
-                            <p class="text-muted small">Payment</p>
+                            <p class="text-muted small">Quoted Price</p>
                         </div>
                     </div>
 
                     <hr class="text-muted opacity-25">
 
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">{{ tour.participants }} participants</span>
-                        <a href="#" class="text-primary text-decoration-none small">
+                        <span class="text-muted small">{{ tour.participants }} Bookings</span>
+                        <a [routerLink]="['/driver/tour-details', tour.id]"
+                            class="text-primary text-decoration-none small">
                             View Details <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>

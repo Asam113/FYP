@@ -247,8 +247,7 @@
                                                     <div class="d-flex gap-2">
                                                         <button class="btn btn-sm btn-success" *ngIf="!offer.isApproved"
                                                             (click)="approveRestaurantOffer(requirement, offer)">
-                                                            <i class="bi bi-check-circle me-1"></i> Approve & Select
-                                                            Menu
+                                                            <i class="bi bi-check-circle me-1"></i> View Offer
                                                         </button>
                                                         <button class="btn btn-sm btn-outline-danger"
                                                             *ngIf="offer.isApproved"
@@ -285,10 +284,133 @@
     </div>
 
     <!-- MENU SELECTION MODAL -->
-    <app-menu-selection-modal *ngIf="showMenuModal && selectedOffer && selectedRequirement" [isVisible]="showMenuModal"
-        [restaurantName]="selectedOffer.restaurantName" [offerType]="selectedOffer.mealType || 'Service'"
-        [quotedPricePerHead]="selectedOffer.pricePerHead" [numberOfPeople]="selectedRequirement.estimatedPeople"
-        (onConfirm)="onMenuConfirm($event)" (onClose)="onMenuModalClose()">
+    <app-menu-selection-modal [isVisible]="showMenuModal" [restaurantName]="selectedOffer?.restaurantName || ''"
+        [restaurantId]="selectedOffer?.restaurantId || 0" [offerType]="selectedOffer?.mealType || ''"
+        [quotedPricePerHead]="selectedOffer?.pricePerHead || 0"
+        [numberOfPeople]="selectedRequirement?.estimatedPeople || 0" (onConfirm)="onMenuConfirm($event)"
+        (onClose)="onMenuModalClose()">
     </app-menu-selection-modal>
+
+    <!-- ACCOMMODATION OFFER MODAL -->
+    <div class="modal fade show d-block" *ngIf="showAccommodationModal" tabindex="-1"
+        style="background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 11000;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header border-0">
+                    <div>
+                        <h5 class="modal-title fw-bold">Accommodation Offer Details</h5>
+                        <p class="text-muted small mb-0" *ngIf="selectedRequirement && selectedOffer">
+                            {{ selectedOffer.restaurantName }} - {{ selectedRequirement.location }}
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close" (click)="onAccommodationModalClose()"></button>
+                </div>
+                <div class="modal-body">
+                    <div *ngIf="selectedRequirement && selectedOffer">
+                        <!-- Requirement Info -->
+                        <div class="alert alert-light mb-4">
+                            <h6 class="fw-bold mb-2">Requirement Details</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Location</small>
+                                    <span class="fw-medium">{{ selectedRequirement.location }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Date</small>
+                                    <span class="fw-medium">{{ selectedRequirement.dateNeeded | date:'mediumDate'
+                                        }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">People</small>
+                                    <span class="fw-medium">{{ selectedRequirement.estimatedPeople }} guests</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Duration</small>
+                                    <span class="fw-medium">{{ selectedOffer.stayDurationDays || 1 }} night(s)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Offer Details -->
+                        <div class="card border-primary mb-3">
+                            <div class="card-header bg-primary-subtle border-primary">
+                                <h6 class="fw-bold mb-0 text-primary">
+                                    <i class="bi bi-building me-2"></i>Offer from {{ selectedOffer.restaurantName }}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="small text-muted d-block">Rent Per Room Per Night</label>
+                                        <h5 class="fw-bold text-primary mb-0">PKR {{ selectedOffer.rentPerNight | number
+                                            }}</h5>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted d-block">Room Capacity</label>
+                                        <h5 class="fw-bold mb-0">{{ selectedOffer.perRoomCapacity }} people/room</h5>
+                                    </div>
+                                    <div class="col-12">
+                                        <hr class="my-2">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted d-block">Total Rooms Needed</label>
+                                        <h5 class="fw-bold mb-0">{{ selectedOffer.totalRooms }} rooms</h5>
+                                        <small class="text-muted">
+                                            ({{ selectedRequirement.estimatedPeople }} ÷ {{
+                                            selectedOffer.perRoomCapacity }})
+                                        </small>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="small text-muted d-block">Total Cost</label>
+                                        <h5 class="fw-bold text-success mb-0">PKR {{ selectedOffer.totalRent | number }}
+                                        </h5>
+                                        <small class="text-muted">
+                                            ({{ selectedOffer.totalRooms }} × PKR {{ selectedOffer.rentPerNight | number
+                                            }} × {{ selectedOffer.stayDurationDays }} nights)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Breakdown -->
+                        <div class="alert alert-info">
+                            <h6 class="fw-bold mb-2">
+                                <i class="bi bi-calculator me-2"></i>Cost Breakdown
+                            </h6>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ selectedOffer.totalRooms }} rooms × PKR {{ selectedOffer.rentPerNight | number
+                                    }}/night</span>
+                                <span class="fw-medium">PKR {{ (selectedOffer.totalRooms! * selectedOffer.rentPerNight!)
+                                    | number }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Duration</span>
+                                <span class="fw-medium">{{ selectedOffer.stayDurationDays }} night(s)</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between">
+                                <strong>Total Accommodation Cost</strong>
+                                <strong class="text-success">PKR {{ selectedOffer.totalRent | number }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary"
+                        (click)="onAccommodationModalClose()">Cancel</button>
+                    <button type="button" class="btn btn-success" (click)="approveAccommodationOffer()">
+                        <i class="bi bi-check-circle me-1"></i> Approve Offer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <app-confirmation-modal [isVisible]="showConfirmModal" [title]="confirmTitle" [message]="confirmMessage"
+        [confirmText]="confirmText" [cancelText]="cancelText" [type]="confirmType" (onConfirm)="onConfirmAction()"
+        (onCancel)="onCancelAction()">
+    </app-confirmation-modal>
 
 </div>

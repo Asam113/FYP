@@ -8,6 +8,7 @@ import {
     ServiceType,
     ServiceRequestStatus
 } from '../../../core/models/service-request';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
     selector: 'app-plan-tour',
@@ -67,7 +68,8 @@ export class PlanTour {
 
     constructor(
         private router: Router,
-        private http: HttpClient
+        private http: HttpClient,
+        private toastService: ToastService
     ) { }
 
     /* =======================
@@ -79,7 +81,7 @@ export class PlanTour {
 
     addRequirement(): void {
         if (!this.newReqLocation || !this.newReqDate) {
-            alert('Please fill in Location and Date');
+            this.toastService.show('Please fill in Location and Date', 'warning');
             return;
         }
 
@@ -114,7 +116,7 @@ export class PlanTour {
             !this.maxParticipants ||
             !this.basePrice
         ) {
-            alert('Please fill in all required tour and pricing details');
+            this.toastService.show('Please fill in all required tour and pricing details', 'warning');
             return;
         }
 
@@ -144,12 +146,12 @@ export class PlanTour {
         this.http.post<any>('http://localhost:5238/api/tours', createTourDto)
             .subscribe({
                 next: () => {
-                    alert('Tour created successfully');
+                    this.toastService.show('Tour created successfully', 'success');
                     this.router.navigate(['/admin/manage-tours']);
                 },
                 error: (err) => {
                     console.error(err);
-                    alert(err.error?.message || 'Failed to create tour');
+                    this.toastService.show(err.error?.message || 'Failed to create tour', 'error');
                 }
             });
     }

@@ -85,6 +85,12 @@
         </a>
       </li>
       <li class="nav-item">
+        <a routerLink="/driver/vehicles" class="nav-link text-white my-1 d-flex align-items-center"
+          routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
+          <i class="bi bi-car-front-fill me-3 fs-5"></i> My Vehicles
+        </a>
+      </li>
+      <li class="nav-item">
         <a routerLink="/driver/ratings" class="nav-link text-white my-1 d-flex align-items-center"
           routerLinkActive="active bg-primary shadow-sm" (click)="toggleSidebar()">
           <i class="bi bi-star me-3 fs-5"></i> Ratings & Reviews
@@ -130,7 +136,7 @@
   <div class="content-wrapper d-flex flex-column flex-fill bg-light mobile-content-padding" style="overflow-y: auto;">
 
     <!-- Router Outlet Container -->
-    <div class="animate-fade-in flex-grow-1" style="padding: 30px;">
+    <div class="flex-grow-1" style="padding: 30px;">
       <router-outlet></router-outlet>
     </div>
 

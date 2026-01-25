@@ -7,10 +7,11 @@ const routes: Routes = [
     path: 'dashboard',
     loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard)
   },
-  {
-    path: 'explore-tours',
-    loadComponent: () => import('./explore-tours/explore-tours').then(m => m.ExploreTours)
-  },
+  // Explore Tours removed - restaurants now see tours through Tour Requests tab
+  // {
+  //   path: 'explore-tours',
+  //   loadComponent: () => import('./explore-tours/explore-tours').then(m => m.ExploreTours)
+  // },
   {
     path: 'requests',
     loadComponent: () => import('./requests/requests').then(m => m.Requests)

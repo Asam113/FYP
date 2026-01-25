@@ -28,6 +28,7 @@ const routes: Routes = [
   { path: 'notifications', component: SharedNotificationsComponent },
   { path: 'profile', component: Profile },
   { path: 'settings', component: DriverSettings },
+  { path: 'vehicles', loadComponent: () => import('./vehicles/vehicles').then(m => m.Vehicles) },
   { path: 'find-trips', loadComponent: () => import('./find-trips/find-trips').then(m => m.FindTrips) }
 ];
 

@@ -1,82 +1,55 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { DriverService } from '../../../core/services/driver.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-booked-tours',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, RouterModule],
     templateUrl: './booked-tours.html',
     styleUrl: './booked-tours.css'
 })
-export class BookedTours {
+export class BookedTours implements OnInit {
 
     activeTab: 'confirmed' | 'pending' = 'confirmed';
+    loading: boolean = false;
+    error: string = '';
 
-    confirmedTours = [
-        {
-            id: 1,
-            title: 'Murree Hill Station Tour',
-            status: 'Confirmed',
-            route: 'Islamabad → Murree → Ayubia',
-            date: 'Jan 10, 2026',
-            duration: '2 Days',
-            requirementsStatus: 'All requirements completed • Tour finalized',
-            requirementsStatusClass: 'success',
-            participants: 6,
-            price: 'Rs. 8,500'
-        },
-        {
-            id: 2,
-            title: 'Lahore Heritage Tour',
-            status: 'Confirmed',
-            route: 'Lahore → Badshahi Mosque → Lahore Fort',
-            date: 'Jan 20, 2026',
-            duration: '1 Day',
-            requirementsStatus: 'All requirements completed • Tour finalized',
-            requirementsStatusClass: 'success',
-            participants: 4,
-            price: 'Rs. 6,000'
-        },
-        {
-            id: 3,
-            title: 'Taxila Historical Tour',
-            status: 'Confirmed',
-            route: 'Islamabad → Taxila → Khanpur',
-            date: 'Feb 5, 2026',
-            duration: '1 Day',
-            requirementsStatus: 'All requirements completed • Tour finalized',
-            requirementsStatusClass: 'success',
-            participants: 5,
-            price: 'Rs. 5,500'
-        }
-    ];
+    confirmedTours: any[] = [];
+    pendingTours: any[] = [];
 
-    pendingTours = [
-        {
-            id: 4,
-            title: 'Northern Areas Explorer',
-            status: 'Pending Completion',
-            route: 'Islamabad → Hunza → Gilgit',
-            date: 'Jan 15, 2026',
-            duration: '6 Days',
-            requirementsStatus: 'Driver accepted • Awaiting accommodation confirmation',
-            requirementsStatusClass: 'warning',
-            participants: 12,
-            price: 'Rs. 25,000'
-        },
-        {
-            id: 5,
-            title: 'Neelum Valley Tour',
-            status: 'Pending Completion',
-            route: 'Muzaffarabad → Neelum Valley',
-            date: 'Jan 28, 2026',
-            duration: '4 Days',
-            requirementsStatus: 'Driver accepted • 1 more driver needed',
-            requirementsStatusClass: 'warning',
-            participants: 8,
-            price: 'Rs. 18,000'
+    constructor(
+        private driverService: DriverService,
+        private authService: AuthService
+    ) { }
+
+    ngOnInit(): void {
+        this.loadBookedTours();
+    }
+
+    loadBookedTours(): void {
+        const user = this.authService.getUser();
+        if (!user || user.role !== 'Driver' || !user.roleSpecificId) {
+            this.error = 'Driver information not found';
+            return;
         }
-    ];
+
+        this.loading = true;
+        this.driverService.getBookedTours(user.roleSpecificId).subscribe({
+            next: (data) => {
+                this.confirmedTours = data.confirmedTours;
+                this.pendingTours = data.pendingTours;
+                this.loading = false;
+            },
+            error: (err) => {
+                console.error('Error loading booked tours:', err);
+                this.error = 'Failed to load booked tours';
+                this.loading = false;
+            }
+        });
+    }
 
     setActiveTab(tab: 'confirmed' | 'pending') {
         this.activeTab = tab;
