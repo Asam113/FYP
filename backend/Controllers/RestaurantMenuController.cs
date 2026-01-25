@@ -10,7 +10,7 @@ using backend.Models.DTOs; // Assuming we might need DTOs, or we can use primiti
 
 namespace backend.Controllers;
 
-[Authorize(Roles = "Restaurant")]
+[Authorize(Roles = "Restaurant,Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class RestaurantMenuController : ControllerBase
@@ -31,19 +31,32 @@ public class RestaurantMenuController : ControllerBase
         {
             return id;
         }
-        throw new UnauthorizedAccessException("Restaurant ID not found in token.");
+        // If Admin, this might return null or 0, handling needed in methods
+        return 0; 
     }
 
     // GET: api/RestaurantMenu
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Menu>>> GetMenus()
+    public async Task<ActionResult<IEnumerable<Menu>>> GetMenus([FromQuery] int? restaurantId)
     {
         try
         {
-            var restaurantId = GetRestaurantId();
+            int targetRestaurantId;
+
+            if (User.IsInRole("Admin"))
+            {
+                if (!restaurantId.HasValue) return BadRequest("Restaurant ID required for Admin");
+                targetRestaurantId = restaurantId.Value;
+            }
+            else
+            {
+                targetRestaurantId = GetRestaurantId();
+                if (targetRestaurantId == 0) return Unauthorized("Restaurant ID not found in token.");
+            }
+
             var menus = await _context.Menus
                 .Include(m => m.MenuItems)
-                .Where(m => m.RestaurantId == restaurantId)
+                .Where(m => m.RestaurantId == targetRestaurantId)
                 .ToListAsync();
 
             return Ok(menus);

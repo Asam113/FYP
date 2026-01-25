@@ -22,6 +22,19 @@ public class RestaurantOffer : Offer
 
     public bool IncludesBeverages { get; set; } = false;
 
+    // Accommodation-specific fields (nullable for backward compatibility with meal offers)
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? RentPerNight { get; set; }
+
+    public int? PerRoomCapacity { get; set; }
+
+    public int? TotalRooms { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? TotalRent { get; set; }
+
+    public int? StayDurationDays { get; set; }
+
     [Required]
     [ForeignKey("ServiceRequirement")]
     public int RequirementId { get; set; } // KEY CHANGE: Link to requirement, not tour

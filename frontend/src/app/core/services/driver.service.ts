@@ -17,4 +17,12 @@ export class DriverService {
     updateDriverStatus(driverId: number, status: string): Observable<any> {
         return this.http.put(`${this.apiUrl}/${driverId}/status`, { status });
     }
+
+    getDriverById(driverId: number): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/${driverId}`);
+    }
+
+    getBookedTours(driverId: number): Observable<any> {
+        return this.http.get<any>(`http://localhost:5238/api/offers/driver/booked-tours/${driverId}`);
+    }
 }

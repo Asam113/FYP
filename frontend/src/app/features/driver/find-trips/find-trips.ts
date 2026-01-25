@@ -1,8 +1,31 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ServiceRequest, ServiceType, ServiceRequestStatus } from '../../../core/models/service-request';
-import { ServiceOffer, PricingUnit, OfferStatus } from '../../../core/models/service-offer';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+
+interface Tour {
+    tourId: number;
+    title: string;
+    description: string;
+    destination: string;
+    departureLocation: string;
+    startDate: string;
+    endDate: string;
+    maxCapacity: number;
+    pricePerHead: number;
+    status: number; // Enum value
+    durationDays: number;
+}
+
+interface Vehicle {
+    vehicleId: number;
+    registrationNumber: string;
+    vehicleType: string;
+    model: string;
+    capacity: number;
+}
 
 @Component({
     selector: 'app-find-trips',
@@ -11,61 +34,106 @@ import { ServiceOffer, PricingUnit, OfferStatus } from '../../../core/models/ser
     templateUrl: './find-trips.html',
     styleUrl: './find-trips.css'
 })
-export class FindTrips {
-
-    // Mock Data mimicking Transport requests
-    requests: ServiceRequest[] = [
-        {
-            serviceRequestId: 501,
-            tourId: 55,
-            serviceType: ServiceType.Transport,
-            location: 'Islamabad -> Naran',
-            dateNeeded: '2026-06-15',
-            estimatedBudget: 50000,
-            status: ServiceRequestStatus.Open
-        },
-        {
-            serviceRequestId: 502,
-            tourId: 62,
-            serviceType: ServiceType.Transport,
-            location: 'Lahore -> Hunza',
-            dateNeeded: '2026-07-01',
-            estimatedBudget: 150000,
-            status: ServiceRequestStatus.Open
-        }
-    ];
-
-    selectedRequest: ServiceRequest | null = null;
+export class FindTrips implements OnInit {
+    tours: Tour[] = [];
+    vehicles: Vehicle[] = [];
+    isLoading = true;
+    selectedTour: Tour | null = null;
 
     // Offer Form
     offerPrice: number | null = null;
     offerDescription: string = '';
+    selectedVehicleId: number | null = null;
 
-    openOfferModal(req: ServiceRequest) {
-        this.selectedRequest = req;
+    constructor(
+        private http: HttpClient,
+        private authService: AuthService,
+        private toastService: ToastService
+    ) { }
+
+    ngOnInit() {
+        this.loadTours();
+        this.loadVehicles();
+    }
+
+    loadTours() {
+        this.isLoading = true;
+        this.http.get<Tour[]>('http://localhost:5238/api/tours').subscribe({
+            next: (data) => {
+                // Filter open tours that might need transport
+                // In a real app, maybe only show tours with status "Draft" or "Open"
+                this.tours = data;
+                this.isLoading = false;
+            },
+            error: (err) => {
+                console.error('Error loading tours:', err);
+                this.toastService.show('Failed to load tours.', 'error');
+                this.isLoading = false;
+            }
+        });
+    }
+
+    loadVehicles() {
+        const user = this.authService.getUser();
+        if (user && user.roleSpecificId) {
+            this.http.get<Vehicle[]>(`http://localhost:5238/api/vehicles/driver/${user.roleSpecificId}`).subscribe({
+                next: (data) => {
+                    this.vehicles = data;
+                    if (this.vehicles.length > 0) {
+                        this.selectedVehicleId = this.vehicles[0].vehicleId;
+                    }
+                },
+                error: (err) => {
+                    console.error('Error loading vehicles:', err);
+                }
+            });
+        }
+    }
+
+    openOfferModal(tour: Tour) {
+        this.selectedTour = tour;
         this.offerPrice = null;
         this.offerDescription = '';
+        if (this.vehicles.length > 0 && !this.selectedVehicleId) {
+            this.selectedVehicleId = this.vehicles[0].vehicleId;
+        }
     }
 
     closeOfferModal() {
-        this.selectedRequest = null;
+        this.selectedTour = null;
     }
 
     submitOffer() {
-        if (!this.selectedRequest || !this.offerPrice) return;
+        if (!this.selectedTour || !this.offerPrice || !this.selectedVehicleId) {
+            this.toastService.show('Please fill in all required fields.', 'warning');
+            return;
+        }
 
-        const newOffer: ServiceOffer = {
-            serviceRequestId: this.selectedRequest.serviceRequestId!,
-            vendorId: 2, // Driver ID
-            price: this.offerPrice,
-            unit: PricingUnit.FixedTotal, // Usually fixed for transport trips
-            quantityOffered: 1,
-            description: this.offerDescription,
-            status: OfferStatus.Pending
+        const offerData = {
+            tourId: this.selectedTour.tourId,
+            vehicleId: this.selectedVehicleId,
+            quotedPrice: this.offerPrice,
+            additionalNotes: this.offerDescription
         };
 
-        console.log('Submitting Transport Bid:', newOffer);
-        alert('Bid Sent Successfully!');
-        this.closeOfferModal();
+        this.http.post('http://localhost:5238/api/offers/driver', offerData).subscribe({
+            next: (res) => {
+                this.toastService.show('Bid Sent Successfully!', 'success');
+                this.closeOfferModal();
+            },
+            error: (err) => {
+                console.error('Error submitting offer:', err);
+                const errorMsg = err.error || 'Failed to submit bid.';
+                this.toastService.show(errorMsg, 'error');
+            }
+        });
+    }
+
+    formatDate(dateStr: string): string {
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     }
 }

@@ -1,22 +1,23 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core'; // Added OnChanges
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 interface MenuItem {
-    itemId: number;
-    itemName: string;
-    price: number;
-    description?: string;
-    selected: boolean;
-    quantity: number;
+  itemId: number;
+  itemName: string;
+  price: number;
+  description?: string;
+  selected: boolean;
+  quantity: number;
 }
 
 @Component({
-    selector: 'app-menu-selection-modal',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    template: `
-    <div class="modal fade show d-block" *ngIf="isVisible" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+  selector: 'app-menu-selection-modal',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="modal fade show d-block" *ngIf="isVisible" tabindex="-1" style="background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 11000;">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content rounded-4 shadow">
           <div class="modal-header border-0 pb-0">
@@ -35,8 +36,21 @@ interface MenuItem {
               <div class="fw-bold">Total: PKR {{ quotedTotal | number }}</div>
             </div>
 
+            <!-- Loading State -->
+            <div *ngIf="loading" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="text-muted mt-2">Loading menu items...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!loading && menuItems.length === 0" class="text-center py-4">
+               <p class="text-muted">No menu items found for this restaurant.</p>
+            </div>
+
             <!-- Menu Items Selection -->
-            <div class="mb-3">
+            <div class="mb-3" *ngIf="!loading && menuItems.length > 0">
               <h6 class="fw-bold mb-3">Available Menu Items</h6>
               <div class="list-group">
                 <div *ngFor="let item of menuItems" class="list-group-item border rounded-3 mb-2">
@@ -102,68 +116,94 @@ interface MenuItem {
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal.show {
       display: block;
     }
   `]
 })
 export class MenuSelectionModal {
-    @Input() isVisible: boolean = false;
-    @Input() restaurantName: string = '';
-    @Input() offerType: string = '';
-    @Input() quotedPricePerHead: number = 0;
-    @Input() numberOfPeople: number = 0;
-    @Output() onConfirm = new EventEmitter<MenuItem[]>();
-    @Output() onClose = new EventEmitter<void>();
+  @Input() isVisible: boolean = false;
+  @Input() restaurantName: string = '';
+  @Input() restaurantId: number = 0;
+  @Input() offerType: string = '';
+  @Input() quotedPricePerHead: number = 0;
+  @Input() numberOfPeople: number = 0;
+  @Output() onConfirm = new EventEmitter<MenuItem[]>();
+  @Output() onClose = new EventEmitter<void>();
 
-    menuItems: MenuItem[] = [];
-    selectedTotal: number = 0;
-    quotedTotal: number = 0;
-    difference: number = 0;
-    differencePercent: number = 0;
-    isWithinTolerance: boolean = false;
+  menuItems: MenuItem[] = [];
+  selectedTotal: number = 0;
+  quotedTotal: number = 0;
+  difference: number = 0;
+  differencePercent: number = 0;
+  isWithinTolerance: boolean = true; // Default true to allow proceeding if prices match exactly initially or are ignored? No, logic updates it.
+  loading: boolean = false;
 
-    ngOnInit() {
-        // Mock menu items - in real app, fetch from API
-        this.menuItems = [
-            { itemId: 1, itemName: 'Chicken Biryani', price: 400, description: 'Traditional aromatic rice dish', selected: false, quantity: this.numberOfPeople },
-            { itemId: 2, itemName: 'Raita', price: 50, description: 'Yogurt side dish', selected: false, quantity: this.numberOfPeople },
-            { itemId: 3, itemName: 'Salad', price: 50, description: 'Fresh garden salad', selected: false, quantity: this.numberOfPeople },
-            { itemId: 4, itemName: 'Cold Drink', price: 100, description: 'Soft drinks', selected: false, quantity: this.numberOfPeople },
-            { itemId: 5, itemName: 'Dessert', price: 150, description: 'Sweet dish', selected: false, quantity: this.numberOfPeople }
-        ];
+  constructor(private http: HttpClient) { }
 
-        this.quotedTotal = this.quotedPricePerHead * this.numberOfPeople;
-        this.updateCalculations();
+  ngOnChanges() {
+    console.log('MenuSelectionModal ngOnChanges:', { isVisible: this.isVisible, restaurantId: this.restaurantId });
+    if (this.isVisible && this.restaurantId) {
+      this.loadMenu();
+      this.quotedTotal = this.quotedPricePerHead * this.numberOfPeople;
+      this.updateCalculations();
     }
+  }
 
-    updateCalculations() {
-        this.selectedTotal = this.menuItems
-            .filter(item => item.selected)
-            .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-        this.difference = Math.abs(this.selectedTotal - this.quotedTotal);
-        this.differencePercent = (this.difference / this.quotedTotal) * 100;
-        this.isWithinTolerance = this.differencePercent <= 5;
-    }
-
-    get selectedItems(): MenuItem[] {
-        return this.menuItems.filter(item => item.selected);
-    }
-
-    getDifferenceClass(): string {
-        if (this.isWithinTolerance) return 'text-success fw-bold';
-        return 'text-warning fw-bold';
-    }
-
-    confirm() {
-        if (this.isWithinTolerance && this.selectedItems.length > 0) {
-            this.onConfirm.emit(this.selectedItems);
+  loadMenu() {
+    this.loading = true;
+    const url = `http://localhost:5238/api/restaurantmenu?restaurantId=${this.restaurantId}`;
+    console.log('Loading menu from:', url);
+    this.http.get<any[]>(url)
+      .subscribe({
+        next: (menus) => {
+          console.log('Menu loaded:', menus);
+          // Flatten menus to items
+          this.menuItems = menus.flatMap(m => m.menuItems || []).map((item: any) => ({
+            itemId: item.itemId,
+            itemName: item.itemName,
+            price: item.price,
+            description: item.description,
+            selected: false,
+            quantity: this.numberOfPeople // Default to total people
+          }));
+          this.loading = false;
+          this.updateCalculations();
+        },
+        error: (err) => {
+          console.error('Error loading menu', err);
+          this.loading = false;
         }
-    }
+      });
+  }
 
-    close() {
-        this.onClose.emit();
+  updateCalculations() {
+    this.selectedTotal = this.menuItems
+      .filter(item => item.selected)
+      .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    this.difference = Math.abs(this.selectedTotal - this.quotedTotal);
+    this.differencePercent = (this.difference / this.quotedTotal) * 100;
+    this.isWithinTolerance = this.differencePercent <= 5;
+  }
+
+  get selectedItems(): MenuItem[] {
+    return this.menuItems.filter(item => item.selected);
+  }
+
+  getDifferenceClass(): string {
+    if (this.isWithinTolerance) return 'text-success fw-bold';
+    return 'text-warning fw-bold';
+  }
+
+  confirm() {
+    if (this.isWithinTolerance && this.selectedItems.length > 0) {
+      this.onConfirm.emit(this.selectedItems);
     }
+  }
+
+  close() {
+    this.onClose.emit();
+  }
 }

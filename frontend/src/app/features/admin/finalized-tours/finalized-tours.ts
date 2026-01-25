@@ -13,6 +13,7 @@ interface Tour {
     basePrice: number;
     serviceRequirements: ServiceRequirement[];
     driverOffers: DriverOffer[];
+    status: number;
 }
 
 interface ServiceRequirement {
@@ -88,25 +89,27 @@ export class FinalizedTours implements OnInit {
         this.http.get<Tour[]>('http://localhost:5238/api/tours')
             .subscribe({
                 next: (tours) => {
-                    // Filter to show only intermediate tours (newly created, waiting for offers)
-                    this.tours = tours.map(tour => {
-                        const allRestaurantOffers = tour.serviceRequirements
-                            .flatMap(req => req.restaurantOffers || []);
+                    // Filter to show only finalized tours
+                    this.tours = tours
+                        .filter(tour => tour.status === 2) // 2 = Finalized in TourStatus enum
+                        .map(tour => {
+                            const allRestaurantOffers = tour.serviceRequirements
+                                .flatMap(req => req.restaurantOffers || []);
 
-                        return {
-                            id: tour.tourId,
-                            name: tour.title,
-                            destination: tour.destination,
-                            duration: `${new Date(tour.startDate).toLocaleDateString()} - ${new Date(tour.endDate).toLocaleDateString()}`,
-                            pricePerPerson: tour.basePrice,
-                            totalSeats: tour.maxCapacity,
-                            hasDriverOffer: (tour.driverOffers?.length || 0) > 0,
-                            hasRestaurantOffer: allRestaurantOffers.length > 0,
-                            driverOffers: tour.driverOffers || [],
-                            restaurantOffers: allRestaurantOffers,
-                            serviceRequirements: tour.serviceRequirements || []
-                        };
-                    });
+                            return {
+                                id: tour.tourId,
+                                name: tour.title,
+                                destination: tour.destination,
+                                duration: `${new Date(tour.startDate).toLocaleDateString()} - ${new Date(tour.endDate).toLocaleDateString()}`,
+                                pricePerPerson: tour.basePrice,
+                                totalSeats: tour.maxCapacity,
+                                hasDriverOffer: (tour.driverOffers?.length || 0) > 0,
+                                hasRestaurantOffer: allRestaurantOffers.length > 0,
+                                driverOffers: tour.driverOffers || [],
+                                restaurantOffers: allRestaurantOffers,
+                                serviceRequirements: tour.serviceRequirements || []
+                            };
+                        });
                     this.loading = false;
                 },
                 error: (err) => {

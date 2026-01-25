@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface Tour {
     tourId: number;
@@ -46,7 +47,7 @@ export class FindTours implements OnInit {
     quotedPrice: number | null = null;
     additionalNotes: string = '';
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private toastService: ToastService) { }
 
     ngOnInit() {
         this.loadTours();
@@ -107,7 +108,7 @@ export class FindTours implements OnInit {
 
     submitOffer() {
         if (!this.selectedTour || !this.selectedVehicleId || !this.quotedPrice) {
-            alert('Please fill in all required fields');
+            this.toastService.show('Please fill in all required fields', 'warning');
             return;
         }
 
@@ -121,12 +122,12 @@ export class FindTours implements OnInit {
         this.http.post('http://localhost:5238/api/offers/driver', offerData).subscribe({
             next: (response) => {
                 console.log('Offer submitted:', response);
-                alert(`Offer submitted successfully for "${this.selectedTour?.title}"!`);
+                this.toastService.show(`Offer submitted successfully for "${this.selectedTour?.title}"!`, 'success');
                 this.closeOfferModal();
             },
             error: (err) => {
                 console.error('Error submitting offer:', err);
-                alert('Failed to submit offer: ' + (err.error?.message || err.message));
+                this.toastService.show('Failed to submit offer: ' + (err.error?.message || err.message), 'error');
             }
         });
     }

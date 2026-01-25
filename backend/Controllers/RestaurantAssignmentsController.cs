@@ -28,7 +28,7 @@ public class RestaurantAssignmentsController : ControllerBase
         var assignments = await _context.RestaurantAssignments
             .Include(a => a.Tour)
             .Include(a => a.ServiceRequirement)
-            .Include(a => a.RestaurantOffer)
+            .Include(a => a.RestaurantOffer!)
                 .ThenInclude(o => o.OfferMenuItems)
                     .ThenInclude(om => om.MenuItem)
             .Where(a => a.RestaurantId == restaurantId)

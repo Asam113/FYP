@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Tour } from '../../../core/models/tour.interface';
 import { TourService } from '../../../core/services/tour.service';
 import { BookingService } from '../../../core/services/booking.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -29,7 +30,8 @@ export class TourDetailsComponent implements OnInit {
         private route: ActivatedRoute,
         private router: Router,
         private tourService: TourService,
-        private bookingService: BookingService
+        private bookingService: BookingService,
+        private toastService: ToastService
     ) { }
 
     ngOnInit(): void {
@@ -94,12 +96,12 @@ export class TourDetailsComponent implements OnInit {
 
         this.bookingService.createBooking(bookingRequest).subscribe({
             next: (res) => {
-                alert('Booking Successful!');
+                this.toastService.show('Booking Successful!', 'success');
                 this.router.navigate(['/tourist/dashboard']);
             },
             error: (err) => {
                 console.error('Booking failed', err);
-                alert('Booking Failed: ' + (err.error || err.message));
+                this.toastService.show('Booking Failed: ' + (err.error || err.message), 'error');
             }
         });
     }

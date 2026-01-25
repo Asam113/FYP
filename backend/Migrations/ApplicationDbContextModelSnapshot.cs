@@ -1259,10 +1259,25 @@ namespace backend.Migrations
                     b.Property<int>("MinimumPeople")
                         .HasColumnType("int");
 
+                    b.Property<int?>("PerRoomCapacity")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("PricePerHead")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("RentPerNight")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("RequirementId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("StayDurationDays")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("TotalRent")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("TotalRooms")
                         .HasColumnType("int");
 
                     b.HasIndex("ProviderId");

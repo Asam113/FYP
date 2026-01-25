@@ -1,7 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms'; // Added form module
 import { MenuSelectionModal } from '../../../shared/menu-selection-modal/menu-selection-modal';
+import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 
 // Backend API Interfaces
 interface ApiTour {
@@ -15,6 +20,7 @@ interface ApiTour {
   basePrice: number;
   serviceRequirements: ApiServiceRequirement[];
   driverOffers: ApiDriverOffer[];
+  status: number;
 }
 
 interface ApiServiceRequirement {
@@ -38,7 +44,7 @@ interface ApiDriverOffer {
   status: string;
   driver: {
     user: {
-      fullName: string;
+      name: string;
     };
   };
   vehicle: {
@@ -49,9 +55,16 @@ interface ApiDriverOffer {
 
 interface ApiRestaurantOffer {
   offerId: number;
-  pricePerPerson: number;
+  pricePerHead: number;
   status: string;
+  // Accommodation fields
+  rentPerNight?: number;
+  perRoomCapacity?: number;
+  totalRooms?: number;
+  totalRent?: number;
+  stayDurationDays?: number;
   restaurant: {
+    restaurantId: number;
     user: {
       fullName: string;
     };
@@ -83,6 +96,12 @@ interface Tour {
     details?: string;
     offersCount?: number;
   };
+  transportState?: {
+    capacity: number;
+    filled: number;
+    remaining: number;
+    status: string;
+  };
 }
 
 interface DriverOffer {
@@ -94,6 +113,7 @@ interface DriverOffer {
   price: string;
   isApproved: boolean;
   offerId: number;
+  status: string;
 }
 
 interface ServiceRequirement {
@@ -111,20 +131,28 @@ interface ServiceRequirement {
 interface RestaurantOffer {
   offerId: number;
   restaurantName: string;
+  restaurantId?: number;
+  // Meal fields
   pricePerHead: number;
   minimumPeople: number;
   maximumPeople: number;
   mealType?: string;
   includesBeverages: boolean;
+  // Accommodation fields
+  rentPerNight?: number;
+  perRoomCapacity?: number;
+  totalRooms?: number;
+  totalRent?: number;
+  stayDurationDays?: number;
   isApproved: boolean;
 }
 
 @Component({
   selector: 'app-manage-tours',
   standalone: true,
-  imports: [CommonModule, MenuSelectionModal],
+  imports: [CommonModule, FormsModule, MenuSelectionModal, ConfirmationModalComponent],
   templateUrl: './manage-tours.html',
-  styleUrl: './manage-tours.css'
+  styleUrls: ['./manage-tours.css']
 })
 export class ManageTours implements OnInit {
 
@@ -137,19 +165,31 @@ export class ManageTours implements OnInit {
   currentDriverOffers: DriverOffer[] = [];
   serviceRequirements: ServiceRequirement[] = [];
 
-  // Menu selection modal state
-  showMenuModal: boolean = false;
+  tours: Tour[] = [];
+  loading: boolean = false;
+  error = '';
+
+  // Menu Modal State
   selectedRequirement: ServiceRequirement | null = null;
   selectedOffer: RestaurantOffer | null = null;
+  showMenuModal: boolean = false;
 
-  tours: Tour[] = [];
-  loading = true;
-  error = '';
+  // Accommodation Offer Modal State
+  showAccommodationModal: boolean = false;
+
+  // Confirmation Modal State
+  showConfirmModal: boolean = false;
+  confirmTitle: string = '';
+  confirmMessage: string = '';
+  confirmText: string = 'Confirm';
+  cancelText: string = 'Cancel';
+  confirmType: 'danger' | 'warning' | 'info' = 'info';
+  private confirmAction: (() => void) | null = null;
 
   // Store raw API data
   private apiTours: ApiTour[] = [];
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private toastService: ToastService) { } // Added toastService
 
   ngOnInit(): void {
     this.loadTours();
@@ -160,13 +200,17 @@ export class ManageTours implements OnInit {
       .subscribe({
         next: (apiTours) => {
           this.apiTours = apiTours;
-          this.tours = apiTours.map(tour => this.mapApiTourToDisplayTour(tour));
+          // Filter to show only non-finalized tours in the Intermediate tab
+          this.tours = apiTours
+            .filter(tour => tour.status < 2) // 0=Draft, 1=Published
+            .map(tour => this.mapApiTourToDisplayTour(tour));
           this.loading = false;
         },
         error: (err) => {
           console.error('Error loading tours:', err);
           this.error = 'Failed to load tours';
           this.loading = false;
+          this.toastService.show('Failed to load tours. Please try again.', 'error');
         }
       });
   }
@@ -211,7 +255,7 @@ export class ManageTours implements OnInit {
       transport: {
         hasService: driverOffers.length > 0,
         status: hasAcceptedDriver ? 'Accepted' : 'Pending',
-        provider: acceptedDriverOffer?.driver?.user?.fullName,
+        provider: acceptedDriverOffer?.driver?.user?.name,
         details: acceptedDriverOffer ? `PKR ${acceptedDriverOffer.transportationFare.toLocaleString()}` : undefined,
         offersCount: pendingDriverOffers.length
       },
@@ -219,9 +263,10 @@ export class ManageTours implements OnInit {
         hasService: serviceRequirements.length > 0,
         status: hasAcceptedRestaurant ? 'Accepted' : (pendingRestaurantOffers.length > 0 ? 'Pending' : 'Alert'),
         provider: acceptedRestaurantOffer?.restaurant?.restaurantName,
-        details: acceptedRestaurantOffer ? `PKR ${acceptedRestaurantOffer.pricePerPerson.toLocaleString()}/person` : undefined,
+        details: acceptedRestaurantOffer ? `PKR ${acceptedRestaurantOffer.pricePerHead.toLocaleString()}/person` : undefined,
         offersCount: pendingRestaurantOffers.length
-      }
+      },
+      transportState: { capacity: 0, filled: 0, remaining: apiTour.maxCapacity || 0, status: 'Open' } // Added for the new logic
     };
   }
 
@@ -238,6 +283,7 @@ export class ManageTours implements OnInit {
     if (apiTour) {
       this.loadDriverOffers(apiTour);
       this.loadServiceRequirements(apiTour);
+      this.calculateTransportState(tour.id); // Added for the new logic
     }
   }
 
@@ -245,19 +291,16 @@ export class ManageTours implements OnInit {
     this.currentDriverOffers = (apiTour.driverOffers || []).map(offer => ({
       id: offer.offerId,
       offerId: offer.offerId,
-      driverName: offer.driver.user.fullName,
+      driverName: offer.driver.user.name,
       vehicleModel: offer.vehicle.model,
       vehicleParams: offer.vehicle.model,
       capacity: offer.vehicle.capacity,
       price: `PKR ${offer.transportationFare.toLocaleString()}`,
-      isApproved: offer.status.toLowerCase() === 'accepted'
+      isApproved: offer.status.toLowerCase() === 'accepted',
+      status: offer.status // Added for the new logic
     }));
 
-    // Calculate filled capacity from approved offers
-    this.filledCapacity = this.currentDriverOffers
-      .filter(o => o.isApproved)
-      .reduce((sum, o) => sum + o.capacity, 0);
-    this.calculateRemaining();
+    this.calculateTransportState(apiTour.tourId);
   }
 
   private loadServiceRequirements(apiTour: ApiTour): void {
@@ -273,11 +316,19 @@ export class ManageTours implements OnInit {
       offers: (req.restaurantOffers || []).map(offer => ({
         offerId: offer.offerId,
         restaurantName: offer.restaurant.restaurantName,
-        pricePerHead: offer.pricePerPerson,
+        restaurantId: offer.restaurant.restaurantId,
+        // Meal fields
+        pricePerHead: offer.pricePerHead || 0,
         minimumPeople: 1,
         maximumPeople: 100,
         mealType: req.type,
         includesBeverages: false,
+        // Accommodation fields
+        rentPerNight: offer.rentPerNight,
+        perRoomCapacity: offer.perRoomCapacity,
+        totalRooms: offer.totalRooms,
+        totalRent: offer.totalRent,
+        stayDurationDays: offer.stayDurationDays || req.stayDurationDays,
         isApproved: offer.status.toLowerCase() === 'accepted'
       }))
     }));
@@ -291,31 +342,103 @@ export class ManageTours implements OnInit {
     if (!this.selectedTour) return;
 
     const newStatus = !offer.isApproved;
+    // For rejection/unapproval, use confirmation modal
+    if (!newStatus) { // i.e., Rejecting or Unapproving (though logic here toggles)
+      // If currently approved, we are unapproving (rejecting?)
+      if (offer.isApproved) {
+        this.confirmTitle = 'Unapprove Driver Offer?';
+        this.confirmMessage = 'Are you sure you want to unapprove this driver offer?';
+        this.confirmText = 'Unapprove';
+        this.confirmType = 'warning';
+        this.confirmAction = () => this.executeDriverToggle(offer, false);
+        this.showConfirmModal = true;
+        return;
+      }
+    }
 
-    // Call backend API to update offer status
-    const endpoint = `http://localhost:5238/api/driver-offers/${offer.offerId}/${newStatus ? 'accept' : 'reject'}`;
+    this.executeDriverToggle(offer, newStatus);
+  }
+
+  executeDriverToggle(offer: DriverOffer, newStatus: boolean) {
+    const endpoint = `http://localhost:5238/api/offers/driver/${offer.offerId}/${newStatus ? 'accept' : 'reject'}`;
 
     this.http.put(endpoint, {}).subscribe({
       next: () => {
         offer.isApproved = newStatus;
         if (newStatus) {
-          this.filledCapacity += offer.capacity;
+          offer.status = 'Accepted';
+          this.toastService.show('Driver offer accepted successfully', 'success');
         } else {
-          this.filledCapacity -= offer.capacity;
+          offer.status = 'Rejected'; // Or Pending? logic was just toggling approved flag.
+          this.toastService.show('Driver offer unapproved/rejected', 'info');
         }
-        this.calculateRemaining();
+
+        this.calculateTransportState(this.selectedTour!.id);
+        this.syncApiTourState(this.selectedTour!.id); // Persist change to apiTours and list view
       },
       error: (err) => {
-        console.error('Error updating driver offer:', err);
-        alert('Failed to update offer status');
+        console.error('Error updating driver offer', err);
+        this.toastService.show('Failed to update driver offer status', 'error');
+        // Revert UI state if needed
+        offer.isApproved = !newStatus;
       }
     });
   }
 
-  calculateRemaining() {
-    if (!this.selectedTour) return;
-    const total = this.selectedTour.participants;
-    this.remainingNeeded = total - this.filledCapacity;
+  rejectDriverOffer(offer: DriverOffer) {
+    this.confirmTitle = 'Reject Driver Offer';
+    this.confirmMessage = 'Are you sure you want to reject this driver offer?';
+    this.confirmText = 'Reject';
+    this.confirmType = 'danger';
+
+    this.confirmAction = () => {
+      const endpoint = `http://localhost:5238/api/offers/driver/${offer.offerId}/reject`;
+      this.http.put(endpoint, {}).subscribe({
+        next: () => {
+          offer.status = 'Rejected';
+          offer.isApproved = false;
+          this.calculateTransportState(this.selectedTour!.id);
+          this.syncApiTourState(this.selectedTour!.id); // Persist change to apiTours and list view
+          this.toastService.show('Driver offer rejected', 'info');
+        },
+        error: (err) => {
+          console.error('Error rejecting offer', err);
+          this.toastService.show('Failed to reject offer', 'error');
+        }
+      });
+    };
+    this.showConfirmModal = true;
+  }
+
+  calculateTransportState(tourId: number) {
+    const tour = this.tours.find(t => t.id === tourId);
+    if (!tour) return;
+
+    const apiTour = this.apiTours.find(t => t.tourId === tourId);
+    if (!apiTour) return;
+
+    const approvedOffers = this.currentDriverOffers.filter(o => o.isApproved);
+    const filled = approvedOffers.reduce((sum, o) => sum + o.capacity, 0);
+    const remaining = tour.participants - filled;
+
+    // Synchronize component-level tracking properties if this is the selected tour
+    if (this.selectedTour && this.selectedTour.id === tourId) {
+      this.filledCapacity = filled;
+      this.remainingNeeded = remaining;
+    }
+
+    tour.transportState = {
+      capacity: tour.participants,
+      filled: filled,
+      remaining: remaining,
+      status: remaining <= 0 ? 'Fulfilled' : 'Open'
+    };
+
+    // Update the main tour object's transport status
+    tour.transport.status = remaining <= 0 ? 'Accepted' : 'Pending';
+    tour.transport.provider = approvedOffers.length > 0 ? approvedOffers[0].driverName : undefined;
+    tour.transport.details = approvedOffers.length > 0 ? `PKR ${approvedOffers[0].price.toLocaleString()}` : undefined;
+    tour.transport.offersCount = this.currentDriverOffers.filter(o => o.status.toLowerCase() === 'pending').length;
   }
 
   getRequirementStatusClass(status: string): string {
@@ -323,15 +446,23 @@ export class ManageTours implements OnInit {
       case 'Open': return 'bg-warning text-dark';
       case 'Fulfilled': return 'bg-success text-white';
       case 'Cancelled': return 'bg-danger text-white';
+      case 'Resolved': return 'bg-success text-white'; // Added for the new logic
       default: return 'bg-secondary text-white';
     }
   }
 
   approveRestaurantOffer(requirement: ServiceRequirement, offer: RestaurantOffer) {
-    // Open menu selection modal
     this.selectedRequirement = requirement;
     this.selectedOffer = offer;
-    this.showMenuModal = true;
+
+    // Check requirement type and show appropriate modal
+    if (requirement.type === 'Meal') {
+      // Open menu selection modal for meal requirements
+      this.showMenuModal = true;
+    } else if (requirement.type === 'Accommodation') {
+      // Open accommodation offer modal for accommodation requirements
+      this.showAccommodationModal = true;
+    }
   }
 
   onMenuConfirm(selectedItems: any[]) {
@@ -341,17 +472,21 @@ export class ManageTours implements OnInit {
     console.log('Selected items:', selectedItems);
 
     // Call backend API
-    this.http.post(`http://localhost:5238/api/restaurant-offers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: selectedItems })
+    this.http.post(`http://localhost:5238/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: selectedItems })
       .subscribe({
         next: () => {
           // Mark as approved
-          this.selectedOffer!.isApproved = true;
-          this.selectedRequirement!.status = 'Fulfilled';
-          alert('Restaurant offer approved and order created!');
+          if (this.selectedOffer) {
+            this.selectedOffer.isApproved = true;
+            this.selectedRequirement!.status = 'Resolved'; // Update requirement status locally
+          }
+          this.syncApiTourState(this.selectedTour!.id);
+          this.showMenuModal = false;
+          this.toastService.show('Restaurant offer accepted successfully', 'success');
         },
         error: (err) => {
-          console.error('Error approving restaurant offer:', err);
-          alert('Failed to approve offer.');
+          console.error('Error approving offer:', err);
+          this.toastService.show('Failed to approve offer', 'error');
         }
       });
 
@@ -367,39 +502,101 @@ export class ManageTours implements OnInit {
     this.selectedOffer = null;
   }
 
+  onAccommodationModalClose() {
+    this.showAccommodationModal = false;
+    this.selectedRequirement = null;
+    this.selectedOffer = null;
+  }
+
+  approveAccommodationOffer() {
+    if (!this.selectedRequirement || !this.selectedOffer) return;
+
+    console.log('Approving accommodation offer:', this.selectedOffer.offerId);
+
+    // Call backend API to approve accommodation offer
+    this.http.post(`http://localhost:5238/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: [] })
+      .subscribe({
+        next: () => {
+          // Mark as approved
+          if (this.selectedOffer) {
+            this.selectedOffer.isApproved = true;
+            this.selectedRequirement!.status = 'Resolved';
+          }
+          this.syncApiTourState(this.selectedTour!.id);
+          this.showAccommodationModal = false;
+          this.toastService.show('Accommodation offer accepted successfully', 'success');
+        },
+        error: (err) => {
+          console.error('Error approving accommodation offer:', err);
+          this.toastService.show('Failed to approve accommodation offer', 'error');
+        }
+      });
+
+    // Close modal
+    this.showAccommodationModal = false;
+    this.selectedRequirement = null;
+    this.selectedOffer = null;
+  }
+
   unapproveRestaurantOffer(requirement: ServiceRequirement, offer: RestaurantOffer) {
-    if (confirm('Unapprove this restaurant offer? This will delete the order.')) {
-      this.http.put(`http://localhost:5238/api/restaurant-offers/${offer.offerId}/reject`, {})
+    this.confirmTitle = 'Unapprove Restaurant Offer?';
+    this.confirmMessage = 'Unapproving this offer will DELETE the associated order and remove the assignment. Are you sure?';
+    this.confirmText = 'Unapprove & Delete Order';
+    this.confirmType = 'warning';
+
+    this.confirmAction = () => {
+      this.http.put(`http://localhost:5238/api/RestaurantOffers/${offer.offerId}/reject`, {})
         .subscribe({
           next: () => {
             offer.isApproved = false;
             requirement.status = 'Open';
-            console.log('Unapproving offer:', offer.offerId);
-            alert('Offer unapproved.');
+            this.syncApiTourState(this.selectedTour!.id);
+            this.toastService.show('Offer unapproved and order deleted', 'info');
           },
           error: (err) => {
-            console.error('Error unapproving restaurant offer:', err);
-            alert('Failed to unapprove offer.');
+            console.error('Error unapproving offer:', err);
+            this.toastService.show('Failed to unapprove offer', 'error');
           }
         });
-    }
+    };
+    this.showConfirmModal = true;
   }
 
   rejectRestaurantOffer(offer: RestaurantOffer) {
-    if (confirm('Reject this restaurant offer?')) {
-      this.http.put(`http://localhost:5238/api/restaurant-offers/${offer.offerId}/reject`, {})
+    this.confirmTitle = 'Reject Restaurant Offer';
+    this.confirmMessage = 'Are you sure you want to reject this restaurant offer?';
+    this.confirmText = 'Reject Offer';
+    this.confirmType = 'danger';
+
+    this.confirmAction = () => {
+      this.http.put(`http://localhost:5238/api/RestaurantOffers/${offer.offerId}/reject`, {})
         .subscribe({
           next: () => {
             console.log('Rejecting offer:', offer.offerId);
-            alert('Offer rejected');
-            // Optionally remove the offer from the list or update its status in UI
+            // Ideally we should update the list to show rejected status
+            // For now, removing from list or marking rejected
+            // The list filters by req.restaurantOffers. usually shows all.
+            this.toastService.show('Restaurant offer rejected', 'info');
           },
           error: (err) => {
-            console.error('Error rejecting restaurant offer:', err);
-            alert('Failed to reject offer.');
+            console.error('Error rejecting offer:', err);
+            this.toastService.show('Failed to reject offer', 'error');
           }
         });
+    };
+    this.showConfirmModal = true;
+  }
+
+  onConfirmAction() {
+    if (this.confirmAction) {
+      this.confirmAction();
     }
+    this.showConfirmModal = false;
+  }
+
+  onCancelAction() {
+    this.showConfirmModal = false;
+    this.confirmAction = null;
   }
 
   canFinalizeTour(): boolean {
@@ -418,31 +615,78 @@ export class ManageTours implements OnInit {
 
   finalizeTour() {
     if (!this.selectedTour || !this.canFinalizeTour()) {
-      alert('Cannot finalize: Please fulfill all transport and service requirements');
+      this.toastService.show('Cannot finalize: Please fulfill all transport and service requirements', 'warning');
       return;
     }
 
-    if (!confirm(`Finalize tour "${this.selectedTour.name}"? This will lock all approved offers and make the tour available for booking.`)) {
-      return;
+    this.confirmTitle = 'Finalize Tour?';
+    this.confirmMessage = `Finalize tour "${this.selectedTour.name}"? This will lock all approved offers and make the tour available for booking.`;
+    this.confirmText = 'Finalize Tour';
+    this.confirmType = 'info';
+
+    this.confirmAction = () => {
+      console.log('Finalizing tour:', this.selectedTour!.id); // Use non-null assertion as checked above
+
+      this.http.post(`http://localhost:5238/api/tours/${this.selectedTour!.id}/finalize`, {})
+        .subscribe({
+          next: () => {
+            this.toastService.show('Tour finalized successfully! It is now ready for tourist bookings.', 'success');
+            if (this.selectedTour) {
+              this.selectedTour.status = 'Ready to Finalize'; // Update status
+            }
+            // Reload tours to reflect the change
+            this.loadTours();
+            this.clearSelection();
+          },
+          error: (err: any) => {
+            console.error('Finalization failed:', err);
+            this.toastService.show('Finalization failed: ' + (err.error?.message || 'Unknown error'), 'error');
+          }
+        });
+    };
+    this.showConfirmModal = true;
+  }
+
+  // Helper to sync local state after updates
+  private syncApiTourState(tourId: number) {
+    const apiTour = this.apiTours.find(t => t.tourId === tourId);
+    if (!apiTour) return;
+
+    // 1. Sync Driver Offers
+    apiTour.driverOffers = this.currentDriverOffers.map(o => {
+      // Find original api offer to keep other props
+      const existing = apiTour.driverOffers?.find(ao => ao.offerId === o.offerId);
+      return {
+        ...existing!,
+        status: o.status
+      };
+    });
+
+    // 2. Sync Service Requirements
+    apiTour.serviceRequirements = this.serviceRequirements.map(req => {
+      const existingReq = apiTour.serviceRequirements?.find(ar => ar.requirementId === req.requirementId);
+      return {
+        ...existingReq!,
+        status: req.status,
+        restaurantOffers: req.offers?.map(offOr => {
+          const existingOff = existingReq?.restaurantOffers?.find(ao => ao.offerId === offOr.offerId);
+          return {
+            ...existingOff!,
+            status: offOr.isApproved ? 'Accepted' : (existingOff?.status || 'Pending')
+          };
+        }) || []
+      };
+    });
+
+    // 3. Update the list view Tour object
+    const tourIndex = this.tours.findIndex(t => t.id === tourId);
+    if (tourIndex !== -1) {
+      this.tours[tourIndex] = this.mapApiTourToDisplayTour(apiTour);
+      // Also update selectedTour if it's the one we modified
+      if (this.selectedTour?.id === tourId) {
+        this.selectedTour = this.tours[tourIndex];
+      }
     }
-
-    // Call backend API POST /api/tours/{id}/finalize
-    console.log('Finalizing tour:', this.selectedTour.id);
-
-    this.http.post(`http://localhost:5238/api/tours/${this.selectedTour.id}/finalize`, {})
-      .subscribe({
-        next: () => {
-          alert('Tour finalized successfully! It is now ready for tourist bookings.');
-          this.selectedTour!.status = 'Ready to Finalize'; // Update status
-          // Reload tours to reflect the change
-          this.loadTours();
-          this.clearSelection();
-        },
-        error: (err) => {
-          console.error('Finalization failed:', err);
-          alert('Finalization failed: ' + (err.error?.message || 'Unknown error'));
-        }
-      });
   }
 
 }

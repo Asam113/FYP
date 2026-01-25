@@ -32,6 +32,6 @@ public class Vehicle
     public string Status { get; set; } = "Active";
 
     // Navigation Properties
-    public virtual Driver Driver { get; set; } = null!;
+    public virtual Driver? Driver { get; set; }
     public virtual ICollection<DriverOffer> DriverOffers { get; set; } = new List<DriverOffer>();
 }

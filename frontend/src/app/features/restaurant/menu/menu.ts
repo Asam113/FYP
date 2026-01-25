@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ToastService } from '../../../core/services/toast.service';
 
 interface MenuItem {
   itemId: number;
@@ -83,7 +84,7 @@ export class Menu implements OnInit {
 
   private readonly API_URL = 'http://localhost:5238/api/RestaurantMenu';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private toastService: ToastService) { }
 
   ngOnInit(): void {
     this.loadMenus();
@@ -164,7 +165,7 @@ export class Menu implements OnInit {
       },
       error: (err) => {
         console.error('Error creating menu', err);
-        alert('Failed to create menu');
+        this.toastService.show('Failed to create menu', 'error');
       }
     });
   }
@@ -263,7 +264,7 @@ export class Menu implements OnInit {
         },
         error: (err) => {
           console.error('Error updating item', err);
-          alert('Failed to update item');
+          this.toastService.show('Failed to update item', 'error');
         }
       });
     } else {
@@ -285,7 +286,7 @@ export class Menu implements OnInit {
         },
         error: (err) => {
           console.error('Error creating item', err);
-          alert('Failed to create item');
+          this.toastService.show('Failed to create item', 'error');
         }
       });
     }
@@ -316,7 +317,7 @@ export class Menu implements OnInit {
         },
         error: (err) => {
           console.error('Error deleting menu', err);
-          alert('Failed to delete menu');
+          this.toastService.show('Failed to delete menu', 'error');
         }
       });
     } else if (this.deleteTarget.type === 'item' && this.deleteTarget.item && this.deleteTarget.category) {
@@ -331,7 +332,7 @@ export class Menu implements OnInit {
         },
         error: (err) => {
           console.error('Error deleting item', err);
-          alert('Failed to delete item');
+          this.toastService.show('Failed to delete item', 'error');
         }
       });
     }

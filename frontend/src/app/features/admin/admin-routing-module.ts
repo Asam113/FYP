@@ -21,8 +21,8 @@ const routes: Routes = [
   { path: 'manage-restaurants', component: ManageRestaurants },
   { path: 'payments', component: Payments },
   { path: 'reports', component: Reports },
-  { path: 'reports', component: Reports },
   { path: 'settings', component: Settings },
+  { path: 'driver-details/:id', loadComponent: () => import('./driver-details/driver-details.component').then(m => m.DriverDetails) },
   { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) }
 ];
 

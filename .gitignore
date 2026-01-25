@@ -43,3 +43,6 @@ testem.log
 Thumbs.db
 
 backend/wwwroot/uploads
+
+# Environment Variables
+frontend/.env
