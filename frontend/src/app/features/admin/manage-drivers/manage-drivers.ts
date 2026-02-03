@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { DriverService } from '../../../core/services/driver.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface Driver {
   id: string;      // Display ID (e.g., D001)
@@ -54,14 +55,14 @@ export class ManageDrivers implements OnInit {
           license: d.license,
           vehicle: d.vehicle,
           documents: {
-            cnicFront: d.documents.cnicFront ? `http://localhost:5238${d.documents.cnicFront}` : 'assets/images/placeholder_cnic_front.jpg',
-            cnicBack: d.documents.cnicBack ? `http://localhost:5238${d.documents.cnicBack}` : 'assets/images/placeholder_cnic_back.jpg',
-            license: d.documents.license ? `http://localhost:5238${d.documents.license}` : 'assets/images/placeholder_license.jpg',
+            cnicFront: d.documents.cnicFront ? `${environment.apiUrl}${d.documents.cnicFront}` : 'assets/images/placeholder_cnic_front.jpg',
+            cnicBack: d.documents.cnicBack ? `${environment.apiUrl}${d.documents.cnicBack}` : 'assets/images/placeholder_cnic_back.jpg',
+            license: d.documents.license ? `${environment.apiUrl}${d.documents.license}` : 'assets/images/placeholder_license.jpg',
           },
           rating: d.rating || null,
           totalTrips: d.totalTrips,
           status: d.accountStatus === 'Active' ? 'Verified' : d.accountStatus, // Map Backend 'Active' to Frontend 'Verified' if needed, or stick to Pending/Verified/Rejected
-          avatar: d.avatar && d.avatar.startsWith('http') ? d.avatar : `http://localhost:5238${d.avatar}`
+          avatar: d.avatar && d.avatar.startsWith('http') ? d.avatar : `${environment.apiUrl}${d.avatar}`
         }));
       },
       error: (err) => {

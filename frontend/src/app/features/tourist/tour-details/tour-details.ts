@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Tour } from '../../../core/models/tour.interface';
 import { TourService } from '../../../core/services/tour.service';
 import { BookingService } from '../../../core/services/booking.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +20,7 @@ export class TourDetailsComponent implements OnInit {
     tour: Tour | undefined;
     isLoading: boolean = true;
     seatsRemaining: number = 0;
+    isAlreadyBooked: boolean = false;
 
     // Booking Fields
     selectedBookingType: string = 'Individual';
@@ -31,6 +33,7 @@ export class TourDetailsComponent implements OnInit {
         private router: Router,
         private tourService: TourService,
         private bookingService: BookingService,
+        private authService: AuthService,
         private toastService: ToastService
     ) { }
 
@@ -43,6 +46,7 @@ export class TourDetailsComponent implements OnInit {
                     if (this.tour) {
                         this.seatsRemaining = (this.tour.totalSeats || 0) - (this.tour.seatsBooked || 0);
                         this.updatePrice();
+                        this.checkIfBooked();
                     }
                     this.isLoading = false;
                 },
@@ -83,15 +87,34 @@ export class TourDetailsComponent implements OnInit {
         this.totalPrice = (price * this.numberOfPeople) - discount;
     }
 
+    checkIfBooked() {
+        if (!this.tour) return;
+        const user = this.authService.getUser();
+        if (user && user.roleSpecificId) {
+            this.bookingService.getTouristBookings(user.roleSpecificId).subscribe({
+                next: (bookings) => {
+                    this.isAlreadyBooked = bookings.some(b => b.tourId === this.tour?.id && b.status !== 'Cancelled');
+                }
+            });
+        }
+    }
+
     bookTour() {
         if (!this.tour) return;
 
+        const user = this.authService.getUser();
+        if (!user || !user.roleSpecificId) {
+            this.toastService.show('Please log in as a tourist to book', 'error');
+            this.router.navigate(['/login']);
+            return;
+        }
+
         const bookingRequest = {
-            TourId: this.tour.id, // Assuming id maps to TourId
-            TouristId: 1, // TODO: Get from AuthService
-            NumberOfPeople: this.numberOfPeople,
-            TotalAmount: this.totalPrice,
-            BookingType: this.selectedBookingType === 'Individual' ? 0 : this.selectedBookingType === 'Couple' ? 1 : 2
+            tourId: this.tour.id,
+            touristId: user.roleSpecificId,
+            numberOfPeople: this.numberOfPeople,
+            totalAmount: this.totalPrice,
+            bookingType: this.selectedBookingType // Now sending 'Individual', 'Couple' or 'Bulk' directly
         };
 
         this.bookingService.createBooking(bookingRequest).subscribe({
@@ -101,7 +124,8 @@ export class TourDetailsComponent implements OnInit {
             },
             error: (err) => {
                 console.error('Booking failed', err);
-                this.toastService.show('Booking Failed: ' + (err.error || err.message), 'error');
+                const errorMsg = err.error?.message || err.error || err.message || 'Unknown error';
+                this.toastService.show('Booking Failed: ' + errorMsg, 'error');
             }
         });
     }

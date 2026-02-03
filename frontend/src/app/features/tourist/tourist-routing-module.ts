@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { Dashboard } from './dashboard/dashboard';
 import { Explore } from './explore/explore';
 import { SubmitPlan } from './submit-plan/submit-plan';
-import { FinalizedTours } from './finalized-tours/finalized-tours';
+import { MyBookings } from './my-bookings/my-bookings';
 import { Payments } from './payments/payments';
 import { Profile } from './profile/profile';
 
@@ -14,7 +14,7 @@ const routes: Routes = [
   { path: 'explore', component: Explore },
   { path: 'tour-details/:id', loadComponent: () => import('./tour-details/tour-details').then(m => m.TourDetailsComponent) },
   { path: 'submit-plan', component: SubmitPlan },
-  { path: 'finalized-tours', component: FinalizedTours },
+  { path: 'my-bookings', component: MyBookings },
   { path: 'payments', component: Payments },
   { path: 'trip-history', loadComponent: () => import('./trip-history/trip-history').then(m => m.TripHistory) },
   { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) },

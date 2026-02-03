@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface Tour {
     tourId: number;
@@ -58,7 +59,7 @@ export class FindTrips implements OnInit {
 
     loadTours() {
         this.isLoading = true;
-        this.http.get<Tour[]>('http://localhost:5238/api/tours').subscribe({
+        this.http.get<Tour[]>(`${environment.apiUrl}/api/tours`).subscribe({
             next: (data) => {
                 // Filter open tours that might need transport
                 // In a real app, maybe only show tours with status "Draft" or "Open"
@@ -76,7 +77,7 @@ export class FindTrips implements OnInit {
     loadVehicles() {
         const user = this.authService.getUser();
         if (user && user.roleSpecificId) {
-            this.http.get<Vehicle[]>(`http://localhost:5238/api/vehicles/driver/${user.roleSpecificId}`).subscribe({
+            this.http.get<Vehicle[]>(`${environment.apiUrl}/api/vehicles/driver/${user.roleSpecificId}`).subscribe({
                 next: (data) => {
                     this.vehicles = data;
                     if (this.vehicles.length > 0) {
@@ -116,7 +117,7 @@ export class FindTrips implements OnInit {
             additionalNotes: this.offerDescription
         };
 
-        this.http.post('http://localhost:5238/api/offers/driver', offerData).subscribe({
+        this.http.post(`${environment.apiUrl}/api/offers/driver`, offerData).subscribe({
             next: (res) => {
                 this.toastService.show('Bid Sent Successfully!', 'success');
                 this.closeOfferModal();

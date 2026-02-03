@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import {
     ServiceRequest,
     ServiceType,
@@ -143,7 +144,7 @@ export class PlanTour {
             }))
         };
 
-        this.http.post<any>('http://localhost:5238/api/tours', createTourDto)
+        this.http.post<any>(`${environment.apiUrl}/api/tours`, createTourDto)
             .subscribe({
                 next: () => {
                     this.toastService.show('Tour created successfully', 'success');

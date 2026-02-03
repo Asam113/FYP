@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class DriverService {
-    private apiUrl = 'http://localhost:5238/api/drivers';
+    private apiUrl = `${environment.apiUrl}/api/drivers`;
 
     constructor(private http: HttpClient) { }
 
@@ -23,6 +24,10 @@ export class DriverService {
     }
 
     getBookedTours(driverId: number): Observable<any> {
-        return this.http.get<any>(`http://localhost:5238/api/offers/driver/booked-tours/${driverId}`);
+        return this.http.get<any>(`${environment.apiUrl}/api/offers/driver/booked-tours/${driverId}`);
+    }
+
+    getDriverOffers(driverId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${environment.apiUrl}/api/offers/driver?driverId=${driverId}`);
     }
 }

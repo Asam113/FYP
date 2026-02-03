@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService, RestaurantDto, RestaurantStatsDto } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface Partner {
   id: number;
@@ -136,7 +137,7 @@ export class ManageRestaurants implements OnInit {
       if (restaurant.profilePicture.startsWith('http')) {
         imageUrl = restaurant.profilePicture;
       } else {
-        imageUrl = `http://localhost:5238${restaurant.profilePicture}`;
+        imageUrl = `${environment.apiUrl}${restaurant.profilePicture}`;
       }
     }
 
@@ -146,7 +147,7 @@ export class ManageRestaurants implements OnInit {
       if (restaurant.businessLicense.startsWith('http')) {
         businessLicense = restaurant.businessLicense;
       } else {
-        businessLicense = `http://localhost:5238${restaurant.businessLicense}`;
+        businessLicense = `${environment.apiUrl}${restaurant.businessLicense}`;
       }
     }
 

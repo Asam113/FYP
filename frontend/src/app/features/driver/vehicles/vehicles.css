@@ -68,3 +68,11 @@
 .hover-up:hover {
     transform: translateY(-2px);
 }
+
+.vehicle-thumb img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

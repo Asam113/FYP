@@ -129,8 +129,10 @@
                         <span class="fw-bold text-primary fs-5">Rs. {{ totalPrice | number }}</span>
                     </div>
 
-                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm mb-3" (click)="bookTour()">
-                        Book This Tour
+                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm mb-3" (click)="bookTour()"
+                        [disabled]="isAlreadyBooked || tour.seatsBooked >= tour.totalSeats">
+                        {{ isAlreadyBooked ? 'Already Booked' : (tour.seatsBooked >= tour.totalSeats ? 'Full' : 'Book
+                        This Tour') }}
                     </button>
                     <button class="btn btn-outline-secondary w-100 py-2 fw-bold rounded-pill">Contact Organizer</button>
 

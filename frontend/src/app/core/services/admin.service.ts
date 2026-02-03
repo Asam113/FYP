@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface RestaurantDto {
     restaurantId: number;
@@ -31,7 +32,7 @@ export interface RestaurantStatsDto {
     providedIn: 'root'
 })
 export class AdminService {
-    private apiUrl = 'http://localhost:5238/api/admin';
+    private apiUrl = `${environment.apiUrl}/api/admin`;
 
     constructor(private http: HttpClient) { }
 

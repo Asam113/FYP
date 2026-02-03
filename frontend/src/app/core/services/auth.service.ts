@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface SignupRequest {
     name: string;
@@ -36,7 +37,7 @@ export interface LoginRequest {
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'http://localhost:5238/api/auth';
+    private apiUrl = `${environment.apiUrl}/api/auth`;
 
     constructor(private http: HttpClient) { }
 

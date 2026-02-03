@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Tour } from '../models/tour.interface';
 
 @Injectable({
@@ -8,7 +9,7 @@ import { Tour } from '../models/tour.interface';
 })
 export class TourService {
 
-    private apiUrl = 'http://localhost:5238/api/tours';
+    private apiUrl = `${environment.apiUrl}/api/tours`;
 
     constructor(private http: HttpClient) { }
 
@@ -44,7 +45,8 @@ export class TourService {
             imageUrl: t.imageUrl || 'https://placehold.co/800x600/1e293b/FFF?text=Tour+Image',
             rating: 4.8, // Partial mock
             type: 'Single', // Simplify mapping for now
-            vehicles: 1 // Mock
+            vehicles: 1, // Mock
+            status: t.status
         };
     }
 }

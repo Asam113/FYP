@@ -7,6 +7,7 @@ import { MenuSelectionModal } from '../../../shared/menu-selection-modal/menu-se
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { environment } from '../../../../environments/environment';
 
 // Backend API Interfaces
 interface ApiTour {
@@ -20,7 +21,7 @@ interface ApiTour {
   basePrice: number;
   serviceRequirements: ApiServiceRequirement[];
   driverOffers: ApiDriverOffer[];
-  status: number;
+  status: string;
 }
 
 interface ApiServiceRequirement {
@@ -196,13 +197,13 @@ export class ManageTours implements OnInit {
   }
 
   loadTours(): void {
-    this.http.get<ApiTour[]>('http://localhost:5238/api/tours')
+    this.http.get<ApiTour[]>(`${environment.apiUrl}/api/tours`)
       .subscribe({
         next: (apiTours) => {
           this.apiTours = apiTours;
           // Filter to show only non-finalized tours in the Intermediate tab
           this.tours = apiTours
-            .filter(tour => tour.status < 2) // 0=Draft, 1=Published
+            .filter(tour => tour.status === 'Draft' || tour.status === 'Published')
             .map(tour => this.mapApiTourToDisplayTour(tour));
           this.loading = false;
         },
@@ -309,7 +310,7 @@ export class ManageTours implements OnInit {
       type: req.type,
       location: req.location,
       dateNeeded: req.dateNeeded,
-      details: req.type === 'Meal' ? `${req.time || 'Time TBD'}` : `${req.stayDurationDays || 1} nights`,
+      details: req.type === 'Meal' ? `${req.time ? this.formatTo12Hour(req.time) : 'Time TBD'}` : `${req.stayDurationDays || 1} nights`,
       estimatedPeople: req.estimatedPeople,
       estimatedBudget: req.estimatedBudget,
       status: req.status,
@@ -332,6 +333,16 @@ export class ManageTours implements OnInit {
         isApproved: offer.status.toLowerCase() === 'accepted'
       }))
     }));
+  }
+
+  private formatTo12Hour(time: string): string {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours, 10);
+    const m = parseInt(minutes, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${m < 10 ? '0' + m : m} ${ampm}`;
   }
 
   clearSelection() {
@@ -360,7 +371,7 @@ export class ManageTours implements OnInit {
   }
 
   executeDriverToggle(offer: DriverOffer, newStatus: boolean) {
-    const endpoint = `http://localhost:5238/api/offers/driver/${offer.offerId}/${newStatus ? 'accept' : 'reject'}`;
+    const endpoint = `${environment.apiUrl}/api/offers/driver/${offer.offerId}/${newStatus ? 'accept' : 'reject'}`;
 
     this.http.put(endpoint, {}).subscribe({
       next: () => {
@@ -392,7 +403,7 @@ export class ManageTours implements OnInit {
     this.confirmType = 'danger';
 
     this.confirmAction = () => {
-      const endpoint = `http://localhost:5238/api/offers/driver/${offer.offerId}/reject`;
+      const endpoint = `${environment.apiUrl}/api/offers/driver/${offer.offerId}/reject`;
       this.http.put(endpoint, {}).subscribe({
         next: () => {
           offer.status = 'Rejected';
@@ -472,7 +483,7 @@ export class ManageTours implements OnInit {
     console.log('Selected items:', selectedItems);
 
     // Call backend API
-    this.http.post(`http://localhost:5238/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: selectedItems })
+    this.http.post(`${environment.apiUrl}/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: selectedItems })
       .subscribe({
         next: () => {
           // Mark as approved
@@ -514,7 +525,7 @@ export class ManageTours implements OnInit {
     console.log('Approving accommodation offer:', this.selectedOffer.offerId);
 
     // Call backend API to approve accommodation offer
-    this.http.post(`http://localhost:5238/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: [] })
+    this.http.post(`${environment.apiUrl}/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: [] })
       .subscribe({
         next: () => {
           // Mark as approved
@@ -545,7 +556,7 @@ export class ManageTours implements OnInit {
     this.confirmType = 'warning';
 
     this.confirmAction = () => {
-      this.http.put(`http://localhost:5238/api/RestaurantOffers/${offer.offerId}/reject`, {})
+      this.http.put(`${environment.apiUrl}/api/RestaurantOffers/${offer.offerId}/reject`, {})
         .subscribe({
           next: () => {
             offer.isApproved = false;
@@ -569,7 +580,7 @@ export class ManageTours implements OnInit {
     this.confirmType = 'danger';
 
     this.confirmAction = () => {
-      this.http.put(`http://localhost:5238/api/RestaurantOffers/${offer.offerId}/reject`, {})
+      this.http.put(`${environment.apiUrl}/api/RestaurantOffers/${offer.offerId}/reject`, {})
         .subscribe({
           next: () => {
             console.log('Rejecting offer:', offer.offerId);
@@ -627,7 +638,7 @@ export class ManageTours implements OnInit {
     this.confirmAction = () => {
       console.log('Finalizing tour:', this.selectedTour!.id); // Use non-null assertion as checked above
 
-      this.http.post(`http://localhost:5238/api/tours/${this.selectedTour!.id}/finalize`, {})
+      this.http.post(`${environment.apiUrl}/api/tours/${this.selectedTour!.id}/finalize`, {})
         .subscribe({
           next: () => {
             this.toastService.show('Tour finalized successfully! It is now ready for tourist bookings.', 'success');

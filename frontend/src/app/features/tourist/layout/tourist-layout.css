@@ -1,25 +1,26 @@
 .sidebar .nav-link {
-    color: #cbd5e1 !important;
-    /* Slate-300 */
+    color: #64748b !important;
+    /* Slate-500 */
     transition: all 0.3s ease;
     border-radius: 8px;
     padding: 10px 15px;
 }
 
 .sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff !important;
+    background-color: rgba(13, 110, 253, 0.08);
+    color: #0d6efd !important;
     transform: translateX(5px);
 }
 
 .active-link {
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-    color: white !important;
-    box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+    background: rgba(13, 110, 253, 0.1) !important;
+    color: #0d6efd !important;
+    box-shadow: none;
+    border-left: 4px solid #0d6efd;
 }
 
 .hover-bg:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Scrollbar Styling for webkit browsers */

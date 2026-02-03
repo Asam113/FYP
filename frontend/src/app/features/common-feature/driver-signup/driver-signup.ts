@@ -4,10 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 
 @Component({
     selector: 'app-driver-signup',
-    imports: [CommonModule, FormsModule, RouterModule],
+    standalone: true,
+    imports: [CommonModule, FormsModule, RouterModule, ImageUploaderComponent],
     templateUrl: './driver-signup.html',
     styleUrl: './driver-signup.css'
 })
@@ -41,6 +43,8 @@ export class DriverSignup {
 
     showPassword = false;
     showConfirmPassword = false;
+
+    selectedVehicleImages: File[] = [];
 
     licenseFile: File | null = null;
     cnicFrontFile: File | null = null;
@@ -92,6 +96,10 @@ export class DriverSignup {
     // Step 4: Vehicle Info
     vehicleModel: string = '';
     vehicleCapacity: string = '';
+
+    onVehicleImagesSelected(files: File[]) {
+        this.selectedVehicleImages = files;
+    }
 
     // Navigation
     nextStep() {
@@ -199,6 +207,11 @@ export class DriverSignup {
         formData.append('vehicleType', this.vehicleType);
         formData.append('vehicleModel', this.vehicleModel);
         formData.append('vehicleCapacity', this.vehicleCapacity.toString());
+
+        // Vehicle Images
+        this.selectedVehicleImages.forEach(image => {
+            formData.append('vehicleImages', image);
+        });
 
         this.authService.signupDriver(formData).subscribe({
             next: (response) => {
