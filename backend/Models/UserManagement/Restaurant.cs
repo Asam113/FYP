@@ -4,6 +4,7 @@ using backend.Models.Enums;
 using backend.Models.OfferSystem;
 using backend.Models.RestaurantMenu;
 using backend.Models.Supporting;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.UserManagement;
 
@@ -44,8 +45,11 @@ public class Restaurant
     // Navigation Properties
     public virtual User User { get; set; } = null!;
     public virtual ICollection<Menu> Menus { get; set; } = new List<Menu>();
+    [JsonIgnore]
     public virtual ICollection<RestaurantAssignment> RestaurantAssignments { get; set; } = new List<RestaurantAssignment>();
+    [JsonIgnore]
     public virtual ICollection<RestaurantOffer> RestaurantOffers { get; set; } = new List<RestaurantOffer>();
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
     public virtual ICollection<Earning> Earnings { get; set; } = new List<Earning>();
+    public virtual ICollection<RestaurantImage> RestaurantImages { get; set; } = new List<RestaurantImage>();
 }

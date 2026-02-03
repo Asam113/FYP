@@ -58,4 +58,6 @@ public class DriverSignupDto
 
     [Required]
     public int VehicleCapacity { get; set; }
+
+    public List<IFormFile>? VehicleImages { get; set; }
 }

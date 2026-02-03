@@ -4,6 +4,7 @@ using backend.Data;
 using backend.Models.TourManagement;
 using backend.Models.Enums;
 using backend.Models.DTOs;
+using backend.Services;
 
 namespace backend.Controllers;
 
@@ -12,10 +13,12 @@ namespace backend.Controllers;
 public class ToursController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public ToursController(ApplicationDbContext context)
+    public ToursController(ApplicationDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     // GET: api/tours
@@ -33,6 +36,9 @@ public class ToursController : ControllerBase
                 .ThenInclude(req => req.RestaurantOffers)
                     .ThenInclude(offer => offer.Restaurant)
                         .ThenInclude(r => r.User)
+            .Include(t => t.Bookings)
+                .ThenInclude(b => b.Tourist)
+                    .ThenInclude(tr => tr.User)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
     }
@@ -135,8 +141,11 @@ public class ToursController : ControllerBase
         var tour = await _context.Tours
             .Include(t => t.DriverOffers)
                 .ThenInclude(o => o.Vehicle)
+            .Include(t => t.DriverOffers)
+                .ThenInclude(o => o.Driver)
             .Include(t => t.ServiceRequirements)
                 .ThenInclude(r => r.RestaurantOffers)
+                    .ThenInclude(o => o.Restaurant)
             .FirstOrDefaultAsync(t => t.TourId == id);
 
         if (tour == null)
@@ -227,7 +236,35 @@ public class ToursController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // TODO: Send notifications to drivers and restaurants
+        // Send Notifications to Drivers
+        foreach (var driverOffer in tour.DriverOffers.Where(o => o.Status == OfferStatus.Confirmed))
+        {
+            await _notificationService.CreateNotificationAsync(
+                driverOffer.Driver.UserId,
+                "Tour Finalized! 🗺️",
+                $"The tour '{tour.Title}' has been finalized. Your transport services are confirmed.",
+                "TourFinalized",
+                $"/driver/requests"
+            );
+        }
+
+        // Send Notifications to Restaurants/Hotels
+        foreach (var requirement in tour.ServiceRequirements)
+        {
+            var confirmedOffer = requirement.RestaurantOffers
+                .FirstOrDefault(o => o.Status == OfferStatus.Confirmed);
+
+            if (confirmedOffer != null)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    confirmedOffer.Restaurant.UserId,
+                    "Tour Finalized! 🏨",
+                    $"The tour '{tour.Title}' has been finalized. Your service for {requirement.Type} is confirmed.",
+                    "TourFinalized",
+                    $"/restaurant/requests"
+                );
+            }
+        }
 
         return Ok(new
         {
@@ -237,6 +274,28 @@ public class ToursController : ControllerBase
             transportCapacity = new { total = totalCapacity, approved = approvedDriverCapacity },
             requirementsFulfilled = tour.ServiceRequirements.Count
         });
+    }
+
+    // POST: api/tours/{id}/mark-ready
+    [HttpPost("{id}/mark-ready")]
+    public async Task<IActionResult> MarkTourAsReady(int id)
+    {
+        var tour = await _context.Tours.FindAsync(id);
+
+        if (tour == null)
+        {
+            return NotFound("Tour not found");
+        }
+
+        if (tour.Status != TourStatus.Finalized)
+        {
+            return BadRequest("Only finalized tours can be marked as ready");
+        }
+
+        tour.Status = TourStatus.Ready;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Tour is now ready for departure", status = tour.Status.ToString() });
     }
 
     // Test endpoint to verify database connection

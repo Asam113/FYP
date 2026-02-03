@@ -13,10 +13,12 @@ namespace backend.Controllers;
 public class DriverOffersController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly backend.Services.INotificationService _notificationService;
 
-    public DriverOffersController(ApplicationDbContext context)
+    public DriverOffersController(ApplicationDbContext context, backend.Services.INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     // DTO for creating driver offer
@@ -47,6 +49,7 @@ public class DriverOffersController : ControllerBase
         // Validate vehicle exists
         var vehicle = await _context.Vehicles
             .Include(v => v.Driver)
+                .ThenInclude(d => d.User)
             .FirstOrDefaultAsync(v => v.VehicleId == dto.VehicleId);
 
         if (vehicle == null)
@@ -79,6 +82,19 @@ public class DriverOffersController : ControllerBase
 
         _context.DriverOffers.Add(offer);
         await _context.SaveChangesAsync();
+
+        // Notify Admin
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Role == UserRole.Admin);
+        if (admin != null)
+        {
+            await _notificationService.CreateNotificationAsync(
+                admin.Id,
+                "New Driver Offer! 🚛",
+                $"Driver {vehicle.Driver.User.Name} submitted an offer for tour '{tour.Title}'",
+                "NewOffer",
+                $"/admin/manage-tours"
+            );
+        }
 
         // Reload with navigation properties
         var createdOffer = await _context.DriverOffers

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.Enums;
 using backend.Models.TourManagement;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.OfferSystem;
 
@@ -33,5 +34,6 @@ public abstract class Offer
     public string? Notes { get; set; }
 
     // Navigation Properties
+    [JsonIgnore]
     public virtual Tour? Tour { get; set; }
 }

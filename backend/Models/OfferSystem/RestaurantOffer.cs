@@ -5,6 +5,7 @@ using backend.Models.Supporting;
 using backend.Models.Enums;
 using backend.Models.TourManagement;
 using backend.Models.UserManagement;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.OfferSystem;
 
@@ -40,6 +41,7 @@ public class RestaurantOffer : Offer
     public int RequirementId { get; set; } // KEY CHANGE: Link to requirement, not tour
 
     // Navigation Properties
+    [JsonIgnore]
     public virtual ServiceRequirement ServiceRequirement { get; set; } = null!;
     [ForeignKey("ProviderId")]
     public virtual Restaurant Restaurant { get; set; } = null!;

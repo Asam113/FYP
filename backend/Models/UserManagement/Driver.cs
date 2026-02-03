@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.OfferSystem;
 using backend.Models.TourManagement;
 using backend.Models.Supporting;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.UserManagement;
 
@@ -40,8 +41,11 @@ public class Driver
 
     // Navigation Properties
     public virtual User User { get; set; } = null!;
+    [JsonIgnore]
     public virtual ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+    [JsonIgnore]
     public virtual ICollection<TourAssignment> TourAssignments { get; set; } = new List<TourAssignment>();
+    [JsonIgnore]
     public virtual ICollection<DriverOffer> DriverOffers { get; set; } = new List<DriverOffer>();
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
     public virtual ICollection<Earning> Earnings { get; set; } = new List<Earning>();

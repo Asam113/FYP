@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.OfferSystem;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.TourManagement;
 
@@ -41,6 +42,7 @@ public class ServiceRequirement
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation Properties
+    [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;
     public virtual ICollection<RestaurantOffer> RestaurantOffers { get; set; } = new List<RestaurantOffer>();
 }
