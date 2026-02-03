@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
+using backend.Models.DTOs;
 
 namespace backend.Controllers;
 
@@ -37,10 +38,4 @@ public class DriversController : ControllerBase
         if (!success) return NotFound(new { message = "Driver not found" });
         return Ok(new { message = $"Driver status updated to {request.Status}" });
     }
-
-}
-
-public class StatusUpdateDto
-{
-    public string Status { get; set; } = string.Empty;
 }

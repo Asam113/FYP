@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.UserManagement;
 using backend.Models.OfferSystem;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.Supporting;
 
@@ -32,6 +33,10 @@ public class Vehicle
     public string Status { get; set; } = "Active";
 
     // Navigation Properties
+    [JsonIgnore]
     public virtual Driver? Driver { get; set; }
+    [JsonIgnore]
     public virtual ICollection<DriverOffer> DriverOffers { get; set; } = new List<DriverOffer>();
+
+    public virtual ICollection<VehicleImage> VehicleImages { get; set; } = new List<VehicleImage>();
 }

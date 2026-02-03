@@ -20,13 +20,15 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _environment;
     private readonly IEmailService _emailService;
+    private readonly IImageService _imageService;
 
-    public AuthService(ApplicationDbContext context, IConfiguration configuration, IWebHostEnvironment environment, IEmailService emailService)
+    public AuthService(ApplicationDbContext context, IConfiguration configuration, IWebHostEnvironment environment, IEmailService emailService, IImageService imageService)
     {
         _context = context;
         _configuration = configuration;
         _environment = environment;
         _emailService = emailService;
+        _imageService = imageService;
     }
 
     public async Task SignupTouristAsync(TouristSignupDto request)
@@ -207,8 +209,23 @@ public class AuthService : IAuthService
             Status = "Pending"
         };
         _context.Vehicles.Add(vehicle);
-
         await _context.SaveChangesAsync();
+
+        // Handle Vehicle Images
+        if (request.VehicleImages != null && request.VehicleImages.Count > 0)
+        {
+            var savedVehiclePaths = await _imageService.SaveImagesAsync(request.VehicleImages, "vehicles");
+            foreach (var path in savedVehiclePaths)
+            {
+                _context.VehicleImages.Add(new VehicleImage
+                {
+                    VehicleId = vehicle.VehicleId,
+                    ImageUrl = path,
+                    IsPrimary = !_context.VehicleImages.Any(vi => vi.VehicleId == vehicle.VehicleId)
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
 
         return GenerateAuthResponse(user, driver.DriverId);
     }
@@ -376,6 +393,22 @@ public class AuthService : IAuthService
                 // Or throw? Let's log to console for now or minimal handling.
                 Console.WriteLine($"Error processing MenuJson: {ex.Message}");
             }
+        }
+
+        // Handle Restaurant Images
+        if (request.RestaurantImages != null && request.RestaurantImages.Count > 0)
+        {
+            var savedRestaurantPaths = await _imageService.SaveImagesAsync(request.RestaurantImages, "restaurants");
+            foreach (var path in savedRestaurantPaths)
+            {
+                _context.RestaurantImages.Add(new RestaurantImage
+                {
+                    RestaurantId = restaurant.RestaurantId,
+                    ImageUrl = path,
+                    IsPrimary = !_context.RestaurantImages.Any(ri => ri.RestaurantId == restaurant.RestaurantId)
+                });
+            }
+            await _context.SaveChangesAsync();
         }
 
         return GenerateAuthResponse(user, restaurant.RestaurantId);

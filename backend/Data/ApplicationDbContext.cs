@@ -57,6 +57,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Document> Documents { get; set; }
     public virtual DbSet<Earning> Earnings { get; set; }
+    public DbSet<VehicleImage> VehicleImages { get; set; }
+    public DbSet<RestaurantImage> RestaurantImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -2,6 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Models.Supporting;
+using Microsoft.AspNetCore.Http;
+using backend.Services;
+using backend.Models.DTOs;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace backend.Controllers;
 
@@ -10,10 +15,12 @@ namespace backend.Controllers;
 public class VehiclesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IImageService _imageService;
 
-    public VehiclesController(ApplicationDbContext context)
+    public VehiclesController(ApplicationDbContext context, IImageService imageService)
     {
         _context = context;
+        _imageService = imageService;
     }
 
     [HttpGet("driver/{driverId}")]
@@ -30,14 +37,16 @@ public class VehiclesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Vehicle>> GetVehicle(int id)
     {
-        var vehicle = await _context.Vehicles.FindAsync(id);
+        var vehicle = await _context.Vehicles
+            .Include(v => v.VehicleImages)
+            .FirstOrDefaultAsync(v => v.VehicleId == id);
 
         if (vehicle == null)
         {
             return NotFound();
         }
 
-        return vehicle;
+        return Ok(vehicle);
     }
 
     [HttpPost]
@@ -86,6 +95,44 @@ public class VehiclesController : ControllerBase
         // Or actually delete:
         // _context.Vehicles.Remove(vehicle);
         
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpPost("{id}/images")]
+    public async Task<IActionResult> UploadVehicleImages(int id, [FromForm] List<IFormFile> images)
+    {
+        var vehicle = await _context.Vehicles.FindAsync(id);
+        if (vehicle == null) return NotFound("Vehicle not found");
+
+        if (images == null || images.Count == 0) return BadRequest("No images provided");
+
+        var savedPaths = await _imageService.SaveImagesAsync(images, "vehicles");
+        
+        foreach (var path in savedPaths)
+        {
+            _context.VehicleImages.Add(new VehicleImage
+            {
+                VehicleId = id,
+                ImageUrl = path,
+                IsPrimary = !_context.VehicleImages.Any(vi => vi.VehicleId == id) // Set first image as primary
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Images uploaded successfully", count = savedPaths.Count });
+    }
+
+    // DELETE: api/vehicles/images/{imageId}
+    [HttpDelete("images/{imageId}")]
+    public async Task<IActionResult> DeleteVehicleImage(int imageId)
+    {
+        var image = await _context.VehicleImages.FindAsync(imageId);
+        if (image == null) return NotFound();
+
+        _imageService.DeleteImage(image.ImageUrl);
+        _context.VehicleImages.Remove(image);
         await _context.SaveChangesAsync();
 
         return NoContent();

@@ -4,6 +4,7 @@ using backend.Models.Enums;
 using backend.Models.TourManagement;
 using backend.Models.UserManagement;
 using backend.Models.RestaurantMenu;
+using System.Text.Json.Serialization;
 
 namespace backend.Models.BookingPayment;
 
@@ -40,7 +41,9 @@ public class Booking
     public string? CancellationReason { get; set; }
 
     // Navigation Properties
+    [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;
+    [JsonIgnore]
     public virtual Tourist Tourist { get; set; } = null!;
     public virtual Payment? Payment { get; set; }
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

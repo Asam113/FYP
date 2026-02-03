@@ -13,10 +13,12 @@ namespace backend.Controllers;
 public class RestaurantOffersController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly backend.Services.INotificationService _notificationService;
 
-    public RestaurantOffersController(ApplicationDbContext context)
+    public RestaurantOffersController(ApplicationDbContext context, backend.Services.INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     // GET: api/restaurantoffers
@@ -97,8 +99,11 @@ public class RestaurantOffersController : ControllerBase
         }
 
         // Validate that the restaurant exists
-        var restaurantExists = await _context.Restaurants.AnyAsync(r => r.RestaurantId == dto.RestaurantId);
-        if (!restaurantExists)
+        var restaurant = await _context.Restaurants
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.RestaurantId == dto.RestaurantId);
+            
+        if (restaurant == null)
         {
             return BadRequest("Restaurant not found");
         }
@@ -158,6 +163,20 @@ public class RestaurantOffersController : ControllerBase
 
         _context.RestaurantOffers.Add(offer);
         await _context.SaveChangesAsync();
+
+        // Notify Admin
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Role == backend.Models.Enums.UserRole.Admin);
+        if (admin != null)
+        {
+            var tour = await _context.Tours.FindAsync(requirement.TourId);
+            await _notificationService.CreateNotificationAsync(
+                admin.Id,
+                "New Restaurant Offer! 🍔",
+                $"Restaurant '{restaurant.RestaurantName}' submitted an offer for {requirement.Type} at {requirement.Location}",
+                "NewOffer",
+                "/admin/manage-tours"
+            );
+        }
 
         return CreatedAtAction(nameof(GetRestaurantOffer), new { id = offer.OfferId }, offer);
     }
