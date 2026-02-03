@@ -82,7 +82,7 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h4 class="fw-bold text-dark mb-1">Place Your Bid</h4>
+                <h4 class="fw-bold text-dark mb-1">Place Your Offer</h4>
                 <p class="text-muted small mb-0">{{ selectedTour.title }} ({{ selectedTour.destination }})</p>
             </div>
             <button class="btn btn-sm btn-light border-0 text-muted rounded-circle" (click)="closeOfferModal()">
@@ -105,7 +105,7 @@
                 </div>
             </div>
             <div class="col-12">
-                <label class="form-label fw-bold text-dark small">Your Bid Amount (PKR)</label>
+                <label class="form-label fw-bold text-dark small">Your Offer Amount (PKR)</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0">PKR</span>
                     <input type="number" class="form-control border-start-0" [(ngModel)]="offerPrice"
@@ -113,7 +113,7 @@
                 </div>
             </div>
             <div class="col-12">
-                <label class="form-label fw-bold text-dark small">Additional Notes / Route Plan</label>
+                <label class="form-label fw-bold text-dark small">Additional Notes</label>
                 <textarea class="form-control" rows="3" [(ngModel)]="offerDescription"
                     placeholder="I have a 2024 Model Coaster with dual AC..."></textarea>
             </div>
@@ -126,7 +126,7 @@
             </button>
             <button class="btn btn-teal w-100 fw-bold py-2 rounded-3 text-white shadow-sm" (click)="submitOffer()"
                 [disabled]="!offerPrice || !selectedVehicleId">
-                Submit Bid
+                Submit Offer
             </button>
         </div>
 

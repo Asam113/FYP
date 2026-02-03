@@ -1,16 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-
-interface Notification {
-    id: number;
-    type: 'success' | 'info' | 'warning' | 'danger' | 'primary';
-    icon: string;
-    title: string;
-    message: string;
-    time: string;
-    read: boolean;
-}
+import { NotificationService, Notification } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-shared-notifications',
@@ -20,174 +12,106 @@ interface Notification {
 })
 export class SharedNotificationsComponent implements OnInit {
     notifications: Notification[] = [];
+    isLoading: boolean = false;
+    currentUserId: number | null = null;
 
-    constructor(private router: Router) { }
+    constructor(
+        private router: Router,
+        private notificationService: NotificationService,
+        private authService: AuthService
+    ) { }
 
     ngOnInit() {
-        this.loadNotifications();
-    }
-
-    loadNotifications() {
-        const url = this.router.url;
-        if (url.includes('/admin')) {
-            this.notifications = this.getAdminNotifications();
-        } else if (url.includes('/restaurant')) {
-            this.notifications = this.getRestaurantNotifications();
-        } else if (url.includes('/driver')) {
-            this.notifications = this.getDriverNotifications();
-        } else if (url.includes('/tourist')) {
-            this.notifications = this.getTouristNotifications();
+        const user = this.authService.getUser();
+        if (user && user.id) {
+            this.currentUserId = user.id;
+            this.loadNotifications();
         }
     }
 
-    getAdminNotifications(): Notification[] {
-        return [
-            {
-                id: 1,
-                type: 'info',
-                icon: 'bi-person-plus',
-                title: 'New Driver Registration',
-                message: 'Driver "Ahmed Khan" has registered and is awaiting approval.',
-                time: '1 hour ago',
-                read: false
-            },
-            {
-                id: 2,
-                type: 'warning',
-                icon: 'bi-shop',
-                title: 'Restaurant Verification Pending',
-                message: 'New restaurant "Spice Bazaar" requires document verification.',
-                time: '3 hours ago',
-                read: false
-            },
-            {
-                id: 3,
-                type: 'success',
-                icon: 'bi-cash-coin',
-                title: 'Monthly Subscription Received',
-                message: 'Received subscription payment from "Serena Hotel".',
-                time: '1 day ago',
-                read: true
-            }
-        ];
-    }
+    loadNotifications() {
+        if (!this.currentUserId) return;
 
-    getRestaurantNotifications(): Notification[] {
-        return [
-            {
-                id: 1,
-                type: 'success',
-                icon: 'bi-cart-check',
-                title: 'New Order Received',
-                message: 'You have a new order #1234 from "Tour Group A".',
-                time: '10 mins ago',
-                read: false
+        this.isLoading = true;
+        this.notificationService.getUserNotifications(this.currentUserId).subscribe({
+            next: (data) => {
+                this.notifications = data;
+                this.isLoading = false;
             },
-            {
-                id: 2,
-                type: 'info',
-                icon: 'bi-star',
-                title: 'New Review',
-                message: 'Customer left a 5-star review for your lunch service.',
-                time: '2 hours ago',
-                read: true
-            },
-            {
-                id: 3,
-                type: 'warning',
-                icon: 'bi-exclamation-triangle',
-                title: 'Stock Alert',
-                message: 'Inventory running low for "Chicken Karahi".',
-                time: '5 hours ago',
-                read: true
+            error: (err) => {
+                console.error('Failed to load notifications', err);
+                this.isLoading = false;
             }
-        ];
-    }
-
-    getDriverNotifications(): Notification[] {
-        return [
-            {
-                id: 1,
-                type: 'success',
-                icon: 'bi-check-circle',
-                title: 'Booking Accepted',
-                message: 'Your application for "Murree Hill Station Tour" has been accepted by the admin.',
-                time: '2 hours ago',
-                read: false
-            },
-            {
-                id: 2,
-                type: 'primary',
-                icon: 'bi-calendar-check',
-                title: 'Tour Finalized',
-                message: 'The "Lahore Heritage Tour" has been finalized. All requirements completed.',
-                time: '5 hours ago',
-                read: false
-            },
-            {
-                id: 3,
-                type: 'success',
-                icon: 'bi-currency-dollar',
-                title: 'Payment Received',
-                message: 'Rs. 8,500 payment for "Murree Hill Station Tour" has been credited to your account.',
-                time: '1 day ago',
-                read: false
-            }
-        ];
-    }
-
-    getTouristNotifications(): Notification[] {
-        return [
-            {
-                id: 1,
-                type: 'success',
-                icon: 'bi-ticket-perforated',
-                title: 'Booking Confirmed',
-                message: 'Your booking for "Naran Kaghan Trip" has been confirmed.',
-                time: '30 mins ago',
-                read: false
-            },
-            {
-                id: 2,
-                type: 'info',
-                icon: 'bi-geo-alt',
-                title: 'Tour Update',
-                message: 'The departure point for your upcoming tour has been updated to vaguely defined location.',
-                time: '4 hours ago',
-                read: true
-            },
-            {
-                id: 3,
-                type: 'primary',
-                icon: 'bi-brightness-high',
-                title: 'Weather Alert',
-                message: 'Sunny weather expected for your trip to Hunza next week!',
-                time: '1 day ago',
-                read: true
-            }
-        ];
+        });
     }
 
     get unreadCount(): number {
-        return this.notifications.filter(n => !n.read).length;
+        return this.notifications.filter(n => !n.isRead).length;
+    }
+
+    markAsRead(notification: Notification) {
+        if (notification.isRead) return;
+
+        this.notificationService.markAsRead(notification.notificationId).subscribe({
+            next: () => {
+                notification.isRead = true;
+            }
+        });
     }
 
     markAllAsRead() {
-        this.notifications.forEach(n => n.read = true);
+        if (!this.currentUserId) return;
+
+        this.notificationService.markAllAsRead(this.currentUserId).subscribe({
+            next: () => {
+                this.notifications.forEach(n => n.isRead = true);
+            }
+        });
     }
 
     clearAll() {
-        this.notifications = [];
+        // We might not have a "Delete All" in backend yet, so just local for now
+        // Or we could implement Mark All As Read
+        this.markAllAsRead();
     }
 
     getIconClass(type: string): string {
         switch (type) {
-            case 'success': return 'text-success bg-success-subtle';
-            case 'primary': return 'text-primary bg-primary-subtle';
-            case 'warning': return 'text-warning bg-warning-subtle';
-            case 'danger': return 'text-danger bg-danger-subtle';
+            case 'BookingSuccess':
+            case 'AccountApproved': return 'text-success bg-success-subtle';
+            case 'TourFinalized': return 'text-primary bg-primary-subtle';
+            case 'AccountRejected': return 'text-danger bg-danger-subtle';
             case 'info': return 'text-info bg-info-subtle';
             default: return 'text-primary bg-primary-subtle';
+        }
+    }
+
+    getBootstrapIcon(type: string): string {
+        switch (type) {
+            case 'BookingSuccess': return 'bi-ticket-perforated';
+            case 'AccountApproved': return 'bi-check-circle';
+            case 'TourFinalized': return 'bi-map';
+            case 'AccountRejected': return 'bi-x-circle';
+            case 'info': return 'bi-info-circle';
+            default: return 'bi-bell';
+        }
+    }
+
+    formatTime(dateString: string): string {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return date.toLocaleDateString();
+    }
+
+    onNotificationClick(notification: Notification) {
+        this.markAsRead(notification);
+        if (notification.actionUrl) {
+            this.router.navigateByUrl(notification.actionUrl);
         }
     }
 }

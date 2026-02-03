@@ -124,7 +124,7 @@
 
                 <div class="nav-buttons">
                     <button class="btn-back" (click)="prevStep()">Back</button>
-                    <button class="btn-next" (click)="nextStep()">Verify & Continue <i
+                    <button type="button" class="btn-next" (click)="nextStep()">Verify & Continue <i
                             class="bi bi-arrow-right"></i></button>
                 </div>
             </div>
@@ -200,8 +200,9 @@
                 </div>
 
                 <div class="nav-buttons">
-                    <button class="btn-back" (click)="prevStep()">Back</button>
-                    <button class="btn-next" (click)="nextStep()">Continue <i class="bi bi-arrow-right"></i></button>
+                    <button type="button" class="btn-back" (click)="prevStep()">Back</button>
+                    <button type="button" class="btn-next" (click)="nextStep()">Continue <i
+                            class="bi bi-arrow-right"></i></button>
                 </div>
             </form>
         </div>
@@ -241,6 +242,14 @@
                     <label>Capacity</label>
                     <input type="number" class="form-control-simple" [(ngModel)]="vehicleCapacity"
                         name="vehicleCapacity" placeholder="Number of passengers" required>
+                </div>
+
+                <!-- Vehicle Photos -->
+                <div class="form-group mt-4">
+                    <label class="d-block mb-2 fw-bold text-dark">Vehicle Photos</label>
+                    <app-image-uploader (imagesSelected)="onVehicleImagesSelected($event)" [multiple]="true">
+                    </app-image-uploader>
+                    <p class="small text-muted mt-1">Upload clear photos of your vehicle (Front, Side, Interior)</p>
                 </div>
 
                 <!-- Note Section -->

@@ -5,10 +5,12 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { VerifyOtp } from '../verify-otp/verify-otp';
+import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 
 @Component({
     selector: 'app-restaurant-signup',
-    imports: [CommonModule, FormsModule, RouterModule, VerifyOtp],
+    standalone: true,
+    imports: [CommonModule, FormsModule, RouterModule, VerifyOtp, ImageUploaderComponent],
     templateUrl: './restaurant-signup.html',
     styleUrl: './restaurant-signup.css'
 })
@@ -35,6 +37,7 @@ export class RestaurantSignup {
 
     showPassword = false;
     showConfirmPassword = false;
+    selectedRestaurantImages: File[] = [];
 
     currentStep = 1;
 
@@ -126,6 +129,10 @@ export class RestaurantSignup {
         this.businessLicenseFile = event.target.files[0];
     }
 
+    onImagesSelected(files: File[]) {
+        this.selectedRestaurantImages = files;
+    }
+
     validateRestaurantDetailsAndSubmit() {
         if (!this.restaurantName || !this.selectedRestaurantType || !this.address || !this.postalCode) {
             this.toastService.show('Please fill in all restaurant details', 'error');
@@ -196,6 +203,11 @@ export class RestaurantSignup {
         if (this.businessLicenseFile) {
             formData.append('LicenseDocument', this.businessLicenseFile);
         }
+
+        // Restaurant Images
+        this.selectedRestaurantImages.forEach(image => {
+            formData.append('restaurantImages', image);
+        });
 
 
         console.log('Submitting application...');

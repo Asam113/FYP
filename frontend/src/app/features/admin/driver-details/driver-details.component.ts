@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DriverService } from '../../../core/services/driver.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
     selector: 'app-driver-details',
@@ -56,7 +57,7 @@ export class DriverDetails implements OnInit {
     private getUrl(path: string | null): string {
         if (!path) return 'assets/images/placeholder.jpg';
         if (path.startsWith('http')) return path;
-        return `http://localhost:5238${path}`;
+        return `${environment.apiUrl}${path}`;
     }
 
     approveVehicle(vehicleId: number) {

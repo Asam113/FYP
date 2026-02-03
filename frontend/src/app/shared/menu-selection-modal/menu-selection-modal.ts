@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../environments/environment';
 
 interface MenuItem {
   itemId: number;
@@ -153,7 +154,7 @@ export class MenuSelectionModal {
 
   loadMenu() {
     this.loading = true;
-    const url = `http://localhost:5238/api/restaurantmenu?restaurantId=${this.restaurantId}`;
+    const url = `${environment.apiUrl}/api/restaurantmenu?restaurantId=${this.restaurantId}`;
     console.log('Loading menu from:', url);
     this.http.get<any[]>(url)
       .subscribe({

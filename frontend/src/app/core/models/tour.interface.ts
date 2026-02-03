@@ -22,4 +22,5 @@ export interface Tour {
     coupleDiscountPercentage?: number;
     bulkDiscountPercentage?: number;
     bulkBookingMinPersons?: number;
+    status: string;
 }

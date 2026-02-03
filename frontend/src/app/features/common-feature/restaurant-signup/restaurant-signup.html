@@ -160,6 +160,15 @@
                     </div>
                 </div>
 
+                <!-- Restaurant Photos -->
+                <div class="form-group">
+                    <label class="form-label fw-bold text-dark">Restaurant Photos</label>
+                    <app-image-uploader (imagesSelected)="onImagesSelected($event)" [multiple]="true">
+                    </app-image-uploader>
+                    <p class="small text-muted mt-1">Upload photos of your restaurant interior, exterior, and ambiance.
+                    </p>
+                </div>
+
                 <button type="button" class="next-btn" (click)="nextStep()">
                     Continue <i class="bi bi-arrow-right"></i>
                 </button>

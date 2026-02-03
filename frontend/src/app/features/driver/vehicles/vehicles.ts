@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface Vehicle {
     vehicleId?: number;
@@ -15,20 +16,24 @@ interface Vehicle {
     status: string;
 }
 
+import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
+import { VehicleService } from '../../../core/services/vehicle.service';
+
 @Component({
     selector: 'app-vehicles',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, ImageUploaderComponent],
     templateUrl: './vehicles.html',
     styleUrl: './vehicles.css'
 })
 export class Vehicles implements OnInit {
-    vehicles: Vehicle[] = [];
+    vehicles: any[] = [];
     isLoading = true;
     showAddModal = false;
+    selectedImages: File[] = [];
 
     // New Vehicle Form
-    newVehicle: Partial<Vehicle> = {
+    newVehicle: any = {
         registrationNumber: '',
         vehicleType: '',
         model: '',
@@ -39,8 +44,13 @@ export class Vehicles implements OnInit {
     constructor(
         private http: HttpClient,
         private authService: AuthService,
-        private toastService: ToastService
+        private toastService: ToastService,
+        private vehicleService: VehicleService
     ) { }
+
+    onImagesSelected(files: File[]): void {
+        this.selectedImages = files;
+    }
 
     ngOnInit(): void {
         this.loadVehicles();
@@ -54,7 +64,7 @@ export class Vehicles implements OnInit {
         }
 
         this.isLoading = true;
-        this.http.get<Vehicle[]>(`http://localhost:5238/api/vehicles/driver/${user.roleSpecificId}`)
+        this.http.get<Vehicle[]>(`${environment.apiUrl}/api/vehicles/driver/${user.roleSpecificId}`)
             .subscribe({
                 next: (data) => {
                     this.vehicles = data;
@@ -99,12 +109,28 @@ export class Vehicles implements OnInit {
 
         // Note: I need to ensure the backend supports POST to api/vehicles. 
         // If not, I'll need to add it to VehiclesController.
-        this.http.post('http://localhost:5238/api/vehicles', payload)
+        this.http.post<any>(`${environment.apiUrl}/api/vehicles`, payload)
             .subscribe({
                 next: (res) => {
-                    this.toastService.show('Vehicle added successfully', 'success');
-                    this.loadVehicles();
-                    this.closeAddModal();
+                    if (this.selectedImages.length > 0) {
+                        this.vehicleService.uploadVehicleImages(res.vehicleId, this.selectedImages)
+                            .subscribe({
+                                next: () => {
+                                    this.toastService.show('Vehicle and images added successfully', 'success');
+                                    this.loadVehicles();
+                                    this.closeAddModal();
+                                },
+                                error: () => {
+                                    this.toastService.show('Vehicle added but images failed to upload', 'warning');
+                                    this.loadVehicles();
+                                    this.closeAddModal();
+                                }
+                            });
+                    } else {
+                        this.toastService.show('Vehicle added successfully', 'success');
+                        this.loadVehicles();
+                        this.closeAddModal();
+                    }
                 },
                 error: (err) => {
                     console.error('Error adding vehicle:', err);
@@ -117,7 +143,7 @@ export class Vehicles implements OnInit {
         if (!id) return;
 
         if (confirm('Are you sure you want to remove this vehicle?')) {
-            this.http.delete(`http://localhost:5238/api/vehicles/${id}`)
+            this.http.delete(`${environment.apiUrl}/api/vehicles/${id}`)
                 .subscribe({
                     next: () => {
                         this.toastService.show('Vehicle removed successfully', 'success');

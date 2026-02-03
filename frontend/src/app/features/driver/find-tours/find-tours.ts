@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface Tour {
     tourId: number;
@@ -55,7 +56,7 @@ export class FindTours implements OnInit {
     }
 
     loadTours() {
-        this.http.get<Tour[]>('http://localhost:5238/api/tours').subscribe({
+        this.http.get<Tour[]>(`${environment.apiUrl}/api/tours`).subscribe({
             next: (data) => {
                 // Filter tours that are open for offers (not Finalized or Cancelled)
                 this.tours = data.filter(t => t.status === 'Draft' || t.status === 'Open');
@@ -73,7 +74,7 @@ export class FindTours implements OnInit {
         // TODO: Get actual driver ID from auth service
         const driverId = 1; // Mock for now
 
-        this.http.get<Vehicle[]>(`http://localhost:5238/api/drivers/${driverId}/vehicles`).subscribe({
+        this.http.get<Vehicle[]>(`${environment.apiUrl}/api/drivers/${driverId}/vehicles`).subscribe({
             next: (data) => {
                 this.driverVehicles = data;
             },
@@ -119,7 +120,7 @@ export class FindTours implements OnInit {
             additionalNotes: this.additionalNotes || null
         };
 
-        this.http.post('http://localhost:5238/api/offers/driver', offerData).subscribe({
+        this.http.post(`${environment.apiUrl}/api/offers/driver`, offerData).subscribe({
             next: (response) => {
                 console.log('Offer submitted:', response);
                 this.toastService.show(`Offer submitted successfully for "${this.selectedTour?.title}"!`, 'success');

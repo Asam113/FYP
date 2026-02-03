@@ -39,8 +39,15 @@
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden vehicle-card">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="icon-box bg-primary-subtle rounded-3 p-3 text-primary">
-                            <i class="bi fs-3" [ngClass]="getVehicleIcon(vehicle.vehicleType)"></i>
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="icon-box bg-primary-subtle rounded-3 p-3 text-primary">
+                                <i class="bi fs-3" [ngClass]="getVehicleIcon(vehicle.vehicleType)"></i>
+                            </div>
+                            <!-- Primary Image Thumb -->
+                            <div class="vehicle-thumb" *ngIf="vehicle.vehicleImages?.length > 0">
+                                <img [src]="vehicle.vehicleImages[0].imageUrl" class="rounded-2 shadow-sm"
+                                    alt="Vehicle">
+                            </div>
                         </div>
                         <div class="dropdown">
                             <button class="btn btn-light btn-sm rounded-circle p-2 border-0" type="button"
@@ -132,6 +139,12 @@
                         <option value="Active">Active</option>
                         <option value="Maintenance">Under Maintenance</option>
                     </select>
+                </div>
+                <!-- Image Upload -->
+                <div class="col-12 mt-3">
+                    <label class="form-label small fw-bold text-dark d-block">Vehicle Photos</label>
+                    <app-image-uploader (imagesSelected)="onImagesSelected($event)" [multiple]="true">
+                    </app-image-uploader>
                 </div>
             </div>
 

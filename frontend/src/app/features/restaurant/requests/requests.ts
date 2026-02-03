@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 interface RequestSummary {
   title: string;
@@ -74,7 +75,7 @@ export class Requests implements OnInit {
 
   loadOffers() {
     this.loading = true;
-    this.http.get<any[]>(`http://localhost:5238/api/restaurantoffers?restaurantId=${this.restaurantId}`)
+    this.http.get<any[]>(`${environment.apiUrl}/api/restaurantoffers?restaurantId=${this.restaurantId}`)
       .subscribe({
         next: (data) => {
           this.mapOffersToRequests(data);

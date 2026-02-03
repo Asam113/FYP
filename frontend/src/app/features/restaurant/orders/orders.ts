@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 interface MenuItem {
     name: string;
@@ -43,7 +44,7 @@ export class Orders implements OnInit {
 
     loadOrders() {
         this.loading = true;
-        this.http.get<any[]>('http://localhost:5238/api/restaurantassignments')
+        this.http.get<any[]>(`${environment.apiUrl}/api/restaurantassignments`)
             .subscribe({
                 next: (data) => {
                     this.mapAssignmentsToOrders(data);

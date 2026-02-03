@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface MenuItem {
   itemId: number;
@@ -82,7 +83,7 @@ export class Menu implements OnInit {
   deleteTarget: { type: 'category' | 'item', category?: MenuCategoryUI, item?: any } | null = null;
   deleteMessage = '';
 
-  private readonly API_URL = 'http://localhost:5238/api/RestaurantMenu';
+  private readonly API_URL = `${environment.apiUrl}/api/RestaurantMenu`;
 
   constructor(private http: HttpClient, private toastService: ToastService) { }
 

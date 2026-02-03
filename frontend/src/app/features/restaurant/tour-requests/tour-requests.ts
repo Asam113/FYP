@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ToastService } from '../../../core/services/toast.service';
+import { environment } from '../../../../environments/environment';
 
 interface Tour {
     tourId: number;
@@ -81,7 +82,7 @@ export class TourRequests implements OnInit {
     loadTourRequirements() {
         const params = this.filterStatus !== 'All' ? `?status=${this.filterStatus}` : '';
 
-        this.http.get<ServiceRequirement[]>(`http://localhost:5238/api/servicerequirements${params}`).subscribe({
+        this.http.get<ServiceRequirement[]>(`${environment.apiUrl}/api/servicerequirements${params}`).subscribe({
             next: (data) => {
                 this.groupRequirementsByTour(data);
                 this.isLoading = false;
@@ -242,7 +243,7 @@ export class TourRequests implements OnInit {
             };
         }
 
-        this.http.post('http://localhost:5238/api/restaurantoffers', offerData).subscribe({
+        this.http.post(`${environment.apiUrl}/api/restaurantoffers`, offerData).subscribe({
             next: (response) => {
                 console.log('Offer submitted:', response);
                 this.toastService.show(`Offer submitted successfully for "${this.selectedRequirement?.type}" requirement!`, 'success');
