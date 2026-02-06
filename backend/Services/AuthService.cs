@@ -126,6 +126,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> SignupDriverAsync(DriverSignupDto request)
     {
+        Console.WriteLine($"[SignupDriver] Starting signup for {request.Email}");
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         
         if (user == null)
@@ -135,6 +136,7 @@ public class AuthService : IAuthService
              if (await _context.Users.AnyAsync(u => u.Email == request.Email))
                 throw new Exception("Email already registered");
 
+            Console.WriteLine("[SignupDriver] Creating new User entity");
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
             string? profilePicPath = await SaveFileAsync(request.ProfilePicture, "profiles");
 
@@ -153,6 +155,7 @@ public class AuthService : IAuthService
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[SignupDriver] User created with ID: {user.Id}");
         }
         else
         {
@@ -171,6 +174,8 @@ public class AuthService : IAuthService
             // Check if driver profile exists
              if (await _context.Drivers.AnyAsync(d => d.UserId == user.Id))
                 throw new Exception("Driver profile already exists for this user.");
+            
+            Console.WriteLine($"[SignupDriver] Using existing User ID: {user.Id}");
         }
 
         var driver = new Driver
@@ -183,6 +188,7 @@ public class AuthService : IAuthService
         };
         _context.Drivers.Add(driver);
         await _context.SaveChangesAsync();
+        Console.WriteLine($"[SignupDriver] Driver created with ID: {driver.DriverId}");
 
         // Handle Documents
         string? cnicFrontPath = await SaveFileAsync(request.CnicFront, "documents");
@@ -199,6 +205,7 @@ public class AuthService : IAuthService
         driver.CnicBack = cnicBackPath;
         
         // Handle Vehicle
+        Console.WriteLine("[SignupDriver] Creating Vehicle...");
         var vehicle = new Vehicle
         {
             DriverId = driver.DriverId,
@@ -210,23 +217,33 @@ public class AuthService : IAuthService
         };
         _context.Vehicles.Add(vehicle);
         await _context.SaveChangesAsync();
+        Console.WriteLine($"[SignupDriver] Vehicle created with ID: {vehicle.VehicleId}");
 
         // Handle Vehicle Images
         if (request.VehicleImages != null && request.VehicleImages.Count > 0)
         {
+            Console.WriteLine($"[SignupDriver] Processing {request.VehicleImages.Count} vehicle images...");
             var savedVehiclePaths = await _imageService.SaveImagesAsync(request.VehicleImages, "vehicles");
+            Console.WriteLine($"[SignupDriver] Saved {savedVehiclePaths.Count} images to disk.");
+            
             foreach (var path in savedVehiclePaths)
             {
+                // Fix Logic: Check database for primary instead of local context context.VehicleImages could be empty locally
+                // Actually for a new vehicle, the first one we add should be primary.
+                bool isPrimary = !_context.VehicleImages.Local.Any(vi => vi.VehicleId == vehicle.VehicleId);
+                
                 _context.VehicleImages.Add(new VehicleImage
                 {
                     VehicleId = vehicle.VehicleId,
                     ImageUrl = path,
-                    IsPrimary = !_context.VehicleImages.Any(vi => vi.VehicleId == vehicle.VehicleId)
+                    IsPrimary = isPrimary
                 });
             }
             await _context.SaveChangesAsync();
+            Console.WriteLine("[SignupDriver] Vehicle images saved to DB.");
         }
 
+        Console.WriteLine("[SignupDriver] Signup completed successfully.");
         return GenerateAuthResponse(user, driver.DriverId);
     }
 
@@ -315,7 +332,10 @@ public class AuthService : IAuthService
             BusinessType = request.BusinessType,
             BusinessLicense = "Uploaded", // Or utilize as License Number if available
             Address = request.Address,
-            PostalCode = request.PostalCode
+            PostalCode = request.PostalCode,
+            // Auto-set service flags based on business type (Phase 2)
+            ProvidesMeal = request.BusinessType == "Restaurant" || request.BusinessType == "Hotel",
+            ProvidesRoom = request.BusinessType == "Hotel" || request.BusinessType == "GuestHouse"
         };
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
@@ -336,62 +356,6 @@ public class AuthService : IAuthService
                 
                 restaurant.BusinessLicense = licensePath; 
                 await _context.SaveChangesAsync();
-            }
-        }
-
-        // Handle MenuJson
-        if (!string.IsNullOrEmpty(request.MenuJson))
-        {
-            try 
-            {
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var categories = JsonSerializer.Deserialize<List<MenuCategoryDto>>(request.MenuJson, options);
-
-                if (categories != null)
-                {
-                    foreach (var category in categories)
-                    {
-                        var menu = new Menu 
-                        {
-                            RestaurantId = restaurant.RestaurantId,
-                            MenuName = category.Title,
-                            Category = category.Badge,
-                            Description = $"{category.Title} - {category.Badge}" // Optional description
-                        };
-                        _context.Menus.Add(menu);
-                        await _context.SaveChangesAsync();
-
-                        if (category.Items != null)
-                        {
-                            foreach (var itemDto in category.Items)
-                            {
-                                string? imagePath = null;
-                                if (!string.IsNullOrEmpty(itemDto.Image) && itemDto.Image.StartsWith("data:image"))
-                                {
-                                     imagePath = await SaveBase64ImageAsync(itemDto.Image, "menu_items");
-                                }
-
-                                var menuItem = new MenuItem
-                                {
-                                    MenuId = menu.MenuId,
-                                    ItemName = itemDto.Name,
-                                    Price = itemDto.Price,
-                                    Description = itemDto.Description,
-                                    Image = imagePath,
-                                    IsAvailable = itemDto.IsAvailable
-                                };
-                                _context.MenuItems.Add(menuItem);
-                            }
-                            await _context.SaveChangesAsync();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't fail the whole registration if menu fails?
-                // Or throw? Let's log to console for now or minimal handling.
-                Console.WriteLine($"Error processing MenuJson: {ex.Message}");
             }
         }
 
@@ -502,8 +466,10 @@ public class AuthService : IAuthService
             throw new Exception("Account not verified. Please verify your OTP.");
         }
 
-        // Get role-specific ID
+        // Get role-specific ID and Status
         int roleSpecificId = 0;
+        string status = "Approved"; // Default
+
         switch (user.Role)
         {
             case UserRole.Tourist:
@@ -512,11 +478,22 @@ public class AuthService : IAuthService
                 break;
             case UserRole.Driver:
                 var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.UserId == user.Id);
-                roleSpecificId = driver?.DriverId ?? 0;
+                if (driver == null)
+                {
+                    throw new Exception("Driver registration incomplete. Please complete your signup.");
+                }
+                roleSpecificId = driver.DriverId;
+                status = driver.AccountStatus;
                 break;
             case UserRole.Restaurant:
                 var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == user.Id);
-                roleSpecificId = restaurant?.RestaurantId ?? 0;
+                Console.WriteLine($"[Login] Restaurant lookup for UserId {user.Id}: {(restaurant != null ? $"Found RestaurantId {restaurant.RestaurantId}" : "NOT FOUND")}");
+                if (restaurant == null)
+                {
+                    throw new Exception("Restaurant registration incomplete. Please complete your signup.");
+                }
+                roleSpecificId = restaurant.RestaurantId;
+                status = restaurant.ApplicationStatus.ToString();
                 break;
         }
 
@@ -534,7 +511,8 @@ public class AuthService : IAuthService
                 PhoneNumber = user.PhoneNumber,
                 Role = user.Role,
                 RoleSpecificId = roleSpecificId,
-                ProfilePicture = user.ProfilePicture
+                ProfilePicture = user.ProfilePicture,
+                Status = status
             }
         };
     }

@@ -827,6 +827,81 @@ namespace backend.Migrations
                     b.ToTable("Reviews");
                 });
 
+            modelBuilder.Entity("backend.Models.Supporting.RoomCategory", b =>
+                {
+                    b.Property<int>("RoomCategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoomCategoryId"));
+
+                    b.Property<string>("Amenities")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("AvailableRooms")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("MaxGuests")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PricePerNight")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalRooms")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoomCategoryId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("RoomCategories");
+                });
+
+            modelBuilder.Entity("backend.Models.Supporting.RoomImage", b =>
+                {
+                    b.Property<int>("RoomImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RoomImageId"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("RoomCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoomImageId");
+
+                    b.HasIndex("RoomCategoryId");
+
+                    b.ToTable("RoomImages");
+                });
+
             modelBuilder.Entity("backend.Models.Supporting.Vehicle", b =>
                 {
                     b.Property<int>("VehicleId")
@@ -1193,6 +1268,12 @@ namespace backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<bool>("ProvidesMeal")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ProvidesRoom")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("Rating")
                         .HasColumnType("decimal(3,2)");
 
@@ -1337,6 +1418,9 @@ namespace backend.Migrations
                     b.Property<int>("RequirementId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("RoomCategoryId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("StayDurationDays")
                         .HasColumnType("int");
 
@@ -1349,6 +1433,8 @@ namespace backend.Migrations
                     b.HasIndex("ProviderId");
 
                     b.HasIndex("RequirementId");
+
+                    b.HasIndex("RoomCategoryId");
 
                     b.HasIndex("TourId");
 
@@ -1693,6 +1779,28 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("backend.Models.Supporting.RoomCategory", b =>
+                {
+                    b.HasOne("backend.Models.UserManagement.Restaurant", "Restaurant")
+                        .WithMany("RoomCategories")
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("backend.Models.Supporting.RoomImage", b =>
+                {
+                    b.HasOne("backend.Models.Supporting.RoomCategory", "RoomCategory")
+                        .WithMany("RoomImages")
+                        .HasForeignKey("RoomCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RoomCategory");
+                });
+
             modelBuilder.Entity("backend.Models.Supporting.Vehicle", b =>
                 {
                     b.HasOne("backend.Models.UserManagement.Driver", "Driver")
@@ -1844,12 +1952,19 @@ namespace backend.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("backend.Models.Supporting.RoomCategory", "RoomCategory")
+                        .WithMany("Offers")
+                        .HasForeignKey("RoomCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("backend.Models.TourManagement.Tour", "Tour")
                         .WithMany()
                         .HasForeignKey("TourId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Restaurant");
+
+                    b.Navigation("RoomCategory");
 
                     b.Navigation("ServiceRequirement");
 
@@ -1910,6 +2025,13 @@ namespace backend.Migrations
                     b.Navigation("Orders");
                 });
 
+            modelBuilder.Entity("backend.Models.Supporting.RoomCategory", b =>
+                {
+                    b.Navigation("Offers");
+
+                    b.Navigation("RoomImages");
+                });
+
             modelBuilder.Entity("backend.Models.Supporting.Vehicle", b =>
                 {
                     b.Navigation("DriverOffers");
@@ -1967,6 +2089,8 @@ namespace backend.Migrations
                     b.Navigation("RestaurantImages");
 
                     b.Navigation("RestaurantOffers");
+
+                    b.Navigation("RoomCategories");
                 });
 
             modelBuilder.Entity("backend.Models.UserManagement.Tourist", b =>

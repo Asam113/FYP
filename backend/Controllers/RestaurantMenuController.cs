@@ -26,11 +26,22 @@ public class RestaurantMenuController : ControllerBase
 
     private int GetRestaurantId()
     {
+        // Debug: Print all claims
+        Console.WriteLine("========== JWT CLAIMS DEBUG ==========");
+        foreach (var c in User.Claims)
+        {
+            Console.WriteLine($"Claim Type: {c.Type}, Value: {c.Value}");
+        }
+        Console.WriteLine("======================================");
+
         var claim = User.FindFirst("RoleSpecificId");
         if (claim != null && int.TryParse(claim.Value, out int id))
         {
+            Console.WriteLine($"[GetRestaurantId] Found RoleSpecificId: {id}");
             return id;
         }
+        
+        Console.WriteLine("[GetRestaurantId] RoleSpecificId claim not found or invalid!");
         // If Admin, this might return null or 0, handling needed in methods
         return 0; 
     }

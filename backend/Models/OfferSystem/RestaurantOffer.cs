@@ -36,6 +36,10 @@ public class RestaurantOffer : Offer
 
     public int? StayDurationDays { get; set; }
 
+    // Room Category Selection (Phase 2)
+    [ForeignKey("RoomCategory")]
+    public int? RoomCategoryId { get; set; }
+
     [Required]
     [ForeignKey("ServiceRequirement")]
     public int RequirementId { get; set; } // KEY CHANGE: Link to requirement, not tour
@@ -45,6 +49,7 @@ public class RestaurantOffer : Offer
     public virtual ServiceRequirement ServiceRequirement { get; set; } = null!;
     [ForeignKey("ProviderId")]
     public virtual Restaurant Restaurant { get; set; } = null!;
+    public virtual RoomCategory? RoomCategory { get; set; }
     public virtual ICollection<OfferMenuItem> OfferMenuItems { get; set; } = new List<OfferMenuItem>();
     public virtual RestaurantAssignment? RestaurantAssignment { get; set; }
 }

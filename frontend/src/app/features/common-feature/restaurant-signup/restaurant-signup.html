@@ -95,6 +95,26 @@
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">Business Name</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-shop input-icon"></i>
+                        <input type="text" class="form-input" placeholder="e.g. Tasty Bites"
+                            [(ngModel)]="restaurantName" name="restaurantName" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Business Type *</label>
+                    <div class="business-type-grid">
+                        <div *ngFor="let type of businessTypes" class="business-type-card"
+                            [class.selected]="businessType === type.value" (click)="businessType = type.value">
+                            <div class="type-icon">{{type.icon}}</div>
+                            <div class="type-label">{{type.label}}</div>
+                        </div>
+                    </div>
+                </div>
+
                 <button type="button" class="next-btn" (click)="nextStep()">
                     Continue <i class="bi bi-arrow-right"></i>
                 </button>
@@ -106,28 +126,8 @@
                     (verified)="onOtpVerified()"></app-verify-otp>
             </div>
 
-            <!-- Step 3: Restaurant Details -->
+            <!-- Step 3: Business License & Images -->
             <div *ngIf="currentStep === 3" class="form-grid">
-                <div class="form-group">
-                    <label class="form-label">Restaurant Name</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-shop input-icon"></i>
-                        <input type="text" class="form-input" placeholder="e.g. Tasty Bites"
-                            [(ngModel)]="restaurantName" name="restaurantName" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Restaurant Type</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-list-ul input-icon"></i>
-                        <select class="form-input" [(ngModel)]="selectedRestaurantType" name="restaurantType" required>
-                            <option value="" disabled selected>Select Type</option>
-                            <option *ngFor="let type of restaurantTypes" [value]="type">{{type}}</option>
-                        </select>
-                    </div>
-                </div>
-
                 <div class="form-group">
                     <label class="form-label">Address</label>
                     <div class="input-wrapper">

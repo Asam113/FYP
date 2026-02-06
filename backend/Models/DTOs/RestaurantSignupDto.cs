@@ -46,7 +46,5 @@ public class RestaurantSignupDto
     public IFormFile? ProfilePicture { get; set; }
     public IFormFile? LicenseDocument { get; set; }
     
-    public string? MenuJson { get; set; }
-
     public List<IFormFile>? RestaurantImages { get; set; }
 }

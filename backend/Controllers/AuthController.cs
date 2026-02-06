@@ -79,6 +79,8 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/signup/driver
     [HttpPost("signup/driver")]
+    [DisableRequestSizeLimit]
+    [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue, ValueLengthLimit = int.MaxValue)]
     public async Task<ActionResult<AuthResponse>> SignupDriver([FromForm] DriverSignupDto request)
     {
         try
@@ -94,6 +96,8 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/signup/restaurant
     [HttpPost("signup/restaurant")]
+    [DisableRequestSizeLimit]
+    [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue, ValueLengthLimit = int.MaxValue)]
     public async Task<ActionResult<AuthResponse>> SignupRestaurant([FromForm] RestaurantSignupDto request)
     {
         try
@@ -103,7 +107,8 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new { message = ex.Message });
+            var message = ex.InnerException?.Message ?? ex.Message;
+            return BadRequest(new { message });
         }
     }
 

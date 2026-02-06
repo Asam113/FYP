@@ -267,6 +267,52 @@
     cursor: pointer;
 }
 
+/* Business Type Selection */
+.business-type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.business-type-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+}
+
+.business-type-card:hover {
+    border-color: #fcd34d;
+    background-color: #fffbeb;
+    transform: translateY(-2px);
+}
+
+.business-type-card.selected {
+    border-color: #ea580c;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+.type-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.type-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1.3;
+}
+
+.business-type-card.selected .type-label {
+    color: #ea580c;
+}
+
+
 /* Buttons */
 .submit-btn,
 .next-btn {
@@ -348,5 +394,13 @@
 
     .signup-card {
         padding: 1.5rem;
+    }
+
+    .business-type-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .type-icon {
+        font-size: 2rem;
     }
 }

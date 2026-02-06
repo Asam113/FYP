@@ -40,6 +40,12 @@ export class Login {
 
         // Role comes from backend as 'Admin', 'Tourist', etc.
         const role = response.user.role;
+        const status = response.user.status;
+
+        if ((role === 'Restaurant' || role === 'Driver') && status !== 'Approved') {
+          this.router.navigate(['/account-pending']);
+          return;
+        }
 
         if (role === 'Tourist') {
           this.router.navigate(['/tourist']);

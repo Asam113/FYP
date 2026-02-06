@@ -28,11 +28,13 @@ export class RestaurantSignup {
     restaurantName: string = '';
     address: string = '';
     postalCode: string = '';
-    selectedRestaurantType: string = '';
+    businessType: string = ''; // Phase 2: Business Type
     businessLicenseFile: File | null = null;
 
-    restaurantTypes = [
-        "Dine-In", "Takeaway", "Delivery-Only", "Café", "Fast Food", "Casual Dining", "Fine Dining"
+    businessTypes = [
+        { value: 'Restaurant', label: 'Restaurant (Meals Only)', icon: '🍽️' },
+        { value: 'Hotel', label: 'Hotel (Rooms + Meals)', icon: '🏨' },
+        { value: 'GuestHouse', label: 'Guest House (Rooms Only)', icon: '🏠' }
     ];
 
     showPassword = false;
@@ -42,9 +44,9 @@ export class RestaurantSignup {
     currentStep = 1;
 
     steps = [
-        { number: 1, name: 'Personal & Logo' },
+        { number: 1, name: 'Personal Info' },
         { number: 2, name: 'Verification' },
-        { number: 3, name: 'Details' }
+        { number: 3, name: 'Business Details' }
     ];
 
 
@@ -81,6 +83,12 @@ export class RestaurantSignup {
             this.toastService.show('Please fill in all personal details', 'error');
             return;
         }
+
+        if (!this.restaurantName || !this.businessType) {
+            this.toastService.show('Please provide business name and type', 'error');
+            return;
+        }
+
         if (this.password !== this.confirmPassword) {
             this.toastService.show('Passwords do not match', 'error');
             return;
@@ -90,7 +98,9 @@ export class RestaurantSignup {
             name: this.ownerName,
             email: this.email,
             password: this.password,
-            phoneNumber: this.phoneNumber
+            phoneNumber: this.phoneNumber,
+            businessName: this.restaurantName,
+            businessType: this.businessType
         };
 
         this.authService.initiateRestaurantSignup(data).subscribe({
@@ -134,8 +144,8 @@ export class RestaurantSignup {
     }
 
     validateRestaurantDetailsAndSubmit() {
-        if (!this.restaurantName || !this.selectedRestaurantType || !this.address || !this.postalCode) {
-            this.toastService.show('Please fill in all restaurant details', 'error');
+        if (!this.address || !this.postalCode) {
+            this.toastService.show('Please fill in all business details', 'error');
             return;
         }
 
@@ -147,8 +157,6 @@ export class RestaurantSignup {
         this.submitApplication();
     }
 
-    // --- Phase 4 Logic (Menu) ---
-
     submitApplication() {
         const formData = new FormData();
         formData.append('Name', this.ownerName);
@@ -158,57 +166,22 @@ export class RestaurantSignup {
 
         formData.append('RestaurantName', this.restaurantName);
         formData.append('Address', this.address);
-        formData.append('BusinessType', this.selectedRestaurantType);
+        formData.append('BusinessType', this.businessType);
         formData.append('PostalCode', this.postalCode);
-        formData.append('OwnerName', this.ownerName); // Added OwnerName mapping if needed by backend DTO
+        formData.append('OwnerName', this.ownerName);
 
         if (this.profilePicture) {
             formData.append('ProfilePicture', this.profilePicture);
         }
-        if (this.businessLicenseFile) {
-            // Note: Backend might expect 'BusinessLicense' property as string but here we upload file?
-            // Checking Backend DTO: BusinessLicense is string? Yes see RestaurantSignupDto.
-            // But we have file upload?
-            // RestaurantSignupDto has: public string? BusinessLicense { get; set; }
-            // It does NOT have IFormFile for license.
-            // Wait, DriverSignup has IFormFile.
-            // RestaurantSignupDto seems to lack IFormFile for License.
-            // I should check Backend DTO again.
-            // Restaurant.BusinessLicense is string.
-            // Maybe we should update backend DTO to accept file or just string?
-            // For now let's assume we pass a placeholder or updating backend DTO is needed.
-            // I will assume for now we must upload it similarly to Driver documents.
-            // Let's stick to what's in DTO. DTO has string. The prompt didn't ask to change DTO for file upload capability but I should probably fix it if I want it to work.
-            // Since DTO has string, I'll just append it as string? No, file upload needs IFormFile.
-            // I will comment out file upload for now or assume backend handles it if I added it?
-            // Reviewing Backend DTO: It only has ProfilePicture as IFormFile.
-            // So License Document upload is MISSING in backend DTO.
-            // I will execute this TS change first, then fix backend DTO.
-            // For now I'll just append it as 'BusinessLicense' (maybe it expects text/number?)
-            // If it's a file, I need to add IFormFile to DTO.
-            // I will assume for now I will append it as file, but backend won't bind it unless I change DTO.
-            // Let's proceed with TS change.
-            formData.append('BusinessLicense', this.businessLicenseFile.name); // Just sending name for now if backend doesn't support file
-        }
 
-        // Logic for Menu data
-        // How to send Menu data? Backend SignupRestaurant does NOT handle menu creation.
-        // It only creates Restaurant.
-        // The menu creation is likely separate or should be handled.
-        // But the wizard has a "Menu" step.
-        // If the backend doesn't accept Menu items in Signup, we might lose them.
-        // Or we should call another API to add menu items after signup.
-        // Given complexity, and user request "link it to backend", I should try to persist what I can.
-        // Since backend strictly does Auth/Restaurant creation, I'll focus on that.
         if (this.businessLicenseFile) {
             formData.append('LicenseDocument', this.businessLicenseFile);
         }
 
         // Restaurant Images
         this.selectedRestaurantImages.forEach(image => {
-            formData.append('restaurantImages', image);
+            formData.append('RestaurantImages', image);
         });
-
 
         console.log('Submitting application...');
         this.authService.signupRestaurant(formData).subscribe({
@@ -217,6 +190,11 @@ export class RestaurantSignup {
                 this.router.navigate(['/login']);
             },
             error: (err) => {
+                console.error('Signup Error Details:', err);
+                if (err.error && err.error.errors) {
+                    // Log validation errors specifically
+                    console.table(err.error.errors);
+                }
                 this.toastService.show(err.error?.message || 'Submission failed', 'error');
             }
         });

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -17,21 +17,30 @@ export class ImageUploaderComponent {
     selectedFiles: File[] = [];
     previews: string[] = [];
 
+    constructor(private cdr: ChangeDetectorRef) {}
+
     onFilesSelected(event: any): void {
         const files = event.target.files;
         if (files) {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                if (file.type.match(/image\/*/) == null) {
+                    continue;
+                }
+                
                 this.selectedFiles.push(file);
 
                 const reader = new FileReader();
                 reader.onload = (e: any) => {
                     this.previews.push(e.target.result);
+                    this.cdr.detectChanges(); // Force update
                 };
                 reader.readAsDataURL(file);
             }
             this.imagesSelected.emit(this.selectedFiles);
         }
+        // Clear input so change event fires if same file selected again
+        event.target.value = '';
     }
 
     removeNewImage(index: number): void {

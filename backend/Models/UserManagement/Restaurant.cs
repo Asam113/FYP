@@ -27,6 +27,10 @@ public class Restaurant
     [MaxLength(100)]
     public string? BusinessType { get; set; }
 
+    // Service Type Flags (Phase 2)
+    public bool ProvidesMeal { get; set; } = true; // Default for backward compatibility
+    public bool ProvidesRoom { get; set; } = false;
+
     [Column(TypeName = "decimal(3,2)")]
     public decimal Rating { get; set; } = 0;
 
@@ -52,4 +56,5 @@ public class Restaurant
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
     public virtual ICollection<Earning> Earnings { get; set; } = new List<Earning>();
     public virtual ICollection<RestaurantImage> RestaurantImages { get; set; } = new List<RestaurantImage>();
+    public virtual ICollection<RoomCategory> RoomCategories { get; set; } = new List<RoomCategory>();
 }
