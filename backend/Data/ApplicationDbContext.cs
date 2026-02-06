@@ -59,6 +59,8 @@ public class ApplicationDbContext : DbContext
     public virtual DbSet<Earning> Earnings { get; set; }
     public DbSet<VehicleImage> VehicleImages { get; set; }
     public DbSet<RestaurantImage> RestaurantImages { get; set; }
+    public DbSet<RoomCategory> RoomCategories { get; set; }
+    public DbSet<RoomImage> RoomImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

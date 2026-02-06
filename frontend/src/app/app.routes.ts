@@ -13,11 +13,13 @@ import { TouristLayout } from './features/tourist/layout/tourist-layout';
 import { DriverLayout } from './features/driver/layout/driver-layout';
 import { RestaurantLayout } from './features/restaurant/layout/restaurant-layout';
 import { AdminLayout } from './features/admin/layout/admin-layout';
+import { AccountPendingComponent } from './features/common-feature/account-pending/account-pending';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: Login },
+  { path: 'account-pending', component: AccountPendingComponent },
   { path: 'role-selection', component: RoleSelection },
   { path: 'tourist-signup', component: TouristSignup },
   { path: 'driver-signup', component: DriverSignup },

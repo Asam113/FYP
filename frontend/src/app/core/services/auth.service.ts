@@ -25,6 +25,7 @@ export interface AuthResponse {
         role: string;
         roleSpecificId?: number;
         profilePicture?: string;
+        status?: string;
     };
 }
 

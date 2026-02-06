@@ -27,6 +27,13 @@ builder.Services.AddControllers()
                 .Select(e => new { Field = e.Key, Message = e.Value.Errors.First().ErrorMessage })
                 .ToList();
 
+            Console.WriteLine("---------------- VALIDATION ERROR ----------------");
+            foreach (var error in errors)
+            {
+                Console.WriteLine($"Field: {error.Field}, Error: {error.Message}");
+            }
+            Console.WriteLine("--------------------------------------------------");
+
             return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(new { message = "Validation Failed", errors });
         };
     });
@@ -81,6 +88,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Increase Max Request Body Size for File Uploads
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(x =>
+{
+    x.ValueLengthLimit = int.MaxValue;
+    x.MultipartBodyLengthLimit = int.MaxValue; // 2 GB limit
+    x.MemoryBufferThreshold = 10 * 1024 * 1024; // 10 MB buffer before writing to disk (prevents RAM spikes)
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = int.MaxValue; // Unlimited Kestrel body size
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(10);
+});
+
 var app = builder.Build();
 
 // Apply Migrations automatically on startup
@@ -130,7 +151,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors("AllowAngular");

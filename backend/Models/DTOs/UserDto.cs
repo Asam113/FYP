@@ -11,4 +11,5 @@ public class UserDto
     public UserRole Role { get; set; }
     public int? RoleSpecificId { get; set; } // TouristId, DriverId, or RestaurantId
     public string? ProfilePicture { get; set; }
+    public string Status { get; set; } = "Approved"; // Default to Approved
 }
