@@ -26,6 +26,7 @@ export interface AuthResponse {
         roleSpecificId?: number;
         profilePicture?: string;
         status?: string;
+        businessType?: string;
     };
 }
 
@@ -103,5 +104,9 @@ export class AuthService {
 
     isLoggedIn(): boolean {
         return !!this.getToken();
+    }
+
+    resendOtp(email: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/resend-otp`, { email });
     }
 }

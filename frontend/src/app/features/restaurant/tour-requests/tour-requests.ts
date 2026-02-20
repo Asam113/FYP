@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ToastService } from '../../../core/services/toast.service';
 import { environment } from '../../../../environments/environment';
@@ -41,13 +42,17 @@ interface ServiceRequirement {
 @Component({
     selector: 'app-tour-requests',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RouterModule],
     templateUrl: './tour-requests.html',
     styleUrl: './tour-requests.css'
 })
 export class TourRequests implements OnInit {
     tours: Tour[] = [];
     isLoading = true;
+    hasMenuItems = true; // Assume true initially
+    hasRooms = true; // Assume true initially
+    businessType: string = '';
+    restaurantId: number = 0;
 
     // View state
     showTourDetails = false;
@@ -76,7 +81,56 @@ export class TourRequests implements OnInit {
     constructor(private http: HttpClient, private toastService: ToastService) { }
 
     ngOnInit() {
+        // Get user data from localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            this.businessType = user.businessType || '';
+            this.restaurantId = user.roleSpecificId || 0;
+        }
+
+        // Check setup status
+        if (this.showMenuAlert()) {
+            this.checkMenuItems();
+        }
+        if (this.showRoomsAlert()) {
+            this.checkRoomCategories();
+        }
         this.loadTourRequirements();
+    }
+
+    checkMenuItems() {
+        this.http.get<any[]>(`${environment.apiUrl}/api/RestaurantMenu`).subscribe({
+            next: (menus) => {
+                // Check if any menu has items
+                this.hasMenuItems = menus.some(menu => menu.menuItems && menu.menuItems.length > 0);
+            },
+            error: (err) => {
+                console.error('Error checking menu items:', err);
+                this.hasMenuItems = false;
+            }
+        });
+    }
+
+    checkRoomCategories() {
+        if (!this.restaurantId) return;
+        this.http.get<any[]>(`${environment.apiUrl}/api/restaurants/${this.restaurantId}/room-categories`).subscribe({
+            next: (categories) => {
+                this.hasRooms = categories.length > 0;
+            },
+            error: (err) => {
+                console.error('Error checking room categories:', err);
+                this.hasRooms = false;
+            }
+        });
+    }
+
+    showMenuAlert(): boolean {
+        return this.businessType === 'Restaurant' || this.businessType === 'Hotel';
+    }
+
+    showRoomsAlert(): boolean {
+        return this.businessType === 'GuestHouse' || this.businessType === 'Guest House' || this.businessType === 'Hotel';
     }
 
     loadTourRequirements() {
@@ -99,6 +153,12 @@ export class TourRequests implements OnInit {
 
         requirements.forEach(req => {
             if (req.tour) {
+                // Filter requirements based on business type
+                const shouldInclude = this.shouldIncludeRequirement(req.type);
+                if (!shouldInclude) {
+                    return; // Skip this requirement
+                }
+
                 if (!tourMap.has(req.tour.tourId)) {
                     tourMap.set(req.tour.tourId, {
                         tourId: req.tour.tourId,
@@ -124,7 +184,20 @@ export class TourRequests implements OnInit {
             }
         });
 
-        this.tours = Array.from(tourMap.values());
+        // Filter out tours with no matching requirements
+        this.tours = Array.from(tourMap.values()).filter(tour => tour.requirements.length > 0);
+    }
+
+    shouldIncludeRequirement(requirementType: string): boolean {
+        if (this.businessType === 'Restaurant') {
+            return requirementType === 'Meal';
+        } else if (this.businessType === 'GuestHouse' || this.businessType === 'Guest House') {
+            return requirementType === 'Accommodation';
+        } else if (this.businessType === 'Hotel') {
+            return true; // Hotels can offer on both
+        }
+        // Default: show all if businessType is unknown
+        return true;
     }
 
     viewTourDetails(tour: Tour) {
@@ -203,12 +276,14 @@ export class TourRequests implements OnInit {
             return;
         }
 
-        // TODO: Get actual restaurant ID from auth service
-        const restaurantId = 1; // Mock for now
+        if (!this.restaurantId) {
+            this.toastService.show('Restaurant ID not found. Please log in again.', 'error');
+            return;
+        }
 
         let offerData: any = {
             requirementId: this.selectedRequirement.requirementId,
-            restaurantId: restaurantId,
+            restaurantId: this.restaurantId,
             notes: this.offerDetails || null
         };
 
@@ -227,19 +302,11 @@ export class TourRequests implements OnInit {
                 includesBeverages: this.includesBeverages
             };
         } else if (this.selectedRequirement.type === 'Accommodation') {
-            if (!this.rentPerNight || !this.perRoomCapacity) {
-                this.toastService.show('Please fill in all required accommodation offer fields', 'warning');
-                return;
-            }
-
+            // For accommodation offers, just send basic data
+            // Admin will select room category and pricing will be calculated automatically
             offerData = {
                 ...offerData,
-                rentPerNight: this.rentPerNight,
-                perRoomCapacity: this.perRoomCapacity,
-                totalRooms: this.calculatedTotalRooms,
-                totalRent: this.calculatedTotalRent,
-                stayDurationDays: this.selectedRequirement.stayDurationDays,
-                notes: this.description || this.offerDetails || null
+                notes: this.offerDetails || null
             };
         }
 

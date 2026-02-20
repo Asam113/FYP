@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { BookingService } from '../../../core/services/booking.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReviewModal } from '../../../shared/components/review-modal/review-modal';
 
 interface DisplayBooking {
   id: number;
@@ -22,7 +23,7 @@ interface DisplayBooking {
 @Component({
   selector: 'app-my-bookings',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ReviewModal],
   templateUrl: './my-bookings.html',
   styleUrl: './my-bookings.css'
 })
@@ -30,6 +31,10 @@ export class MyBookings implements OnInit {
 
   bookings: DisplayBooking[] = [];
   isLoading: boolean = true;
+
+  // Review Modal State
+  selectedTourId: number | null = null;
+  showReviewModal: boolean = false;
 
   constructor(
     private bookingService: BookingService,
@@ -69,12 +74,26 @@ export class MyBookings implements OnInit {
     });
   }
 
+  openReviewModal(tourId: number) {
+    this.selectedTourId = tourId;
+    this.showReviewModal = true;
+  }
+
+  closeReviewModal() {
+    this.showReviewModal = false;
+    this.selectedTourId = null;
+  }
+
+  onReviewSubmitted() {
+    alert('Thank you for your review!');
+    // Optionally refresh bookings or mark this tour as reviewed locally to hide the button
+  }
+
   get completedCount(): number {
     return this.bookings.filter(t => t.status === 'Completed').length;
   }
 
   get ongoingCount(): number {
-    // Simplified: consider Confirmed as ongoing or upcoming depending on date
     return this.bookings.filter(t => t.status === 'Confirmed').length;
   }
 

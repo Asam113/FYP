@@ -19,8 +19,9 @@ export class Explore {
   ngOnInit(): void {
     this.tourService.getTours().subscribe({
       next: (tours) => {
-        // Only show finalized tours to tourists
-        this.tours = tours.filter(tour => tour.status === 'Finalized');
+        // Show published, finalized, and ready tours to tourists
+        const visibleStatuses = ['Published', 'Finalized', 'Ready'];
+        this.tours = tours.filter(tour => visibleStatuses.includes(tour.status));
       },
       error: (err) => {
         console.error('Error fetching tours:', err);

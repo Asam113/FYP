@@ -33,14 +33,19 @@
         <!-- Left Column: Tour List -->
         <div class="col-md-3">
             <!-- Filters -->
-            <div class="btn-group w-100 mb-3" role="group">
-                <button type="button" class="btn btn-sm" [class.btn-primary]="currentFilter === 'All'"
-                    [class.btn-outline-primary]="currentFilter !== 'All'" (click)="setFilter('All')">All</button>
-                <button type="button" class="btn btn-sm" [class.btn-primary]="currentFilter === 'Finalized'"
-                    [class.btn-outline-primary]="currentFilter !== 'Finalized'"
+            <!-- Filters -->
+            <div class="d-flex gap-2 mb-3 overflow-auto pb-2">
+                <button type="button" class="btn btn-sm rounded-pill" [class.btn-dark]="currentFilter === 'All'"
+                    [class.btn-outline-dark]="currentFilter !== 'All'" (click)="setFilter('All')">All</button>
+                <button type="button" class="btn btn-sm rounded-pill"
+                    [class.btn-success]="currentFilter === 'Finalized'"
+                    [class.btn-outline-success]="currentFilter !== 'Finalized'"
                     (click)="setFilter('Finalized')">Finalized</button>
-                <button type="button" class="btn btn-sm" [class.btn-primary]="currentFilter === 'Ready'"
+                <button type="button" class="btn btn-sm rounded-pill" [class.btn-primary]="currentFilter === 'Ready'"
                     [class.btn-outline-primary]="currentFilter !== 'Ready'" (click)="setFilter('Ready')">Ready</button>
+                <button type="button" class="btn btn-sm rounded-pill" [class.btn-warning]="currentFilter === 'Started'"
+                    [class.btn-outline-warning]="currentFilter !== 'Started'"
+                    (click)="setFilter('Started')">Started</button>
             </div>
 
             <div class="d-flex flex-column gap-3">
@@ -57,6 +62,10 @@
                             class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Finalized</span>
                         <span *ngIf="tour.status === 'Ready'"
                             class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">Ready</span>
+                        <span *ngIf="tour.status === 'InProgress'"
+                            class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Started</span>
+                        <span *ngIf="tour.status === 'Completed'"
+                            class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">Completed</span>
                         <small class="fw-bold text-primary">{{tour.pricePerPerson | number}} PKR</small>
                     </div>
                 </div>
@@ -64,8 +73,9 @@
         </div>
 
         <!-- Right Column: Detail View -->
-        <div class="col-md-9" *ngIf="selectedTour">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="min-height: 600px;">
+        <div class="col-md-9">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="min-height: 600px;"
+                *ngIf="selectedTour; else noSelection">
 
                 <!-- Tour Header -->
                 <div class="card-header bg-white border-bottom p-4">
@@ -181,6 +191,45 @@
                                             class="btn btn-outline-primary w-100 rounded-pill mb-2" disabled>
                                             <i class="bi bi-check2-all me-2"></i>Already Ready
                                         </button>
+
+                                        <!-- New Lifecycle Actions -->
+                                        <div *ngIf="selectedTour.status === 'Finalized' || selectedTour.status === 'Ready'"
+                                            class="mb-2">
+                                            <button class="btn btn-success w-100 rounded-pill"
+                                                [disabled]="!canStartTour(selectedTour)"
+                                                (click)="startTour(selectedTour.id)">
+                                                <i class="bi bi-play-fill me-1"></i> Start Tour
+                                            </button>
+                                            <div *ngIf="!canStartTour(selectedTour)" class="text-center mt-1">
+                                                <small class="text-danger" style="font-size: 0.75rem;">
+                                                    Starts on {{selectedTour.startDate | date:'mediumDate'}}
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div *ngIf="selectedTour.status === 'InProgress'" class="mb-2">
+                                            <!-- Show started status -->
+                                            <div class="alert alert-success py-2 px-3 mb-2 small text-center">
+                                                <i class="bi bi-activity me-1"></i> Tour in Progress
+                                            </div>
+
+                                            <button class="btn btn-danger w-100 rounded-pill"
+                                                [disabled]="!canCompleteTour(selectedTour)"
+                                                (click)="completeTour(selectedTour.id)">
+                                                <i class="bi bi-stop-fill me-1"></i> End Tour
+                                            </button>
+                                            <div *ngIf="!canCompleteTour(selectedTour)" class="text-center mt-1">
+                                                <small class="text-danger" style="font-size: 0.75rem;">
+                                                    Ends on {{selectedTour.endDate | date:'mediumDate'}}
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div *ngIf="selectedTour.status === 'Completed'">
+                                            <div class="alert alert-secondary py-2 px-3 mb-0 small text-center">
+                                                <i class="bi bi-check-circle-fill me-1"></i> Tour Completed
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -341,8 +390,31 @@
 
                 </div>
             </div>
+
+            <!-- Placeholder for no selection -->
+            <ng-template #noSelection>
+                <div class="card border-0 shadow-sm rounded-4 d-flex align-items-center justify-content-center bg-white"
+                    style="min-height: 600px;">
+                    <div class="text-center p-5">
+                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+                            style="width: 100px; height: 100px;">
+                            <i class="bi bi-cursor-fill fs-1 text-primary-emphasis opacity-25"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-2">Select a Tour</h4>
+                        <p class="text-muted mx-auto" style="max-width: 300px;">
+                            Choose a tour from the left list to view its full details, requirements, and bookings.
+                        </p>
+                    </div>
+                </div>
+            </ng-template>
         </div>
 
     </div>
 
+
+    <!-- Custom Confirmation Modal -->
+    <app-confirmation-modal [isVisible]="showConfirmModal" [title]="confirmTitle" [message]="confirmMessage"
+        [confirmText]="confirmText" [cancelText]="cancelText" [type]="confirmType" (onConfirm)="onConfirmAction()"
+        (onCancel)="onCancelAction()">
+    </app-confirmation-modal>
 </div>

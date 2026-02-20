@@ -30,6 +30,15 @@
     border: 2px solid #3b82f6;
 }
 
+.clickable-image {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.clickable-image:hover {
+    transform: scale(1.05);
+}
+
 .delete-btn {
     position: absolute;
     top: 5px;

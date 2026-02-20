@@ -44,7 +44,7 @@ public class RestaurantOffersController : ControllerBase
 
         if (restaurantId.HasValue)
         {
-            query = query.Where(o => o.ProviderId == restaurantId.Value);
+            query = query.Where(o => o.RestaurantId == restaurantId.Value);
         }
 
         if (!string.IsNullOrEmpty(status))
@@ -113,7 +113,7 @@ public class RestaurantOffersController : ControllerBase
         // Check if restaurant already has a pending offer for this requirement
         var existingOffer = await _context.RestaurantOffers
             .AnyAsync(o => o.RequirementId == dto.RequirementId && 
-                          o.ProviderId == dto.RestaurantId && 
+                          o.RestaurantId == dto.RestaurantId && 
                           o.Status == Models.Enums.OfferStatus.Pending);
 
         if (existingOffer)
@@ -155,34 +155,15 @@ public class RestaurantOffersController : ControllerBase
                 return BadRequest("Please set up room categories before making accommodation offers");
             }
             
-            // Validate room category selection
-            if (!dto.RoomCategoryId.HasValue)
-            {
-                return BadRequest("Room category must be selected for accommodation offers");
-            }
-            
-            var roomCategory = await _context.RoomCategories.FindAsync(dto.RoomCategoryId.Value);
-            if (roomCategory == null || roomCategory.RestaurantId != dto.RestaurantId)
-            {
-                return BadRequest("Invalid room category");
-            }
-            
-            // Check availability
-            if (roomCategory.AvailableRooms < (dto.TotalRooms ?? 0))
-            {
-                return BadRequest($"Only {roomCategory.AvailableRooms} rooms available in this category");
-            }
-            
-            if (!dto.RentPerNight.HasValue || !dto.PerRoomCapacity.HasValue || !dto.TotalRooms.HasValue || !dto.TotalRent.HasValue)
-            {
-                return BadRequest("Accommodation offers require RentPerNight, PerRoomCapacity, TotalRooms, and TotalRent");
-            }
+            // Note: Pricing fields (RentPerNight, PerRoomCapacity, TotalRooms, TotalRent) 
+            // are now optional during offer submission.
+            // They will be calculated and set when admin accepts the offer and selects a room category.
         }
 
         var offer = new RestaurantOffer
         {
             RequirementId = dto.RequirementId,
-            ProviderId = dto.RestaurantId,
+            RestaurantId = dto.RestaurantId,
             
             // Meal fields
             PricePerHead = dto.PricePerHead ?? 0,
@@ -263,17 +244,25 @@ public class RestaurantOffersController : ControllerBase
         if (offer.Status == Models.Enums.OfferStatus.Accepted || offer.Status == Models.Enums.OfferStatus.Confirmed)
         {
             var assignment = await _context.RestaurantAssignments
-                .Include(a => a.Order)
+                .Include(a => a.Orders) // Include referencing orders
                 .ThenInclude(o => o.OrderItems)
                 .FirstOrDefaultAsync(a => a.RestaurantOfferId == id);
 
             if (assignment != null)
             {
-                // Delete Order (and items via cascade or manual if restrict)
-                if (assignment.Order != null)
+                // Break circular dependency
+                assignment.OrderId = null;
+                await _context.SaveChangesAsync();
+
+                // Delete Orders (referencing this assignment)
+                if (assignment.Orders != null && assignment.Orders.Any())
                 {
-                    _context.OrderItems.RemoveRange(assignment.Order.OrderItems);
-                    _context.Orders.Remove(assignment.Order);
+                    foreach (var order in assignment.Orders)
+                    {
+                        _context.OrderItems.RemoveRange(order.OrderItems);
+                        _context.Orders.Remove(order);
+                    }
+                    await _context.SaveChangesAsync(); // Ensure Orders are deleted first
                 }
 
                 // Delete OfferMenuItems associated with this offer?
@@ -291,6 +280,14 @@ public class RestaurantOffersController : ControllerBase
             }
         }
 
+        // Clear accommodation-specific fields that were set during acceptance
+        offer.RoomCategoryId = null;
+        offer.RentPerNight = null;
+        offer.TotalRent = null;
+        offer.TotalRooms = null;
+        offer.PerRoomCapacity = null;
+        offer.StayDurationDays = null;
+
         offer.Status = Models.Enums.OfferStatus.Rejected;
         offer.RespondedAt = DateTime.UtcNow;
 
@@ -304,42 +301,78 @@ public class RestaurantOffersController : ControllerBase
         var offer = await _context.RestaurantOffers
             .Include(o => o.ServiceRequirement)
             .Include(o => o.RoomCategory)
+            .Include(o => o.Restaurant)
             .FirstOrDefaultAsync(o => o.OfferId == id);
 
         if (offer == null) return NotFound();
+
+        // For accommodation offers, require room category selection and calculate pricing
+        if (offer.ServiceRequirement.Type == "Accommodation")
+        {
+            if (!dto.RoomCategoryId.HasValue)
+            {
+                return BadRequest("Room category must be selected for accommodation offers");
+            }
+
+            var roomCategory = await _context.RoomCategories
+                .FirstOrDefaultAsync(rc => rc.RoomCategoryId == dto.RoomCategoryId.Value && rc.RestaurantId == offer.RestaurantId);
+
+            if (roomCategory == null)
+            {
+                return BadRequest("Invalid room category for this restaurant");
+            }
+
+            // Calculate pricing based on selected room category
+            var estimatedPeople = offer.ServiceRequirement.EstimatedPeople;
+            var stayDurationDays = offer.ServiceRequirement.StayDurationDays ?? 1;
+
+            var totalRoomsNeeded = (int)Math.Ceiling((decimal)estimatedPeople / roomCategory.MaxGuests);
+            var totalRent = totalRoomsNeeded * roomCategory.PricePerNight * stayDurationDays;
+
+            // Check availability
+            if (roomCategory.AvailableRooms < totalRoomsNeeded)
+            {
+                return BadRequest($"Insufficient rooms available. Only {roomCategory.AvailableRooms} rooms available in this category");
+            }
+
+            // Update offer with calculated values
+            offer.RoomCategoryId = dto.RoomCategoryId.Value;
+            offer.RentPerNight = roomCategory.PricePerNight;
+            offer.PerRoomCapacity = roomCategory.MaxGuests;
+            offer.TotalRooms = totalRoomsNeeded;
+            offer.TotalRent = totalRent;
+            offer.StayDurationDays = stayDurationDays;
+
+            // Decrease room availability
+            roomCategory.AvailableRooms -= totalRoomsNeeded;
+        }
 
         // 1. Update Offer Status
         offer.Status = Models.Enums.OfferStatus.Accepted;
         offer.RespondedAt = DateTime.UtcNow;
 
-        // 2. Decrease Room Availability (Phase 2)
-        if (offer.RoomCategoryId.HasValue && offer.TotalRooms.HasValue)
+        // Check if assignment already exists
+        var existingAssignment = await _context.RestaurantAssignments
+            .FirstOrDefaultAsync(a => a.RestaurantOfferId == offer.OfferId);
+
+        if (existingAssignment != null)
         {
-            var roomCategory = offer.RoomCategory;
-            if (roomCategory != null)
-            {
-                roomCategory.AvailableRooms -= offer.TotalRooms.Value;
-                
-                if (roomCategory.AvailableRooms < 0)
-                {
-                    return BadRequest("Insufficient rooms available");
-                }
-            }
+            return BadRequest("This offer has already been accepted and assigned.");
         }
 
         // 3. Create Assignment
         var assignment = new RestaurantAssignment
         {
             TourId = offer.ServiceRequirement.TourId,
-            RestaurantId = offer.ProviderId,
+            RestaurantId = offer.RestaurantId,
             RestaurantOfferId = offer.OfferId,
             RequirementId = offer.RequirementId,
             Status = Models.Enums.AssignmentStatus.Assigned,
             AssignedAt = DateTime.UtcNow,
-            PricePerHead = offer.PricePerHead,
+            PricePerHead = offer.ServiceRequirement.Type == "Accommodation" ? 0 : offer.PricePerHead,
             ExpectedPeople = offer.ServiceRequirement.EstimatedPeople,
-            FinalPrice = offer.PricePerHead * offer.ServiceRequirement.EstimatedPeople,
-            MealScheduleText = $"{offer.MealType} at {offer.ServiceRequirement.Location}"
+            FinalPrice = offer.ServiceRequirement.Type == "Accommodation" ? (offer.TotalRent ?? 0) : (offer.PricePerHead * offer.ServiceRequirement.EstimatedPeople),
+            MealScheduleText = offer.ServiceRequirement.Type == "Accommodation" ? $"Stay at {offer.Restaurant.RestaurantName}" : $"{offer.MealType} at {offer.ServiceRequirement.Location}"
         };
 
         _context.RestaurantAssignments.Add(assignment);
@@ -402,8 +435,9 @@ public class RestaurantOffersController : ControllerBase
                     });
                 }
             }
-            await _context.SaveChangesAsync();
         }
+        
+        await _context.SaveChangesAsync();
         
         return Ok(new { message = "Offer accepted and order created", assignmentId = assignment.AssignmentId });
     }
@@ -441,6 +475,7 @@ public class CreateRestaurantOfferDto
 
 public class AcceptRestaurantOfferDto
 {
+    public int? RoomCategoryId { get; set; } // For accommodation offers
     public List<SelectedMenuItemDto> SelectedMenuItems { get; set; } = new();
 }
 

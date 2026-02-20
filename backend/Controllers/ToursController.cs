@@ -14,11 +14,13 @@ public class ToursController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly INotificationService _notificationService;
+    private readonly IPaymentService _paymentService;
 
-    public ToursController(ApplicationDbContext context, INotificationService notificationService)
+    public ToursController(ApplicationDbContext context, INotificationService notificationService, IPaymentService paymentService)
     {
         _context = context;
         _notificationService = notificationService;
+        _paymentService = paymentService;
     }
 
     // GET: api/tours
@@ -85,7 +87,7 @@ public class ToursController : ControllerBase
             Description = tourDto.Description,
             DepartureLocation = tourDto.DepartureLocation,  // NEW
             Destination = tourDto.Destination,              // NEW
-            DurationDays = (int)(tourDto.EndDate - tourDto.StartDate).TotalDays + 1,  // NEW
+            DurationDays = (int)(tourDto.EndDate.Date - tourDto.StartDate.Date).TotalDays + 1,  // Updated to use Date component
             StartDate = tourDto.StartDate,
             EndDate = tourDto.EndDate,
             MaxCapacity = tourDto.MaxCapacity,
@@ -198,7 +200,7 @@ public class ToursController : ControllerBase
 
             if (assignment == null || !assignment.OrderId.HasValue)
             {
-                unfulfilledRequirements.Add($"{requirement.Type} at {requirement.Location} - offer accepted but menu items not selected");
+                unfulfilledRequirements.Add($"{requirement.Type} at {requirement.Location} - offer accepted but order/assignment data is incomplete. Please Unapprove and Re-Accept to fix.");
             }
         }
 
@@ -296,6 +298,72 @@ public class ToursController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Tour is now ready for departure", status = tour.Status.ToString() });
+    }
+
+    // POST: api/tours/{id}/start
+    [HttpPost("{id}/start")]
+    public async Task<IActionResult> StartTour(int id)
+    {
+        var tour = await _context.Tours.FindAsync(id);
+
+        if (tour == null)
+        {
+            return NotFound("Tour not found");
+        }
+
+        if (tour.Status != TourStatus.Ready && tour.Status != TourStatus.Finalized)
+        {
+            return BadRequest("Only ready or finalized tours can be started");
+        }
+
+        tour.Status = TourStatus.InProgress;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Tour successfully started", status = tour.Status.ToString() });
+    }
+
+    // POST: api/tours/{id}/complete
+    [HttpPost("{id}/complete")]
+    public async Task<IActionResult> CompleteTour(int id)
+    {
+        var tour = await _context.Tours.FindAsync(id);
+
+        if (tour == null)
+        {
+            return NotFound("Tour not found");
+        }
+
+        if (tour.Status != TourStatus.InProgress)
+        {
+            return BadRequest("Only tours in progress can be completed");
+        }
+
+        tour.Status = TourStatus.Completed;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Tour successfully completed", status = tour.Status.ToString() });
+    }
+
+    // POST: api/tours/{id}/publish
+    [HttpPost("{id}/publish")]
+    public async Task<IActionResult> PublishTour(int id)
+    {
+        var tour = await _context.Tours.FindAsync(id);
+
+        if (tour == null)
+        {
+            return NotFound("Tour not found");
+        }
+
+        if (tour.Status != TourStatus.Draft)
+        {
+            return BadRequest("Only draft tours can be published");
+        }
+
+        tour.Status = TourStatus.Published;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Tour published successfully", status = tour.Status.ToString() });
     }
 
     // Test endpoint to verify database connection

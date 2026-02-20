@@ -27,13 +27,6 @@ builder.Services.AddControllers()
                 .Select(e => new { Field = e.Key, Message = e.Value.Errors.First().ErrorMessage })
                 .ToList();
 
-            Console.WriteLine("---------------- VALIDATION ERROR ----------------");
-            foreach (var error in errors)
-            {
-                Console.WriteLine($"Field: {error.Field}, Error: {error.Message}");
-            }
-            Console.WriteLine("--------------------------------------------------");
-
             return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(new { message = "Validation Failed", errors });
         };
     });
@@ -50,6 +43,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDriverService, DriverService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>(); // Registering PaymentService explicitly
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key not configured");
@@ -119,18 +113,21 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Database migrations applied successfully.");
 
         // Ensure Admin User Exists with Correct Password
-        var adminUser = context.Users.FirstOrDefault(u => u.Role == UserRole.Admin);
-        if (adminUser == null)
+        var defaultEmail = "admin@travel.com";
+        var exists = context.Users.Any(u => u.Role == UserRole.Admin || u.Email == defaultEmail);
+        
+        if (!exists)
         {
-            adminUser = new User
+            var adminUser = new User
             {
                 Name = "Administrator",
-                Email = "admin@travel.com",
+                Email = defaultEmail,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
                 PhoneNumber = "0000000000",
                 Role = UserRole.Admin,
                 IsVerified = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RegistrationStep = 4
             };
             context.Users.Add(adminUser);
             context.SaveChanges();

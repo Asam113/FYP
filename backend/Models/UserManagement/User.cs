@@ -32,6 +32,9 @@ public class User
     public bool IsVerified { get; set; } = false;
     public string? OtpCode { get; set; }
     public DateTime? OtpExpiry { get; set; }
+    
+    // Track registration progress: 1=Personal Info, 2=OTP Pending, 3=Details Pending, 4=Complete
+    public int RegistrationStep { get; set; } = 1;
 
     [MaxLength(500)]
     public string? ProfilePicture { get; set; }

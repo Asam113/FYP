@@ -14,8 +14,25 @@
             <p class="page-subtitle">Create your tourist account</p>
         </div>
 
-        <!-- Registration Form -->
+        <!-- Form Content -->
         <form (ngSubmit)="createAccount()">
+            <!-- Profile Picture Upload -->
+            <div class="form-group">
+                <label class="form-label">Profile Picture</label>
+                <div class="profile-upload-box" (click)="fileInput.click()">
+                    <div class="upload-icon-wrapper" *ngIf="!profilePicture">
+                        <i class="bi bi-camera"></i>
+                    </div>
+                    <div class="preview-wrapper" *ngIf="profilePicture">
+                        <i class="bi bi-file-earmark-image"></i>
+                        <span class="file-name text-truncate">{{profilePicture.name}}</span>
+                    </div>
+                    <span class="upload-text" *ngIf="!profilePicture">Upload Photo</span>
+                    <input #fileInput type="file" class="d-none" (change)="onProfilePicSelected($event)"
+                        accept="image/*">
+                </div>
+            </div>
+
             <!-- Full Name Field -->
             <div class="form-group">
                 <label class="form-label">Full Name</label>

@@ -158,3 +158,4 @@ D:\FYP\backend\obj\Debug\net9.0\refint\backend.dll
 D:\FYP\backend\obj\Debug\net9.0\backend.pdb
 D:\FYP\backend\obj\Debug\net9.0\backend.genruntimeconfig.cache
 D:\FYP\backend\obj\Debug\net9.0\ref\backend.dll
+D:\FYP\backend\bin\Debug\net9.0\requirements.json

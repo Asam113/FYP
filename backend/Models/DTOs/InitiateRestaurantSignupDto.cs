@@ -21,12 +21,4 @@ public class InitiateRestaurantSignupDto
     [Phone]
     [MaxLength(20)]
     public string? PhoneNumber { get; set; }
-
-    [Required]
-    [MaxLength(200)]
-    public string BusinessName { get; set; } = string.Empty;
-
-    [Required]
-    [MaxLength(50)]
-    public string BusinessType { get; set; } = string.Empty; // "Restaurant" | "Hotel" | "GuestHouse"
 }

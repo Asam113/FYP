@@ -12,6 +12,9 @@ public class DriverOffer : Offer
     [ForeignKey("Vehicle")]
     public int VehicleId { get; set; }
 
+    [Required]
+    public int DriverId { get; set; }
+
     [Column(TypeName = "decimal(18,2)")]
     public decimal TransportationFare { get; set; }
 
@@ -21,7 +24,7 @@ public class DriverOffer : Offer
     public bool IncludesFuel { get; set; } = true;
 
     // Navigation Properties
-    [ForeignKey("ProviderId")]
+    [ForeignKey("DriverId")]
     public virtual Driver Driver { get; set; } = null!;
     public virtual Vehicle Vehicle { get; set; } = null!;
     public virtual TourAssignment? TourAssignment { get; set; }

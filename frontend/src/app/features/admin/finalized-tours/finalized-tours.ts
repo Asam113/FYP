@@ -99,10 +99,12 @@ interface DisplayTour {
     status: string;
 }
 
+import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+
 @Component({
     selector: 'app-finalized-tours',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, ConfirmationModalComponent],
     templateUrl: './finalized-tours.html',
     styleUrl: './finalized-tours.css'
 })
@@ -115,6 +117,15 @@ export class FinalizedTours implements OnInit {
     loading = true;
     error = '';
 
+    // Confirmation Modal State
+    showConfirmModal = false;
+    confirmTitle = '';
+    confirmMessage = '';
+    confirmText = 'Confirm';
+    cancelText = 'Cancel';
+    confirmType: 'danger' | 'warning' | 'info' = 'info';
+    private confirmAction: (() => void) | null = null;
+
     constructor(private http: HttpClient) { }
 
     ngOnInit(): void {
@@ -125,9 +136,9 @@ export class FinalizedTours implements OnInit {
         this.http.get<Tour[]>(`${environment.apiUrl}/api/tours`)
             .subscribe({
                 next: (tours) => {
-                    // Filter to show Finalized and Ready tours
+                    // Filter to show Finalized, Ready, and InProgress tours (Excluding Completed as it has its own page)
                     this.tours = tours
-                        .filter(tour => tour.status === 'Finalized' || tour.status === 'Ready')
+                        .filter(tour => ['Finalized', 'Ready', 'InProgress'].includes(tour.status))
                         .map(tour => {
                             const allRestaurantOffers = tour.serviceRequirements
                                 .flatMap(req => req.restaurantOffers || []);
@@ -158,10 +169,6 @@ export class FinalizedTours implements OnInit {
                             };
                         });
 
-                    // Automatically select the first tour if available
-                    if (this.tours.length > 0) {
-                        this.selectTour(this.tours[0]);
-                    }
 
                     this.loading = false;
                 },
@@ -211,31 +218,104 @@ export class FinalizedTours implements OnInit {
     }
 
     markTourAsReady(tourId: number): void {
-        if (!confirm('Are you sure you want to mark this tour as Ready? This indicates all bookings are confirmed and the tour is prepared for departure.')) {
-            return;
-        }
-
-        this.http.post(`${environment.apiUrl}/api/tours/${tourId}/mark-ready`, {})
-            .subscribe({
-                next: () => {
-                    alert('Tour marked as Ready successfully');
-                    this.loadTours();
-                },
-                error: (err) => {
-                    console.error('Error marking tour as ready:', err);
-                    alert('Failed to mark tour as ready');
-                }
-            });
+        this.confirmTitle = 'Mark as Ready';
+        this.confirmMessage = 'Are you sure you want to mark this tour as Ready? This indicates all bookings are confirmed and the tour is prepared for departure.';
+        this.confirmText = 'Mark Ready';
+        this.confirmType = 'info';
+        this.confirmAction = () => {
+            this.http.post(`${environment.apiUrl}/api/tours/${tourId}/mark-ready`, {})
+                .subscribe({
+                    next: () => {
+                        this.loadTours();
+                    },
+                    error: (err) => {
+                        console.error('Error marking tour as ready:', err);
+                    }
+                });
+        };
+        this.showConfirmModal = true;
     }
 
-    currentFilter: 'All' | 'Finalized' | 'Ready' = 'All';
+    startTour(tourId: number): void {
+        this.confirmTitle = 'Start Tour';
+        this.confirmMessage = 'Are you sure you want to start this tour? This will change the status to In Progress.';
+        this.confirmText = 'Start Tour';
+        this.confirmType = 'info';
+        this.confirmAction = () => {
+            this.http.post(`${environment.apiUrl}/api/tours/${tourId}/start`, {})
+                .subscribe({
+                    next: () => {
+                        this.loadTours();
+                    },
+                    error: (err) => {
+                        console.error('Error starting tour:', err);
+                    }
+                });
+        };
+        this.showConfirmModal = true;
+    }
+
+    completeTour(tourId: number): void {
+        this.confirmTitle = 'End Tour';
+        this.confirmMessage = 'Are you sure you want to complete this tour? This will change the status to Completed.';
+        this.confirmText = 'End Tour';
+        this.confirmType = 'info';
+        this.confirmAction = () => {
+            this.http.post(`${environment.apiUrl}/api/tours/${tourId}/complete`, {})
+                .subscribe({
+                    next: () => {
+                        this.loadTours();
+                    },
+                    error: (err) => {
+                        console.error('Error completing tour:', err);
+                    }
+                });
+        };
+        this.showConfirmModal = true;
+    }
+
+    onConfirmAction(): void {
+        if (this.confirmAction) {
+            this.confirmAction();
+        }
+        this.showConfirmModal = false;
+    }
+
+    onCancelAction(): void {
+        this.showConfirmModal = false;
+        this.confirmAction = null;
+    }
+
+    canStartTour(tour: DisplayTour): boolean {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(tour.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        return today >= startDate;
+    }
+
+    canCompleteTour(tour: DisplayTour): boolean {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endDate = new Date(tour.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        return today >= endDate;
+    }
+
+    currentFilter: 'All' | 'Finalized' | 'Ready' | 'Started' = 'All';
 
     get filteredTours(): DisplayTour[] {
-        if (this.currentFilter === 'All') return this.tours;
-        return this.tours.filter(t => t.status === this.currentFilter);
+        if (this.currentFilter === 'All') {
+            return this.tours.filter(t => ['Finalized', 'Ready', 'InProgress'].includes(t.status));
+        }
+        if (this.currentFilter === 'Finalized') return this.tours.filter(t => t.status === 'Finalized');
+        if (this.currentFilter === 'Ready') return this.tours.filter(t => t.status === 'Ready');
+        if (this.currentFilter === 'Started') return this.tours.filter(t => t.status === 'InProgress');
+        return this.tours;
     }
 
-    setFilter(filter: 'All' | 'Finalized' | 'Ready'): void {
+    setFilter(filter: 'All' | 'Finalized' | 'Ready' | 'Started'): void {
         this.currentFilter = filter;
+        this.selectedTour = null;
     }
 }

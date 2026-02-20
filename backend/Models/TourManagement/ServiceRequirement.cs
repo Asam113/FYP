@@ -42,7 +42,6 @@ public class ServiceRequirement
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation Properties
-    [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;
     public virtual ICollection<RestaurantOffer> RestaurantOffers { get; set; } = new List<RestaurantOffer>();
 }

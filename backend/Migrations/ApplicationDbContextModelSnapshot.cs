@@ -314,9 +314,6 @@ namespace backend.Migrations
                     b.Property<decimal>("OfferedAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProviderId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("RespondedAt")
                         .HasColumnType("datetime2");
 
@@ -1352,6 +1349,9 @@ namespace backend.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int>("RegistrationStep")
+                        .HasColumnType("int");
+
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
@@ -1367,6 +1367,9 @@ namespace backend.Migrations
                 {
                     b.HasBaseType("backend.Models.OfferSystem.Offer");
 
+                    b.Property<int>("DriverId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IncludesFuel")
                         .HasColumnType("bit");
 
@@ -1380,7 +1383,7 @@ namespace backend.Migrations
                     b.Property<int>("VehicleId")
                         .HasColumnType("int");
 
-                    b.HasIndex("ProviderId");
+                    b.HasIndex("DriverId");
 
                     b.HasIndex("TourId");
 
@@ -1418,6 +1421,9 @@ namespace backend.Migrations
                     b.Property<int>("RequirementId")
                         .HasColumnType("int");
 
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("RoomCategoryId")
                         .HasColumnType("int");
 
@@ -1430,9 +1436,9 @@ namespace backend.Migrations
                     b.Property<int?>("TotalRooms")
                         .HasColumnType("int");
 
-                    b.HasIndex("ProviderId");
-
                     b.HasIndex("RequirementId");
+
+                    b.HasIndex("RestaurantId");
 
                     b.HasIndex("RoomCategoryId");
 
@@ -1916,7 +1922,7 @@ namespace backend.Migrations
                 {
                     b.HasOne("backend.Models.UserManagement.Driver", "Driver")
                         .WithMany("DriverOffers")
-                        .HasForeignKey("ProviderId")
+                        .HasForeignKey("DriverId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1940,15 +1946,15 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.OfferSystem.RestaurantOffer", b =>
                 {
-                    b.HasOne("backend.Models.UserManagement.Restaurant", "Restaurant")
-                        .WithMany("RestaurantOffers")
-                        .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("backend.Models.TourManagement.ServiceRequirement", "ServiceRequirement")
                         .WithMany("RestaurantOffers")
                         .HasForeignKey("RequirementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.UserManagement.Restaurant", "Restaurant")
+                        .WithMany("RestaurantOffers")
+                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

@@ -154,7 +154,15 @@
                                     [routerLink]="['/tourist/tour-details', booking.tourId]">
                                     <i class="bi bi-eye me-2"></i>View Tour Details
                                 </button>
-                                <button class="btn btn-primary px-4 rounded-pill">
+
+                                <button *ngIf="booking.status === 'Completed'"
+                                    class="btn btn-warning text-white px-4 rounded-pill"
+                                    (click)="openReviewModal(booking.tourId)">
+                                    <i class="bi bi-star-fill me-2"></i>Rate & Review
+                                </button>
+
+                                <button *ngIf="booking.status !== 'Completed'"
+                                    class="btn btn-primary px-4 rounded-pill">
                                     <i class="bi bi-chat-dots me-2"></i>Contact Support
                                 </button>
                             </div>
@@ -164,4 +172,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Review Modal -->
+    <app-review-modal *ngIf="showReviewModal && selectedTourId" [tourId]="selectedTourId" (close)="closeReviewModal()"
+        (submitted)="onReviewSubmitted()">
+    </app-review-modal>
 </div>

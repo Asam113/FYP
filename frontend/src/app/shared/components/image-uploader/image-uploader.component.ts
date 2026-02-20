@@ -13,11 +13,12 @@ export class ImageUploaderComponent {
     @Input() existingImages: any[] = [];
     @Output() imagesSelected = new EventEmitter<File[]>();
     @Output() imageDeleted = new EventEmitter<number>();
+    @Output() imageClicked = new EventEmitter<string>();
 
     selectedFiles: File[] = [];
     previews: string[] = [];
 
-    constructor(private cdr: ChangeDetectorRef) {}
+    constructor(private cdr: ChangeDetectorRef) { }
 
     onFilesSelected(event: any): void {
         const files = event.target.files;
@@ -27,7 +28,7 @@ export class ImageUploaderComponent {
                 if (file.type.match(/image\/*/) == null) {
                     continue;
                 }
-                
+
                 this.selectedFiles.push(file);
 
                 const reader = new FileReader();
@@ -51,5 +52,9 @@ export class ImageUploaderComponent {
 
     removeExistingImage(imageId: number): void {
         this.imageDeleted.emit(imageId);
+    }
+
+    onImageClick(url: string): void {
+        this.imageClicked.emit(url);
     }
 }

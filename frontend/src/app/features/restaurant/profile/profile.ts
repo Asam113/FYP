@@ -5,6 +5,7 @@ import { RestaurantService } from '../../../core/services/restaurant.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -18,6 +19,7 @@ export class Profile implements OnInit {
   isEditMode = false;
   editFormData: any = {};
   selectedImages: File[] = [];
+  enlargedImageUrl: string | null = null;
 
   constructor(
     private restaurantService: RestaurantService,
@@ -34,6 +36,13 @@ export class Profile implements OnInit {
     if (user && user.roleSpecificId) {
       this.restaurantService.getRestaurant(user.roleSpecificId).subscribe({
         next: (data) => {
+          // Prefix image URLs if they are relative
+          if (data && data.restaurantImages) {
+            data.restaurantImages = data.restaurantImages.map((img: any) => ({
+              ...img,
+              imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `${environment.apiUrl}${img.imageUrl}`
+            }));
+          }
           this.profile = data;
         },
         error: (err) => {
@@ -76,6 +85,34 @@ export class Profile implements OnInit {
 
   onImagesSelected(files: File[]) {
     this.selectedImages = files;
+
+    // If we are not in edit mode, upload immediately to the gallery
+    if (!this.isEditMode && this.selectedImages.length > 0 && this.profile) {
+      this.uploadImages();
+    }
+  }
+
+  uploadImages() {
+    if (!this.profile || this.selectedImages.length === 0) return;
+
+    this.restaurantService.uploadRestaurantImages(this.profile.restaurantId, this.selectedImages).subscribe({
+      next: () => {
+        this.toastService.show('Images uploaded successfully', 'success');
+        this.selectedImages = [];
+        this.loadProfile();
+      },
+      error: () => {
+        this.toastService.show('Failed to upload images', 'error');
+      }
+    });
+  }
+
+  enlargeImage(url: string) {
+    this.enlargedImageUrl = url;
+  }
+
+  closeLightbox() {
+    this.enlargedImageUrl = null;
   }
 
   onImageDeleted(imageId: number) {

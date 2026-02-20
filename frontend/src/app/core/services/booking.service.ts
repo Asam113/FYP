@@ -19,4 +19,8 @@ export class BookingService {
     getTouristBookings(touristId: number): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/tourist/${touristId}`);
     }
+
+    submitReview(reviewData: any): Observable<any> {
+        return this.http.post(`${environment.apiUrl}/api/reviews`, reviewData);
+    }
 }

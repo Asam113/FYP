@@ -60,7 +60,7 @@ public class OfferManagementController : ControllerBase
         var assignment = new TourAssignment
         {
             TourId = offer.TourId ?? 0,
-            DriverId = offer.ProviderId,
+            DriverId = offer.DriverId,
             VehicleId = offer.VehicleId,
             DriverOfferId = offer.OfferId,
             Status = AssignmentStatus.Assigned,
@@ -111,7 +111,7 @@ public class OfferManagementController : ControllerBase
             return BadRequest("One or more menu items not found");
         }
 
-        if (menuItems.Any(mi => mi.Menu.RestaurantId != offer.ProviderId))
+        if (menuItems.Any(mi => mi.Menu.RestaurantId != offer.RestaurantId))
         {
             return BadRequest("Menu items must belong to the offering restaurant");
         }
@@ -147,7 +147,7 @@ public class OfferManagementController : ControllerBase
         var assignment = new RestaurantAssignment
         {
             TourId = offer.ServiceRequirement.TourId,
-            RestaurantId = offer.ProviderId,
+            RestaurantId = offer.RestaurantId,
             RequirementId = offer.RequirementId,
             RestaurantOfferId = offer.OfferId,
             Status = AssignmentStatus.Assigned,

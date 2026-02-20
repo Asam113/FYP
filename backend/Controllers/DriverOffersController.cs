@@ -70,7 +70,7 @@ public class DriverOffersController : ControllerBase
         var offer = new DriverOffer
         {
             TourId = dto.TourId,
-            ProviderId = vehicle.DriverId, // Set from vehicle's driver
+            DriverId = vehicle.DriverId, // Set from vehicle's driver
             VehicleId = dto.VehicleId,
             TransportationFare = dto.QuotedPrice, 
             OfferedAmount = dto.QuotedPrice, // Set base class property
@@ -174,7 +174,7 @@ public class DriverOffersController : ControllerBase
             .Include(o => o.Tour)
                 .ThenInclude(t => t.ServiceRequirements)
             .Include(o => o.Vehicle)
-            .Where(o => o.ProviderId == driverId && 
+            .Where(o => o.DriverId == driverId && 
                        (o.Status == OfferStatus.Accepted || o.Status == OfferStatus.Confirmed))
             .ToListAsync();
 
@@ -192,7 +192,7 @@ public class DriverOffersController : ControllerBase
                 Status = isConfirmed ? "Confirmed" : "Pending Completion",
                 Route = $"{tour.DepartureLocation} → {tour.Destination}",
                 Date = tour.StartDate.ToString("MMM dd, yyyy"),
-                Duration = $"{(tour.EndDate - tour.StartDate).Days + 1} Days",
+                Duration = $"{(tour.EndDate.Date - tour.StartDate.Date).Days + 1} Days",
                 Participants = tour.CurrentBookings,
                 Price = $"PKR {offer.TransportationFare:N0}",
                 RequirementsStatus = isConfirmed 

@@ -23,6 +23,7 @@ export class TouristSignup {
     showPassword = false;
     showConfirmPassword = false;
     isLoading = false;
+    profilePicture: File | null = null;
 
     constructor(
         private router: Router,
@@ -72,12 +73,14 @@ export class TouristSignup {
         this.isLoading = true;
 
         const formData = new FormData();
-        formData.append('Name', this.fullName);
-        formData.append('Email', this.email);
-        formData.append('Password', this.password);
-        formData.append('PhoneNumber', this.phoneNumber);
-        // formData.append('Role', 'Tourist'); // Role is inferred by endpoint or can be added if backend needs it, but DTO doesn't have Role property, it's hardcoded in backend.
-        // Backend TouristSignupDto doesn't have Role property. It is just basic info.
+        formData.append('name', this.fullName);
+        formData.append('email', this.email);
+        formData.append('password', this.password);
+        formData.append('phoneNumber', this.phoneNumber);
+
+        if (this.profilePicture) {
+            formData.append('profilePicture', this.profilePicture);
+        }
 
         this.authService.signupTourist(formData).subscribe({
             next: (response) => {
@@ -93,6 +96,10 @@ export class TouristSignup {
                 this.toastService.show(errorMessage, "error");
             }
         });
+    }
+
+    onProfilePicSelected(event: any) {
+        this.profilePicture = event.target.files[0];
     }
 
     goBack() {

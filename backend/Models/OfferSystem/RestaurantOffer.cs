@@ -11,6 +11,9 @@ namespace backend.Models.OfferSystem;
 
 public class RestaurantOffer : Offer
 {
+    [Required]
+    public int RestaurantId { get; set; }
+
     [Column(TypeName = "decimal(18,2)")]
     public decimal PricePerHead { get; set; }
 
@@ -45,9 +48,8 @@ public class RestaurantOffer : Offer
     public int RequirementId { get; set; } // KEY CHANGE: Link to requirement, not tour
 
     // Navigation Properties
-    [JsonIgnore]
     public virtual ServiceRequirement ServiceRequirement { get; set; } = null!;
-    [ForeignKey("ProviderId")]
+    [ForeignKey("RestaurantId")]
     public virtual Restaurant Restaurant { get; set; } = null!;
     public virtual RoomCategory? RoomCategory { get; set; }
     public virtual ICollection<OfferMenuItem> OfferMenuItems { get; set; } = new List<OfferMenuItem>();

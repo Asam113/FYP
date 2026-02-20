@@ -22,9 +22,20 @@
                 {{ isLoading ? 'Verifying...' : 'Verify OTP' }}
             </button>
 
-            <div class="info-message" style="margin-top: 1rem;">
-                <!-- TODO: Resend logic -->
-                <span>Didn't receive code? <a href="#" (click)="$event.preventDefault()">Resend</a></span>
+            <div class="info-message" style="margin-top: 1rem; text-align: center;">
+                <span *ngIf="timeLeft > 0" class="text-muted">
+                    Resend OTP in {{ timeLeft }}s
+                </span>
+                <span *ngIf="timeLeft === 0">
+                    Didn't receive code? 
+                    <a href="#" (click)="$event.preventDefault(); resendOtp()" 
+                       [class.disabled]="isResending"
+                       [style.pointer-events]="isResending ? 'none' : 'auto'"
+                       [style.text-decoration]="isResending ? 'none' : 'underline'"
+                       [style.color]="isResending ? '#6c757d' : ''">
+                       {{ isResending ? 'Resending...' : 'Resend' }}
+                    </a>
+                </span>
             </div>
         </form>
     </div>

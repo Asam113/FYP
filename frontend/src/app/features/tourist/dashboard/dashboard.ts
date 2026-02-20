@@ -12,12 +12,17 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './dashboard.css'
 })
 export class Dashboard implements OnInit {
-  stats = {
-    activeBookings: 0,
-    upcomingTrips: 0,
-    completedTrips: 0,
-    newNotifications: 0
-  };
+  stats: {
+    activeBookings: number;
+    upcomingTrips: number;
+    completedTrips: number;
+    newNotifications: number;
+  } = {
+      activeBookings: 0,
+      upcomingTrips: 0,
+      completedTrips: 0,
+      newNotifications: 0
+    };
 
   activeTab: 'overview' | 'bookings' = 'overview';
   recentBookings: any[] = [];
@@ -37,8 +42,10 @@ export class Dashboard implements OnInit {
   }
 
   loadBookings(touristId: number): void {
+    console.log('Loading bookings for touristId:', touristId);
     this.bookingService.getTouristBookings(touristId).subscribe({
       next: (bookings) => {
+        console.log('Bookings loaded:', bookings);
         this.allBookings = bookings.map(b => ({
           id: b.bookingId,
           tourId: b.tourId,

@@ -258,7 +258,186 @@ public class AdminController : ControllerBase
         }
     }
 
-    // POST: api/admin/restaurants/reset
+    // --- Driver Management ---
+
+    // GET: api/admin/drivers
+    [HttpGet("drivers")]
+    public async Task<ActionResult<IEnumerable<DriverDto>>> GetDrivers()
+    {
+        try
+        {
+            var drivers = await _context.Drivers
+                .Include(d => d.User)
+                .Select(d => new DriverDto
+                {
+                    DriverId = d.DriverId,
+                    CNIC = d.CNIC,
+                    Licence = d.Licence,
+                    LicenceExpiryDate = d.LicenceExpiryDate,
+                    AccountStatus = d.AccountStatus,
+                    TotalEarnings = d.TotalEarnings,
+                    Name = d.User != null ? d.User.Name : "Unknown",
+                    Email = d.User != null ? d.User.Email : "",
+                    PhoneNumber = d.User != null ? d.User.PhoneNumber : null,
+                    ProfilePicture = d.User != null ? d.User.ProfilePicture : null,
+                    CreatedAt = d.User != null ? d.User.CreatedAt : DateTime.MinValue,
+                    LicenceImage = d.LicenceImage,
+                    CnicFront = d.CnicFront,
+                    CnicBack = d.CnicBack
+                })
+                .ToListAsync();
+
+            return Ok(drivers);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // PUT: api/admin/drivers/{id}/approve
+    [HttpPut("drivers/{id}/approve")]
+    public async Task<ActionResult<DriverDto>> ApproveDriver(int id)
+    {
+        try
+        {
+            var driver = await _context.Drivers
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(d => d.DriverId == id);
+
+            if (driver == null)
+                return NotFound(new { message = "Driver not found" });
+
+            driver.AccountStatus = "Approved";
+            await _context.SaveChangesAsync();
+
+            // Send Platform Notification
+            if (driver.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    driver.UserId,
+                    "Account Approved! 🚗",
+                    "Your driver account has been approved. You can now start accepting rides!",
+                    "AccountApproved",
+                    "/driver/dashboard"
+                );
+            }
+
+            // Send Email Notification
+            try
+            {
+                if (driver.User != null && !string.IsNullOrEmpty(driver.User.Email))
+                {
+                    var subject = "Driver Account Approved - Tourism Platform";
+                    var body = $"Dear {driver.User.Name},<br/><br/>" +
+                               $"Congratulations! Your driver account has been approved.<br/>" +
+                               $"You can now log in and start earning.<br/><br/>" +
+                               "Best Regards,<br/>Admin Team";
+                    
+                    await _emailService.SendEmailAsync(driver.User.Email, subject, body);
+                }
+            }
+            catch (Exception emailEx)
+            {
+                Console.WriteLine($"Failed to send approval email: {emailEx.Message}");
+            }
+
+            // Return updated DTO
+            return Ok(new DriverDto
+            {
+                DriverId = driver.DriverId,
+                CNIC = driver.CNIC,
+                Licence = driver.Licence,
+                LicenceExpiryDate = driver.LicenceExpiryDate,
+                AccountStatus = driver.AccountStatus,
+                TotalEarnings = driver.TotalEarnings,
+                Name = driver.User?.Name ?? "Unknown",
+                Email = driver.User?.Email ?? "",
+                PhoneNumber = driver.User?.PhoneNumber,
+                ProfilePicture = driver.User?.ProfilePicture,
+                CreatedAt = driver.User?.CreatedAt ?? DateTime.MinValue,
+                LicenceImage = driver.LicenceImage,
+                CnicFront = driver.CnicFront,
+                CnicBack = driver.CnicBack
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // PUT: api/admin/drivers/{id}/reject
+    [HttpPut("drivers/{id}/reject")]
+    public async Task<ActionResult<DriverDto>> RejectDriver(int id)
+    {
+        try
+        {
+            var driver = await _context.Drivers
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(d => d.DriverId == id);
+
+            if (driver == null)
+                return NotFound(new { message = "Driver not found" });
+
+            driver.AccountStatus = "Rejected";
+            await _context.SaveChangesAsync();
+
+            // Send Platform Notification
+            if (driver.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    driver.UserId,
+                    "Account Rejected ❌",
+                    "We regret to inform you that your driver account application has been rejected.",
+                    "AccountRejected",
+                    "/driver/dashboard"
+                );
+            }
+
+            // Send Email Notification
+            try
+            {
+                if (driver.User != null && !string.IsNullOrEmpty(driver.User.Email))
+                {
+                    var subject = "Driver Account Rejected - Tourism Platform";
+                    var body = $"Dear {driver.User.Name},<br/><br/>" +
+                               $"We regret to inform you that your driver application has been rejected.<br/>" +
+                               $"Please contact support for more details.<br/><br/>" +
+                               "Best Regards,<br/>Admin Team";
+                    
+                    await _emailService.SendEmailAsync(driver.User.Email, subject, body);
+                }
+            }
+            catch (Exception emailEx)
+            {
+                 Console.WriteLine($"Failed to send rejection email: {emailEx.Message}");
+            }
+
+            // Return updated DTO
+            return Ok(new DriverDto
+            {
+                DriverId = driver.DriverId,
+                CNIC = driver.CNIC,
+                Licence = driver.Licence,
+                LicenceExpiryDate = driver.LicenceExpiryDate,
+                AccountStatus = driver.AccountStatus,
+                TotalEarnings = driver.TotalEarnings,
+                Name = driver.User?.Name ?? "Unknown",
+                Email = driver.User?.Email ?? "",
+                PhoneNumber = driver.User?.PhoneNumber,
+                ProfilePicture = driver.User?.ProfilePicture,
+                CreatedAt = driver.User?.CreatedAt ?? DateTime.MinValue,
+                LicenceImage = driver.LicenceImage,
+                CnicFront = driver.CnicFront,
+                CnicBack = driver.CnicBack
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
     [HttpPost("restaurants/reset")]
     public async Task<IActionResult> ResetAllStatuses()
     {
@@ -370,10 +549,14 @@ public class AdminController : ControllerBase
             if (driver != null)
             {
                 var driverId = driver.DriverId;
+                // Delete Earnings first
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Earnings WHERE DriverId = {0}", driverId);
+                // Delete DriverOffers first (references Vehicles and Drivers)
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Offers WHERE OfferId IN (SELECT OfferId FROM DriverOffers WHERE DriverId = {0})", driverId);
+                
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM VehicleImages WHERE VehicleId IN (SELECT VehicleId FROM Vehicles WHERE DriverId = {0})", driverId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Vehicles WHERE DriverId = {0}", driverId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Documents WHERE DriverId = {0}", driverId);
-                await _context.Database.ExecuteSqlRawAsync("DELETE FROM DriverOffers WHERE DriverId = {0}", driverId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Drivers WHERE DriverId = {0}", driverId);
             }
 
@@ -382,6 +565,13 @@ public class AdminController : ControllerBase
             if (restaurant != null)
             {
                 var restaurantId = restaurant.RestaurantId;
+                // Delete Earnings first
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Earnings WHERE RestaurantId = {0}", restaurantId);
+                // Delete OfferMenuItems first
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM OfferMenuItems WHERE RestaurantOfferId IN (SELECT OfferId FROM RestaurantOffers WHERE RestaurantId = {0})", restaurantId);
+                // Delete RestaurantOffers
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Offers WHERE OfferId IN (SELECT OfferId FROM RestaurantOffers WHERE RestaurantId = {0})", restaurantId);
+
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM RestaurantImages WHERE RestaurantId = {0}", restaurantId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM MenuItemImages WHERE MenuItemId IN (SELECT MenuItemId FROM MenuItems WHERE MenuId IN (SELECT MenuId FROM Menus WHERE RestaurantId = {0}))", restaurantId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM MenuItems WHERE MenuId IN (SELECT MenuId FROM Menus WHERE RestaurantId = {0})", restaurantId);
@@ -390,8 +580,22 @@ public class AdminController : ControllerBase
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Restaurants WHERE RestaurantId = {0}", restaurantId);
             }
 
-            // 3. Delete Notifications, Bookings etc.
+            // 3. Delete Notifications, Bookings, Reviews etc.
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Notifications WHERE UserId = {0}", userId);
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Reviews WHERE UserId = {0}", userId);
+            
+            // If Tourist, delete bookings and related
+            var tourist = await _context.Tourists.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (tourist != null)
+            {
+                var touristId = tourist.TouristId;
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Refunds WHERE PaymentId IN (SELECT PaymentId FROM Payments WHERE BookingId IN (SELECT BookingId FROM Bookings WHERE TouristId = {0}))", touristId);
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Payments WHERE BookingId IN (SELECT BookingId FROM Bookings WHERE TouristId = {0})", touristId);
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM OrderItems WHERE OrderId IN (SELECT OrderId FROM Orders WHERE RestaurantAssignmentId IN (SELECT RestaurantAssignmentId FROM RestaurantAssignments WHERE TourId IN (SELECT TourId FROM Bookings WHERE TouristId = {0})))", touristId);
+                // This is getting complex, let's keep it to direct user linkage if possible or follow standard clean order
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Bookings WHERE TouristId = {0}", touristId);
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM Tourists WHERE TouristId = {0}", touristId);
+            }
             
             // 4. Finally delete user
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Users WHERE Id = {0}", userId);
@@ -406,3 +610,4 @@ public class AdminController : ControllerBase
         }
     }
 }
+

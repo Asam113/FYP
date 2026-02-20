@@ -41,6 +41,10 @@ const routes: Routes = [
     loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent)
   },
   {
+    path: 'rooms',
+    loadComponent: () => import('./rooms/rooms').then(m => m.Rooms)
+  },
+  {
     path: 'tour-requests',
     loadComponent: () => import('./tour-requests/tour-requests').then(m => m.TourRequests)
   }
