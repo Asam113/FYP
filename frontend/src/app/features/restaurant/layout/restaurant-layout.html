@@ -96,10 +96,16 @@
                     <i class="bi bi-check-circle me-3 fs-5"></i> Confirmed Orders
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" *ngIf="showMenuTab()">
                 <a routerLink="/restaurant/menu" class="nav-link text-secondary my-1 d-flex align-items-center"
                     routerLinkActive="active-link text-primary bg-light" (click)="toggleSidebar()">
                     <i class="bi bi-book me-3 fs-5"></i> My Menu
+                </a>
+            </li>
+            <li class="nav-item" *ngIf="showRoomsTab()">
+                <a routerLink="/restaurant/rooms" class="nav-link text-secondary my-1 d-flex align-items-center"
+                    routerLinkActive="active-link text-primary bg-light" (click)="toggleSidebar()">
+                    <i class="bi bi-door-open me-3 fs-5"></i> Manage Rooms
                 </a>
             </li>
             <li class="nav-item">

@@ -14,8 +14,8 @@ public abstract class Offer
     [ForeignKey("Tour")]
     public int? TourId { get; set; } // Made nullable for RestaurantOffers (they use RequirementId)
 
-    [Required]
-    public int ProviderId { get; set; } // DriverId or RestaurantId
+    // [Required]
+    // public int ProviderId { get; set; } // MOVED TO SUBCLASSES
 
     [Required]
     [MaxLength(50)]

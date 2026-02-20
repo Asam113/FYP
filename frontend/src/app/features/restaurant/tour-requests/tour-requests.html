@@ -25,6 +25,43 @@
             </div>
         </div>
 
+        <!-- Setup Alerts -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Menu Validation Alert (For Restaurant & Hotel) -->
+                <div *ngIf="showMenuAlert() && !hasMenuItems && !isLoading"
+                    class="alert alert-warning border-0 shadow-sm rounded-4 mb-4" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading fw-bold mb-2">Setup Your Menu First</h6>
+                            <p class="mb-2">You need to add menu items before you can submit offers on meal
+                                requirements.</p>
+                            <a routerLink="/restaurant/menu" class="btn btn-warning btn-sm">
+                                <i class="bi bi-book me-1"></i> Go to My Menu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rooms Validation Alert (For Guest House & Hotel) -->
+                <div *ngIf="showRoomsAlert() && !hasRooms && !isLoading"
+                    class="alert alert-info border-0 shadow-sm rounded-4 mb-4" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-info-circle-fill fs-4 me-3 text-info"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading fw-bold mb-2">Setup Your Rooms First</h6>
+                            <p class="mb-2">You need to setup your room categories before you can submit offers on
+                                accommodation requirements.</p>
+                            <a routerLink="/restaurant/rooms" class="btn btn-info btn-sm text-white">
+                                <i class="bi bi-door-open me-1"></i> Go to Manage Rooms
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading State -->
         <div *ngIf="isLoading" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
@@ -36,7 +73,7 @@
         <div *ngIf="!isLoading" class="row g-4">
 
             <!-- No Tours -->
-            <div *ngIf="tours.length === 0" class="col-12">
+            <div *ngIf="tours.length === 0 && hasMenuItems" class="col-12">
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle me-2"></i>
                     No tours with service requirements available at the moment.
@@ -281,34 +318,21 @@
                     <!-- Accommodation Offer Form -->
                     <div *ngIf="selectedRequirement?.type === 'Accommodation'" class="row g-3">
                         <div class="col-12">
-                            <label class="form-label fw-bold small">Rent Per Room Per Night (PKR) <span
-                                    class="text-danger">*</span></label>
-                            <input type="number" class="form-control border-0 bg-light" [(ngModel)]="rentPerNight"
-                                placeholder="e.g., 3000" required>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-bold small">Room Capacity (People per Room) <span
-                                    class="text-danger">*</span></label>
-                            <input type="number" class="form-control border-0 bg-light" [(ngModel)]="perRoomCapacity"
-                                placeholder="e.g., 2" required>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-bold small">Description</label>
-                            <textarea class="form-control border-0 bg-light" rows="3" [(ngModel)]="description"
-                                placeholder="Describe your rooms, amenities, facilities..."></textarea>
-                        </div>
-
-                        <div class="col-12" *ngIf="rentPerNight && perRoomCapacity && selectedRequirement">
-                            <div class="alert alert-info">
-                                <strong>Total Rooms Needed:</strong> {{ calculatedTotalRooms }}<br>
-                                <strong>Total Rent:</strong> PKR {{ calculatedTotalRent | number }}
-                                <small class="d-block mt-1 text-muted">
-                                    ({{ calculatedTotalRooms }} rooms × PKR {{ rentPerNight | number }} × {{
-                                    selectedRequirement.stayDurationDays }} nights)
-                                </small>
+                            <div class="alert alert-info border-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Submit Your Interest</strong>
+                                <p class="mb-0 mt-2 small">
+                                    Express your interest in this accommodation requirement. The admin will review your
+                                    room categories and select the best fit based on pricing, capacity, and
+                                    availability.
+                                </p>
                             </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Additional Notes (Optional)</label>
+                            <textarea class="form-control border-0 bg-light" rows="4" [(ngModel)]="offerDetails"
+                                placeholder="Mention any special features, amenities, or services you can provide for this tour group..."></textarea>
                         </div>
                     </div>
                 </div>

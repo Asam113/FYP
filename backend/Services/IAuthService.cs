@@ -11,5 +11,6 @@ public interface IAuthService
     Task<AuthResponse> SignupRestaurantAsync(RestaurantSignupDto request);
     Task<AuthResponse> LoginAsync(LoginRequest request);
     Task<AuthResponse> VerifyOtpAsync(VerifyOtpDto request);
+    Task ResendOtpAsync(string email);
     Task<UserDto?> GetUserByIdAsync(int userId);
 }

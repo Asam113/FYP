@@ -56,3 +56,7 @@
 
   </div>
 </div>
+
+<app-resume-registration-modal [isVisible]="isResumeModalVisible" [message]="resumeMessage" [step]="resumeStep"
+  (confirm)="onResumeConfirm()" (cancel)="onResumeCancel()">
+</app-resume-registration-modal>

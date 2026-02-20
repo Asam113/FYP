@@ -1,63 +1,70 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using backend.Models.Enums;
 
 namespace backend.Models.DTOs;
 
 public class DriverSignupDto
 {
-    [Required]
     [MaxLength(100)]
-    public string Name { get; set; } = string.Empty;
+    [FromForm(Name = "name")]
+    public string? Name { get; set; }
 
     [Required]
     [EmailAddress]
     [MaxLength(100)]
+    [FromForm(Name = "email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
     [MinLength(8)]
-    public string Password { get; set; } = string.Empty;
+    [FromForm(Name = "password")]
+    public string? Password { get; set; }
 
     [Phone]
     [MaxLength(20)]
+    [FromForm(Name = "phoneNumber")]
     public string? PhoneNumber { get; set; }
 
-    [Required]
     [MaxLength(15)]
-    public string CNIC { get; set; } = string.Empty;
+    [FromForm(Name = "cnic")]
+    public string? CNIC { get; set; }
 
-    [Required]
     [MaxLength(50)]
-    public string Licence { get; set; } = string.Empty;
+    [FromForm(Name = "licence")]
+    public string? Licence { get; set; }
 
+    [FromForm(Name = "licenceExpiryDate")]
     public DateTime? LicenceExpiryDate { get; set; }
 
+    [FromForm(Name = "profilePicture")]
     public IFormFile? ProfilePicture { get; set; }
 
-    [Required]
-    public IFormFile CnicFront { get; set; } = null!;
+    [FromForm(Name = "cnicFront")]
+    public IFormFile? CnicFront { get; set; }
 
-    [Required]
-    public IFormFile CnicBack { get; set; } = null!;
+    [FromForm(Name = "cnicBack")]
+    public IFormFile? CnicBack { get; set; }
 
-    [Required]
-    public IFormFile LicenceImage { get; set; } = null!;
+    [FromForm(Name = "licenceImage")]
+    public IFormFile? LicenceImage { get; set; }
 
     // Vehicle Info
-    [Required]
     [MaxLength(50)]
-    public string VehicleRegNumber { get; set; } = string.Empty;
-
-    [Required]
-    [MaxLength(50)]
-    public string VehicleType { get; set; } = string.Empty;
+    [FromForm(Name = "vehicleRegNumber")]
+    public string? VehicleRegNumber { get; set; }
 
     [MaxLength(50)]
+    [FromForm(Name = "vehicleType")]
+    public string? VehicleType { get; set; }
+
+    [MaxLength(50)]
+    [FromForm(Name = "vehicleModel")]
     public string? VehicleModel { get; set; }
 
-    [Required]
-    public int VehicleCapacity { get; set; }
+    [FromForm(Name = "vehicleCapacity")]
+    public int? VehicleCapacity { get; set; }
 
+    [FromForm(Name = "vehicleImages")]
     public List<IFormFile>? VehicleImages { get; set; }
 }

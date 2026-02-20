@@ -91,10 +91,26 @@
                             <small class="text-muted">{{ profilePicture ? profilePicture.name : 'SVG, PNG, JPG (max.
                                 800x400px)' }}</small>
                         </div>
-                        <input type="file" class="file-input" (change)="onLogoSelected($event)" accept="image/*">
+                        <input type="file" class="file-input" (change)="onProfilePicSelected($event)" accept="image/*">
                     </div>
                 </div>
 
+
+
+                <button type="button" class="next-btn" (click)="nextStep()">
+                    Continue <i class="bi bi-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Step 2: Verification (OTP) -->
+            <div *ngIf="currentStep === 2" class="form-grid text-center">
+                <app-verify-otp [email]="email" [redirectOnSuccess]="false"
+                    (verified)="onOtpVerified()"></app-verify-otp>
+            </div>
+
+            <!-- Step 3: Business License & Details -->
+            <div *ngIf="currentStep === 3" class="form-grid">
+                <!-- Business Name & Type (Shifted from Step 1) -->
                 <div class="form-group">
                     <label class="form-label">Business Name</label>
                     <div class="input-wrapper">
@@ -115,19 +131,6 @@
                     </div>
                 </div>
 
-                <button type="button" class="next-btn" (click)="nextStep()">
-                    Continue <i class="bi bi-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- Step 2: Verification (OTP) -->
-            <div *ngIf="currentStep === 2" class="form-grid text-center">
-                <app-verify-otp [email]="email" [redirectOnSuccess]="false"
-                    (verified)="onOtpVerified()"></app-verify-otp>
-            </div>
-
-            <!-- Step 3: Business License & Images -->
-            <div *ngIf="currentStep === 3" class="form-grid">
                 <div class="form-group">
                     <label class="form-label">Address</label>
                     <div class="input-wrapper">

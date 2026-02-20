@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 interface StatCard {
   title: string;
@@ -20,11 +23,66 @@ interface ActivityItem {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
+  hasMenuItems = true; // Assume true initially
+  hasRooms = true; // Assume true initially
+  businessType: string = '';
+  restaurantId: number = 0;
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit() {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      this.businessType = user.businessType || '';
+      this.restaurantId = user.roleSpecificId || 0;
+    }
+
+    if (this.showMenuAlert()) {
+      this.checkMenuItems();
+    }
+    if (this.showRoomsAlert()) {
+      this.checkRoomCategories();
+    }
+  }
+
+  checkMenuItems() {
+    this.http.get<any[]>(`${environment.apiUrl}/api/RestaurantMenu`).subscribe({
+      next: (menus) => {
+        this.hasMenuItems = menus.some(menu => menu.menuItems && menu.menuItems.length > 0);
+      },
+      error: (err) => {
+        console.error('Error checking menu items:', err);
+        this.hasMenuItems = false;
+      }
+    });
+  }
+
+  checkRoomCategories() {
+    if (!this.restaurantId) return;
+    this.http.get<any[]>(`${environment.apiUrl}/api/restaurants/${this.restaurantId}/room-categories`).subscribe({
+      next: (categories) => {
+        this.hasRooms = categories.length > 0;
+      },
+      error: (err) => {
+        console.error('Error checking room categories:', err);
+        this.hasRooms = false;
+      }
+    });
+  }
+
+  showMenuAlert(): boolean {
+    return this.businessType === 'Restaurant' || this.businessType === 'Hotel';
+  }
+
+  showRoomsAlert(): boolean {
+    return this.businessType === 'GuestHouse' || this.businessType === 'Guest House' || this.businessType === 'Hotel';
+  }
 
   stats: StatCard[] = [
     {

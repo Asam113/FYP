@@ -54,9 +54,10 @@
 
             <!-- Restaurant Photos -->
             <div class="card border-0 shadow-sm p-4 rounded-4 mb-4">
-                <h5 class="fw-bold text-dark mb-3">Restaurant Photos</h5>
+                <h5 class="fw-bold text-dark mb-3">Gallery</h5>
                 <app-image-uploader [existingImages]="profile.restaurantImages" [multiple]="true"
-                    (imagesSelected)="onImagesSelected($event)" (imageDeleted)="onImageDeleted($event)">
+                    (imagesSelected)="onImagesSelected($event)" (imageDeleted)="onImageDeleted($event)"
+                    (imageClicked)="enlargeImage($event)">
                 </app-image-uploader>
             </div>
         </div>

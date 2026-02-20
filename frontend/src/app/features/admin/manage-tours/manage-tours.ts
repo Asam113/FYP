@@ -64,6 +64,7 @@ interface ApiRestaurantOffer {
   totalRooms?: number;
   totalRent?: number;
   stayDurationDays?: number;
+  roomCategoryId?: number;
   restaurant: {
     restaurantId: number;
     user: {
@@ -77,12 +78,14 @@ interface ApiRestaurantOffer {
 interface Tour {
   id: number;
   name: string;
-  status: 'Pending' | 'Ready to Finalize' | 'Pending Accommodation' | 'Awaiting Offers';
+  status: 'Pending' | 'Ready to Finalize' | 'Pending Accommodation' | 'Awaiting Offers' | 'Published' | 'Draft' | 'Finalized' | 'InProgress' | 'Completed';
   statusClass: string;
   price: string;
   participants: number;
   destination: string;
   duration: string;
+  startDate: string;
+  endDate: string;
   transport: {
     hasService: boolean;
     status: 'Accepted' | 'Pending';
@@ -125,6 +128,7 @@ interface ServiceRequirement {
   details?: string;
   estimatedPeople: number;
   estimatedBudget?: number;
+  stayDurationDays?: number;
   status: string;
   offers?: RestaurantOffer[];
 }
@@ -145,7 +149,26 @@ interface RestaurantOffer {
   totalRooms?: number;
   totalRent?: number;
   stayDurationDays?: number;
+  roomCategoryId?: number;
   isApproved: boolean;
+  restaurant?: {
+    restaurantId: number;
+    user: { fullName: string };
+    restaurantName: string;
+  };
+}
+
+interface RoomCategory {
+  roomCategoryId: number;
+  categoryName: string;
+  description?: string;
+  pricePerNight: number;
+  maxGuests: number;
+  totalRooms: number;
+  availableRooms: number;
+  amenities?: string;
+  amenitiesArray?: string[];
+  roomImages?: { imageUrl: string; isPrimary: boolean }[];
 }
 
 @Component({
@@ -177,6 +200,9 @@ export class ManageTours implements OnInit {
 
   // Accommodation Offer Modal State
   showAccommodationModal: boolean = false;
+  availableRoomCategories: RoomCategory[] = [];
+  selectedRoomCategory: RoomCategory | null = null;
+  loadingRoomCategories: boolean = false;
 
   // Confirmation Modal State
   showConfirmModal: boolean = false;
@@ -190,10 +216,18 @@ export class ManageTours implements OnInit {
   // Store raw API data
   private apiTours: ApiTour[] = [];
 
-  constructor(private http: HttpClient, private toastService: ToastService) { } // Added toastService
+
+  constructor(private http: HttpClient, private toastService: ToastService) { }
 
   ngOnInit(): void {
     this.loadTours();
+  }
+
+  get filteredTours(): Tour[] {
+    // Exclude Finalized, InProgress, and Completed tours
+    return this.tours.filter(t =>
+      !['Finalized', 'InProgress', 'Completed'].includes(t.status)
+    );
   }
 
   loadTours(): void {
@@ -201,10 +235,8 @@ export class ManageTours implements OnInit {
       .subscribe({
         next: (apiTours) => {
           this.apiTours = apiTours;
-          // Filter to show only non-finalized tours in the Intermediate tab
-          this.tours = apiTours
-            .filter(tour => tour.status === 'Draft' || tour.status === 'Published')
-            .map(tour => this.mapApiTourToDisplayTour(tour));
+          // Map ALL tours, filtering happens in getter
+          this.tours = apiTours.map(tour => this.mapApiTourToDisplayTour(tour));
           this.loading = false;
         },
         error: (err) => {
@@ -214,6 +246,25 @@ export class ManageTours implements OnInit {
           this.toastService.show('Failed to load tours. Please try again.', 'error');
         }
       });
+  }
+
+  // Helper Methods for lifecycle constraints
+  canStartTour(tour: Tour): boolean {
+    if (tour.status !== 'Finalized') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(tour.startDate); // Assuming startDate exists on Tour interface
+    startDate.setHours(0, 0, 0, 0);
+    return today >= startDate;
+  }
+
+  canCompleteTour(tour: Tour): boolean {
+    if (tour.status !== 'InProgress') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(tour.endDate); // Assuming endDate exists on Tour interface
+    endDate.setHours(0, 0, 0, 0);
+    return today >= endDate;
   }
 
   private mapApiTourToDisplayTour(apiTour: ApiTour): Tour {
@@ -233,7 +284,16 @@ export class ManageTours implements OnInit {
     let status: Tour['status'];
     let statusClass: string;
 
-    if (hasAcceptedDriver && hasAcceptedRestaurant) {
+    if (apiTour.status === 'Completed') {
+      status = 'Completed';
+      statusClass = 'bg-secondary text-white';
+    } else if (apiTour.status === 'InProgress') {
+      status = 'InProgress';
+      statusClass = 'bg-primary text-white';
+    } else if (apiTour.status === 'Finalized') {
+      status = 'Finalized';
+      statusClass = 'bg-info text-white';
+    } else if (hasAcceptedDriver && hasAcceptedRestaurant) {
       status = 'Ready to Finalize';
       statusClass = 'bg-success text-white';
     } else if (hasAcceptedDriver && !hasAcceptedRestaurant) {
@@ -253,6 +313,8 @@ export class ManageTours implements OnInit {
       participants: apiTour.maxCapacity || 0,
       destination: apiTour.destination || 'Unknown',
       duration: `${new Date(apiTour.startDate).toLocaleDateString()} to ${new Date(apiTour.endDate).toLocaleDateString()}`,
+      startDate: apiTour.startDate,
+      endDate: apiTour.endDate,
       transport: {
         hasService: driverOffers.length > 0,
         status: hasAcceptedDriver ? 'Accepted' : 'Pending',
@@ -330,6 +392,7 @@ export class ManageTours implements OnInit {
         totalRooms: offer.totalRooms,
         totalRent: offer.totalRent,
         stayDurationDays: offer.stayDurationDays || req.stayDurationDays,
+        roomCategoryId: offer.roomCategoryId,
         isApproved: offer.status.toLowerCase() === 'accepted'
       }))
     }));
@@ -473,6 +536,14 @@ export class ManageTours implements OnInit {
     } else if (requirement.type === 'Accommodation') {
       // Open accommodation offer modal for accommodation requirements
       this.showAccommodationModal = true;
+
+      // Fetch room categories if needed
+      // Use efficient safe access for restaurantId
+      const restaurantId = offer.restaurant?.restaurantId || offer.restaurantId;
+      if (this.needsRoomCategorySelection(offer) && restaurantId) {
+        this.fetchRoomCategories(restaurantId);
+        this.selectedRoomCategory = null; // Reset selection
+      }
     }
   }
 
@@ -524,8 +595,21 @@ export class ManageTours implements OnInit {
 
     console.log('Approving accommodation offer:', this.selectedOffer.offerId);
 
+    // Validation for room category selection
+    if (this.needsRoomCategorySelection(this.selectedOffer)) {
+      if (!this.selectedRoomCategory) {
+        this.toastService.show('Please select a room category to proceed', 'warning');
+        return;
+      }
+    }
+
+    const payload = {
+      selectedMenuItems: [],
+      roomCategoryId: this.selectedRoomCategory?.roomCategoryId
+    };
+
     // Call backend API to approve accommodation offer
-    this.http.post(`${environment.apiUrl}/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, { selectedMenuItems: [] })
+    this.http.post(`${environment.apiUrl}/api/RestaurantOffers/${this.selectedOffer.offerId}/accept`, payload)
       .subscribe({
         next: () => {
           // Mark as approved
@@ -624,7 +708,10 @@ export class ManageTours implements OnInit {
     return transportFulfilled && allRequirementsFulfilled;
   }
 
-  finalizeTour() {
+  finalizeTour(tourId?: number) {
+    const id = tourId || this.selectedTour?.id;
+    if (!id) return;
+
     if (!this.selectedTour || !this.canFinalizeTour()) {
       this.toastService.show('Cannot finalize: Please fulfill all transport and service requirements', 'warning');
       return;
@@ -636,16 +723,10 @@ export class ManageTours implements OnInit {
     this.confirmType = 'info';
 
     this.confirmAction = () => {
-      console.log('Finalizing tour:', this.selectedTour!.id); // Use non-null assertion as checked above
-
-      this.http.post(`${environment.apiUrl}/api/tours/${this.selectedTour!.id}/finalize`, {})
+      this.http.post(`${environment.apiUrl}/api/tours/${id}/finalize`, {})
         .subscribe({
           next: () => {
             this.toastService.show('Tour finalized successfully! It is now ready for tourist bookings.', 'success');
-            if (this.selectedTour) {
-              this.selectedTour.status = 'Ready to Finalize'; // Update status
-            }
-            // Reload tours to reflect the change
             this.loadTours();
             this.clearSelection();
           },
@@ -656,6 +737,67 @@ export class ManageTours implements OnInit {
         });
     };
     this.showConfirmModal = true;
+  }
+
+  startTour(tourId: number) {
+    if (!confirm('Are you sure you want to start this tour? This will notify all tourists.')) {
+      return;
+    }
+
+    this.http.post(`${environment.apiUrl}/api/tours/${tourId}/start`, {})
+      .subscribe({
+        next: () => {
+          this.toastService.show('Tour started successfully', 'success');
+          this.loadTours();
+          this.clearSelection();
+        },
+        error: (err) => {
+          console.error('Error starting tour:', err);
+          this.toastService.show(err.error?.message || 'Failed to start tour', 'error');
+        }
+      });
+  }
+
+  completeTour(tourId: number) {
+    if (!confirm('Are you sure you want to complete this tour? This will mark all bookings as completed.')) {
+      return;
+    }
+
+    this.http.post(`${environment.apiUrl}/api/tours/${tourId}/complete`, {})
+      .subscribe({
+        next: () => {
+          this.toastService.show('Tour completed successfully', 'success');
+          this.loadTours();
+          this.clearSelection();
+        },
+        error: (err) => {
+          console.error('Error completing tour:', err);
+          this.toastService.show(err.error?.message || 'Failed to complete tour', 'error');
+        }
+      });
+  }
+
+  publishTour(tourId: number) {
+    if (!confirm('Are you sure you want to publish this tour? It will become visible to tourists for browsing.')) {
+      return;
+    }
+
+    this.http.post(`${environment.apiUrl}/api/tours/${tourId}/publish`, {})
+      .subscribe({
+        next: (response: any) => {
+          this.toastService.show('Tour published successfully!', 'success');
+          // Reload tours to reflect the change
+          this.loadTours();
+          // If the published tour was selected, update its local status
+          if (this.selectedTour && this.selectedTour.id === tourId) {
+            this.selectedTour.status = 'Published';
+          }
+        },
+        error: (err) => {
+          console.error('Publishing failed:', err);
+          this.toastService.show('Publishing failed: ' + (err.error?.message || 'Unknown error'), 'error');
+        }
+      });
   }
 
   // Helper to sync local state after updates
@@ -698,6 +840,62 @@ export class ManageTours implements OnInit {
         this.selectedTour = this.tours[tourIndex];
       }
     }
+  }
+
+  // Room Category Selection Methods
+  fetchRoomCategories(restaurantId: number): void {
+    if (!restaurantId) return;
+
+    this.loadingRoomCategories = true;
+    this.http.get<RoomCategory[]>(`${environment.apiUrl}/api/restaurants/${restaurantId}/room-categories`)
+      .subscribe({
+        next: (categories) => {
+          this.availableRoomCategories = categories.map(cat => ({
+            ...cat,
+            amenitiesArray: cat.amenities ? JSON.parse(cat.amenities) : []
+          }));
+          this.loadingRoomCategories = false;
+        },
+        error: (err) => {
+          console.error('Error fetching room categories:', err);
+          this.toastService.show('Failed to load room categories', 'error');
+          this.loadingRoomCategories = false;
+        }
+      });
+  }
+
+  selectRoomCategory(category: RoomCategory): void {
+    this.selectedRoomCategory = category;
+  }
+
+  get calculatedAccommodationPricing() {
+    if (!this.selectedRoomCategory || !this.selectedRequirement) {
+      return null;
+    }
+
+    const estimatedPeople = this.selectedRequirement.estimatedPeople;
+    const stayDurationDays = this.selectedOffer?.stayDurationDays || this.selectedRequirement.stayDurationDays || 1;
+    const totalRooms = Math.ceil(estimatedPeople / this.selectedRoomCategory.maxGuests);
+    const totalCost = totalRooms * this.selectedRoomCategory.pricePerNight * stayDurationDays;
+
+    return {
+      rentPerNight: this.selectedRoomCategory.pricePerNight,
+      perRoomCapacity: this.selectedRoomCategory.maxGuests,
+      totalRooms,
+      totalCost,
+      stayDurationDays
+    };
+  }
+
+  needsRoomCategorySelection(offer: RestaurantOffer | null): boolean {
+    // If offer has no pricing data (rentPerNight is null/undefined), it needs category selection
+    return offer != null && (offer.rentPerNight == null || offer.rentPerNight === 0);
+  }
+
+  getPrimaryImage(category: RoomCategory): string {
+    const primaryImage = category.roomImages?.find(img => img.isPrimary);
+    const imageUrl = primaryImage?.imageUrl || category.roomImages?.[0]?.imageUrl;
+    return imageUrl ? `${environment.apiUrl}${imageUrl}` : 'https://via.placeholder.com/300x200?text=No+Image';
   }
 
 }

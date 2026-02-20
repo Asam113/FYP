@@ -8,6 +8,43 @@
         <p class="text-muted mb-0">Welcome back! Here's your restaurant activity summary</p>
     </div>
 
+    <!-- Setup Alerts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <!-- Menu Validation Alert (For Restaurant & Hotel) -->
+            <div *ngIf="showMenuAlert() && !hasMenuItems" class="alert alert-warning border-0 shadow-sm rounded-4 mb-3"
+                role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading fw-bold mb-2">Setup Your Menu</h6>
+                        <p class="mb-2">You need to add menu items to start receiving and submitting offers on meal
+                            requirements.</p>
+                        <a routerLink="/restaurant/menu" class="btn btn-warning btn-sm">
+                            <i class="bi bi-book me-1"></i> Setup My Menu
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rooms Validation Alert (For Guest House & Hotel) -->
+            <div *ngIf="showRoomsAlert() && !hasRooms" class="alert alert-info border-0 shadow-sm rounded-4 mb-3"
+                role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-info-circle-fill fs-4 me-3 text-info"></i>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading fw-bold mb-2">Setup Your Rooms</h6>
+                        <p class="mb-2">You haven't setup any rooms yet. Please setup your room categories to receive
+                            accommodation requests.</p>
+                        <a routerLink="/restaurant/rooms" class="btn btn-info btn-sm text-white">
+                            <i class="bi bi-door-open me-1"></i> Setup My Rooms
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistics Section -->
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-xl-3" *ngFor="let stat of stats">

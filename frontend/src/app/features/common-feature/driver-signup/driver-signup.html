@@ -84,8 +84,7 @@
                 <div class="form-group">
                     <label>Profile Photo</label>
                     <div class="upload-box" (click)="fileInput.click()">
-                        <input #fileInput type="file" (change)="onFileSelected($event, 'profile')" hidden
-                            accept="image/*">
+                        <input #fileInput type="file" (change)="onProfilePicSelected($event)" hidden accept="image/*">
                         <div class="upload-content">
                             <i class="bi bi-camera"></i>
                             <span *ngIf="!profilePicture">Upload your photo</span>
@@ -118,8 +117,18 @@
                     </div>
                 </div>
 
-                <div class="text-center">
-                    <a class="resend-link">Resend Code</a>
+                <div class="text-center" style="margin-top: 1rem;">
+                    <span *ngIf="timeLeft > 0" class="text-muted">
+                        Resend Code in {{ timeLeft }}s
+                    </span>
+                    <span *ngIf="timeLeft === 0">
+                        <a class="resend-link" (click)="resendOtp(email)" [class.disabled]="isResending"
+                            [style.pointer-events]="isResending ? 'none' : 'auto'"
+                            [style.cursor]="isResending ? 'default' : 'pointer'"
+                            [style.opacity]="isResending ? '0.5' : '1'">
+                            {{ isResending ? 'Resending...' : 'Resend Code' }}
+                        </a>
+                    </span>
                 </div>
 
                 <div class="nav-buttons">

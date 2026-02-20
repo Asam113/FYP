@@ -14,14 +14,13 @@
                     {{selectedTour.status}}
                 </span>
             </div>
-            <div class="text-muted" *ngIf="!selectedTour">Tours awaiting driver and accommodation offers acceptance
-            </div>
         </div>
+
     </div>
 
     <!-- LIST VIEW -->
     <div class="d-flex flex-column gap-3" *ngIf="!selectedTour">
-        <div class="card border-0 shadow-sm rounded-4 p-3 hover-shadow" *ngFor="let tour of tours"
+        <div class="card border-0 shadow-sm rounded-4 p-3 hover-shadow" *ngFor="let tour of filteredTours"
             (click)="selectTour(tour)" style="cursor: pointer;">
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-4">
@@ -56,16 +55,17 @@
         </div>
 
         <!-- Empty State -->
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center mt-4" *ngIf="tours.length === 0 && !loading">
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center mt-4"
+            *ngIf="filteredTours.length === 0 && !loading">
             <div class="mb-4">
                 <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center"
                     style="width: 80px; height: 80px;">
                     <i class="bi bi-calendar-x fs-1 text-muted"></i>
                 </div>
             </div>
-            <h5 class="fw-bold text-dark mb-2">No Tours Yet</h5>
+            <h5 class="fw-bold text-dark mb-2">No Tours Found</h5>
             <p class="text-muted mb-4 mx-auto" style="max-width: 300px;">
-                There are currently no intermediate tours awaiting finalize. Create a new tour to get started.
+                No tours found in this category.
             </p>
             <button class="btn btn-teal text-white shadow-sm px-4 py-2 mx-auto d-flex align-items-center gap-2"
                 routerLink="/admin/plan-tour">
@@ -105,10 +105,42 @@
                 <button class="btn btn-outline-secondary btn-sm w-100 mb-2" (click)="clearSelection()">
                     <i class="bi bi-arrow-left me-1"></i> Back to List
                 </button>
-                <button class="btn btn-success btn-sm w-100" (click)="finalizeTour()" [disabled]="!canFinalizeTour()">
+                <button class="btn btn-primary btn-sm w-100 mb-2" (click)="publishTour(selectedTour.id)"
+                    *ngIf="selectedTour.status === 'Draft'">
+                    <i class="bi bi-send me-1"></i> Publish Tour
+                </button>
+                <button class="btn btn-success btn-sm w-100 mb-2" (click)="finalizeTour(selectedTour.id)"
+                    *ngIf="selectedTour.status === 'Ready to Finalize' || selectedTour.status === 'Published'">
                     <i class="bi bi-check-circle me-1"></i> Finalize Tour
                 </button>
-                <small class="text-muted d-block mt-2" *ngIf="!canFinalizeTour()">
+
+                <!-- Start Tour Button -->
+                <div *ngIf="selectedTour.status === 'Finalized'" class="d-grid mb-2">
+                    <button class="btn btn-primary btn-sm w-100" (click)="startTour(selectedTour.id)"
+                        [disabled]="!canStartTour(selectedTour)"
+                        [title]="!canStartTour(selectedTour) ? 'Cannot start yet. Start date is ' + (selectedTour.startDate | date) : 'Start Tour'">
+                        <i class="bi bi-play-circle me-1"></i> Start Tour
+                    </button>
+                    <small class="text-danger d-block mt-1" style="font-size: 0.7em;"
+                        *ngIf="!canStartTour(selectedTour)">
+                        Starts on {{selectedTour.startDate | date}}
+                    </small>
+                </div>
+
+                <!-- Complete Tour Button -->
+                <div *ngIf="selectedTour.status === 'InProgress'" class="d-grid mb-2">
+                    <button class="btn btn-secondary btn-sm w-100" (click)="completeTour(selectedTour.id)"
+                        [disabled]="!canCompleteTour(selectedTour)"
+                        [title]="!canCompleteTour(selectedTour) ? 'Cannot complete yet. End date is ' + (selectedTour.endDate | date) : 'Complete Tour'">
+                        <i class="bi bi-check-all me-1"></i> Complete Tour
+                    </button>
+                    <small class="text-danger d-block mt-1" style="font-size: 0.7em;"
+                        *ngIf="!canCompleteTour(selectedTour)">
+                        Ends on {{selectedTour.endDate | date}}
+                    </small>
+                </div>
+
+                <small class="text-muted d-block mt-2" *ngIf="selectedTour.status === 'Awaiting Offers'">
                     <i class="bi bi-info-circle me-1"></i> Complete all offers to finalize
                 </small>
             </div>
@@ -254,20 +286,61 @@
                                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                                         <div>
                                                             <h6 class="fw-bold mb-0">{{ offer.restaurantName }}</h6>
-                                                            <small class="text-muted">{{ offer.mealType }}</small>
+                                                            <small class="text-muted"
+                                                                *ngIf="requirement.type === 'Meal'">{{ offer.mealType
+                                                                }}</small>
+                                                            <small class="text-muted"
+                                                                *ngIf="requirement.type === 'Accommodation'">Accommodation</small>
                                                         </div>
-                                                        <span class="badge bg-primary">PKR {{ offer.pricePerHead
-                                                            }}/head</span>
+
+                                                        <!-- Meal Pricing -->
+                                                        <span class="badge bg-primary"
+                                                            *ngIf="requirement.type === 'Meal'">
+                                                            PKR {{ offer.pricePerHead }}/head
+                                                        </span>
+
+                                                        <!-- Accommodation Pricing -->
+                                                        <span class="badge bg-primary"
+                                                            *ngIf="requirement.type === 'Accommodation'">
+                                                            <span *ngIf="offer.totalRent">Total: PKR {{ offer.totalRent
+                                                                | number }}</span>
+                                                            <span *ngIf="!offer.totalRent">Pending Review</span>
+                                                        </span>
                                                     </div>
-                                                    <p class="mb-2 small text-muted">
+
+                                                    <!-- Meal Details -->
+                                                    <p class="mb-2 small text-muted"
+                                                        *ngIf="requirement.type === 'Meal'">
                                                         <i class="bi bi-people me-1"></i> {{ offer.minimumPeople }} - {{
                                                         offer.maximumPeople }} people
                                                         <br>
                                                         <i class="bi bi-cup-straw me-1"></i> Beverages: {{
                                                         offer.includesBeverages ? 'Yes' : 'No' }}
                                                     </p>
-                                                    <p class="mb-2 fw-medium">Total: PKR {{ offer.pricePerHead *
-                                                        requirement.estimatedPeople | number }}</p>
+
+                                                    <!-- Accommodation Details -->
+                                                    <p class="mb-2 small text-muted"
+                                                        *ngIf="requirement.type === 'Accommodation'">
+                                                        <span *ngIf="offer.totalRooms">
+                                                            <i class="bi bi-houses me-1"></i> {{ offer.totalRooms }}
+                                                            Rooms
+                                                            <br>
+                                                        </span>
+                                                        <span *ngIf="offer.perRoomCapacity">
+                                                            <i class="bi bi-people me-1"></i> Capacity: {{
+                                                            offer.perRoomCapacity }} / room
+                                                        </span>
+                                                    </p>
+
+                                                    <!-- Total Cost Display -->
+                                                    <p class="mb-2 fw-medium" *ngIf="requirement.type === 'Meal'">
+                                                        Total: PKR {{ offer.pricePerHead * requirement.estimatedPeople |
+                                                        number }}
+                                                    </p>
+                                                    <p class="mb-2 fw-medium"
+                                                        *ngIf="requirement.type === 'Accommodation' && offer.totalRent">
+                                                        Total: PKR {{ offer.totalRent | number }}
+                                                    </p>
                                                     <div class="d-flex gap-2">
                                                         <button class="btn btn-sm btn-success" *ngIf="!offer.isApproved"
                                                             (click)="approveRestaurantOffer(requirement, offer)">
@@ -355,14 +428,16 @@
                             </div>
                         </div>
 
-                        <!-- Offer Details -->
+                        <!-- Offer Details or Room Category Selection -->
                         <div class="card border-primary mb-3">
                             <div class="card-header bg-primary-subtle border-primary">
                                 <h6 class="fw-bold mb-0 text-primary">
                                     <i class="bi bi-building me-2"></i>Offer from {{ selectedOffer.restaurantName }}
                                 </h6>
                             </div>
-                            <div class="card-body">
+
+                            <!-- Case 1: Pricing already exists (Legacy or Pre-calculated) -->
+                            <div class="card-body" *ngIf="!needsRoomCategorySelection(selectedOffer)">
                                 <div class="row g-3">
                                     <div class="col-6">
                                         <label class="small text-muted d-block">Rent Per Room Per Night</label>
@@ -390,33 +465,141 @@
                                         </h5>
                                         <small class="text-muted">
                                             ({{ selectedOffer.totalRooms }} × PKR {{ selectedOffer.rentPerNight | number
-                                            }} × {{ selectedOffer.stayDurationDays }} nights)
+                                            }} × {{ selectedOffer.stayDurationDays ||
+                                            selectedRequirement.stayDurationDays || 1 }} nights)
                                         </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Case 2: Needs Room Category Selection -->
+                            <div class="card-body" *ngIf="needsRoomCategorySelection(selectedOffer)">
+                                <div class="alert alert-warning border-0 mb-3">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Action Required:</strong> Please select a room category to finalize pricing.
+                                </div>
+
+                                <h6 class="fw-bold mb-3">Available Room Categories</h6>
+
+                                <div *ngIf="loadingRoomCategories" class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+
+                                <div class="room-category-list" style="max-height: 300px; overflow-y: auto;">
+                                    <div *ngFor="let category of availableRoomCategories"
+                                        class="card mb-2 cursor-pointer"
+                                        [class.border-success]="selectedRoomCategory?.roomCategoryId === category.roomCategoryId"
+                                        [class.bg-light]="selectedRoomCategory?.roomCategoryId !== category.roomCategoryId"
+                                        (click)="selectRoomCategory(category)" style="cursor: pointer;">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex align-items-center">
+                                                <img [src]="getPrimaryImage(category)" class="rounded me-3"
+                                                    style="width: 60px; height: 60px; object-fit: cover;">
+                                                <div class="flex-grow-1">
+                                                    <h6 class="fw-bold mb-1">{{ category.categoryName }}</h6>
+                                                    <div class="d-flex gap-3 small text-muted">
+                                                        <span><i class="bi bi-people me-1"></i>{{ category.maxGuests }}
+                                                            guests</span>
+                                                        <span><i class="bi bi-door-closed me-1"></i>{{
+                                                            category.availableRooms }} left</span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <h6 class="fw-bold text-primary mb-0">PKR {{ category.pricePerNight
+                                                        | number }}</h6>
+                                                    <small class="text-muted">per night</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Calculated Pricing Preview -->
+                                <div *ngIf="selectedRoomCategory && calculatedAccommodationPricing"
+                                    class="mt-3 p-3 bg-light rounded-3">
+                                    <h6 class="fw-bold mb-2 text-dark">Pricing Preview</h6>
+                                    <div class="row g-2 text-muted small">
+                                        <div class="col-6">
+                                            <span>Rooms Needed:</span>
+                                            <strong class="text-dark ms-1">{{ calculatedAccommodationPricing.totalRooms
+                                                }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <span>Duration:</span>
+                                            <strong class="text-dark ms-1">{{
+                                                calculatedAccommodationPricing.stayDurationDays }} nights</strong>
+                                        </div>
+                                        <div class="col-12 border-top pt-2 mt-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold text-dark">Total Cost:</span>
+                                                <span class="fw-bold text-success fs-5">PKR {{
+                                                    calculatedAccommodationPricing.totalCost | number }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Cost Breakdown -->
+                        <!-- Cost Breakdown -->
                         <div class="alert alert-info">
                             <h6 class="fw-bold mb-2">
                                 <i class="bi bi-calculator me-2"></i>Cost Breakdown
                             </h6>
-                            <div class="d-flex justify-content-between mb-1">
-                                <span>{{ selectedOffer.totalRooms }} rooms × PKR {{ selectedOffer.rentPerNight | number
-                                    }}/night</span>
-                                <span class="fw-medium">PKR {{ (selectedOffer.totalRooms! * selectedOffer.rentPerNight!)
-                                    | number }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1">
-                                <span>Duration</span>
-                                <span class="fw-medium">{{ selectedOffer.stayDurationDays }} night(s)</span>
-                            </div>
-                            <hr class="my-2">
-                            <div class="d-flex justify-content-between">
-                                <strong>Total Accommodation Cost</strong>
-                                <strong class="text-success">PKR {{ selectedOffer.totalRent | number }}</strong>
-                            </div>
+
+                            <!-- Scenario 1: Pre-calculated / Legacy Offer -->
+                            <ng-container *ngIf="!needsRoomCategorySelection(selectedOffer)">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{{ selectedOffer.totalRooms }} rooms × PKR {{ selectedOffer.rentPerNight |
+                                        number
+                                        }}/night</span>
+                                    <span class="fw-medium">PKR {{ (selectedOffer.totalRooms! *
+                                        selectedOffer.rentPerNight!)
+                                        | number }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Duration</span>
+                                    <span class="fw-medium">{{ selectedOffer.stayDurationDays }} night(s)</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Total Accommodation Cost</strong>
+                                    <strong class="text-success">PKR {{ selectedOffer.totalRent | number }}</strong>
+                                </div>
+                            </ng-container>
+
+                            <!-- Scenario 2: Calculated from Room Category Selection -->
+                            <ng-container *ngIf="needsRoomCategorySelection(selectedOffer)">
+                                <ng-container *ngIf="calculatedAccommodationPricing; else noCategorySelected">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>{{ calculatedAccommodationPricing.totalRooms }} rooms × PKR {{
+                                            calculatedAccommodationPricing.rentPerNight | number
+                                            }}/night</span>
+                                        <span class="fw-medium">PKR {{ (calculatedAccommodationPricing.totalRooms *
+                                            calculatedAccommodationPricing.rentPerNight)
+                                            | number }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Duration</span>
+                                        <span class="fw-medium">{{ calculatedAccommodationPricing.stayDurationDays }}
+                                            night(s)</span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total Accommodation Cost</strong>
+                                        <strong class="text-success">PKR {{ calculatedAccommodationPricing.totalCost |
+                                            number }}</strong>
+                                    </div>
+                                </ng-container>
+                                <ng-template #noCategorySelected>
+                                    <div class="text-center text-muted small py-2">
+                                        Select a room category to see cost breakdown
+                                    </div>
+                                </ng-template>
+                            </ng-container>
                         </div>
                     </div>
                 </div>

@@ -15,12 +15,15 @@ export class RestaurantLayout implements OnInit {
     isSidebarOpen = false;
     user: any;
     unreadCount = 0;
+    businessType: string = '';
 
     constructor(
         private authService: AuthService,
         private notificationService: NotificationService
     ) {
         this.user = this.authService.getUser();
+        // Extract businessType from user data or JWT token
+        this.businessType = this.user?.businessType || '';
     }
 
     ngOnInit() {
@@ -43,5 +46,14 @@ export class RestaurantLayout implements OnInit {
 
     logout() {
         this.authService.logout();
+    }
+
+    // Helper methods for dynamic sidebar navigation
+    showMenuTab(): boolean {
+        return this.businessType === 'Restaurant' || this.businessType === 'Hotel';
+    }
+
+    showRoomsTab(): boolean {
+        return this.businessType === 'GuestHouse' || this.businessType === 'Guest House' || this.businessType === 'Hotel';
     }
 }

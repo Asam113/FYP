@@ -47,6 +47,23 @@ public class AuthController : ControllerBase
         }
     }
 
+    // POST: api/auth/resend-otp
+    // POST: api/auth/resend-otp
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto request)
+    {
+        try
+        {
+            // Reusing VerifyOtpDto just for Email field
+            await _authService.ResendOtpAsync(request.Email);
+            return Ok(new { message = "OTP sent successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     // POST: api/auth/initiate-driver-signup
     [HttpPost("initiate-driver-signup")]
     public async Task<IActionResult> InitiateDriverSignup([FromBody] InitiateDriverSignupDto request)

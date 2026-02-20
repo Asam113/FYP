@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { VerifyOtp } from '../verify-otp/verify-otp';
@@ -10,7 +10,13 @@ import { ImageUploaderComponent } from '../../../shared/components/image-uploade
 @Component({
     selector: 'app-restaurant-signup',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule, VerifyOtp, ImageUploaderComponent],
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterModule,
+        VerifyOtp,
+        ImageUploaderComponent
+    ],
     templateUrl: './restaurant-signup.html',
     styleUrl: './restaurant-signup.css'
 })
@@ -22,13 +28,15 @@ export class RestaurantSignup {
     phoneNumber: string = '';
     password: string = '';
     confirmPassword: string = '';
-    profilePicture: File | null = null; // Restaurant Logo
+    profilePicture: File | null = null;
 
     // Phase 3: Restaurant Info
     restaurantName: string = '';
     address: string = '';
     postalCode: string = '';
-    businessType: string = ''; // Phase 2: Business Type
+    businessType: string = '';
+
+    // Phase 2: Business Type
     businessLicenseFile: File | null = null;
 
     businessTypes = [
@@ -39,25 +47,89 @@ export class RestaurantSignup {
 
     showPassword = false;
     showConfirmPassword = false;
+
     selectedRestaurantImages: File[] = [];
 
     currentStep = 1;
-
     steps = [
         { number: 1, name: 'Personal Info' },
         { number: 2, name: 'Verification' },
         { number: 3, name: 'Business Details' }
     ];
 
-
     constructor(
         private router: Router,
         private authService: AuthService,
-        private toastService: ToastService
-    ) { }
+        private toastService: ToastService,
+        private route: ActivatedRoute
+    ) {
+
+        // Check for resume parameters
+        this.route.queryParams.subscribe(params => {
+            if (params['email']) {
+                this.email = params['email'];
+            }
+
+            if (params['resumeStep']) {
+                const step = parseInt(params['resumeStep'], 10);
+
+                if (step === 2) {
+                    this.currentStep = 2;
+                    this.resendOtp(this.email);
+                } else if (step === 3) {
+                    this.currentStep = 3;
+                }
+            }
+        });
+
+        // Retrieve password passed from Login
+        const navState = this.router.getCurrentNavigation()?.extras.state;
+
+        if (navState && navState['password']) {
+            this.password = navState['password'];
+            this.confirmPassword = navState['password'];
+        } else if (history.state.password) {
+            this.password = history.state.password;
+            this.confirmPassword = history.state.password;
+        }
+
+        // Auto-fill from authenticated user if resuming
+        const currentUser = this.authService.getUser();
+        console.log('[RestaurantSignup] Current User for auto-fill:', currentUser);
+
+        if (currentUser && currentUser.status === 'Incomplete') {
+
+            if (!this.restaurantName && currentUser.businessName) {
+                this.restaurantName = currentUser.businessName;
+            }
+
+            if (!this.businessType && currentUser.businessType) {
+                this.businessType = currentUser.businessType;
+            }
+
+            if (!this.ownerName && currentUser.name) {
+                this.ownerName = currentUser.name;
+            }
+
+            if (!this.phoneNumber && currentUser.phoneNumber) {
+                this.phoneNumber = currentUser.phoneNumber;
+            }
+        }
+    }
+
+    resendOtp(email: string) {
+        this.authService.resendOtp(email).subscribe({
+            next: () =>
+                this.toastService.show('Verification code sent to your email', 'success'),
+            error: err =>
+                this.toastService.show(
+                    err.error?.message || 'Failed to send OTP',
+                    'error'
+                )
+        });
+    }
 
     // --- Navigation & Flow ---
-
     goBack() {
         if (this.currentStep === 1) {
             this.router.navigate(['/role-selection']);
@@ -69,23 +141,21 @@ export class RestaurantSignup {
     nextStep() {
         if (this.currentStep === 1) {
             this.validateAndInitiateSignup();
-        } else if (this.currentStep === 2) {
-            // Handled by VerifyOtp Component event
         } else if (this.currentStep === 3) {
             this.validateRestaurantDetailsAndSubmit();
         }
     }
 
     // --- Phase 1 Logic ---
-
     validateAndInitiateSignup() {
-        if (!this.ownerName || !this.email || !this.phoneNumber || !this.password || !this.confirmPassword) {
+        if (
+            !this.ownerName ||
+            !this.email ||
+            !this.phoneNumber ||
+            !this.password ||
+            !this.confirmPassword
+        ) {
             this.toastService.show('Please fill in all personal details', 'error');
-            return;
-        }
-
-        if (!this.restaurantName || !this.businessType) {
-            this.toastService.show('Please provide business name and type', 'error');
             return;
         }
 
@@ -98,18 +168,19 @@ export class RestaurantSignup {
             name: this.ownerName,
             email: this.email,
             password: this.password,
-            phoneNumber: this.phoneNumber,
-            businessName: this.restaurantName,
-            businessType: this.businessType
+            phoneNumber: this.phoneNumber
         };
 
         this.authService.initiateRestaurantSignup(data).subscribe({
-            next: (res) => {
+            next: () => {
                 this.toastService.show('OTP sent to your email', 'success');
                 this.currentStep++;
             },
-            error: (err) => {
-                this.toastService.show(err.error?.message || 'Signup initialization failed', 'error');
+            error: err => {
+                this.toastService.show(
+                    err.error?.message || 'Signup initialization failed',
+                    'error'
+                );
             }
         });
     }
@@ -122,19 +193,16 @@ export class RestaurantSignup {
         this.showConfirmPassword = !this.showConfirmPassword;
     }
 
-    onLogoSelected(event: any) {
+    onProfilePicSelected(event: any) {
         this.profilePicture = event.target.files[0];
     }
 
-    // --- Phase 2 Logic (OTP) ---
-
+    // --- Phase 2 Logic ---
     onOtpVerified() {
-        // Called when VerifyOtp component emits success
         this.currentStep++;
     }
 
-    // --- Phase 3 Logic (Details) ---
-
+    // --- Phase 3 Logic ---
     onLicenseSelected(event: any) {
         this.businessLicenseFile = event.target.files[0];
     }
@@ -144,6 +212,11 @@ export class RestaurantSignup {
     }
 
     validateRestaurantDetailsAndSubmit() {
+        if (!this.restaurantName || !this.businessType) {
+            this.toastService.show('Please provide business name and type', 'error');
+            return;
+        }
+
         if (!this.address || !this.postalCode) {
             this.toastService.show('Please fill in all business details', 'error');
             return;
@@ -159,43 +232,43 @@ export class RestaurantSignup {
 
     submitApplication() {
         const formData = new FormData();
-        formData.append('Name', this.ownerName);
-        formData.append('Email', this.email);
-        formData.append('Password', this.password);
-        formData.append('PhoneNumber', this.phoneNumber);
 
-        formData.append('RestaurantName', this.restaurantName);
-        formData.append('Address', this.address);
-        formData.append('BusinessType', this.businessType);
-        formData.append('PostalCode', this.postalCode);
-        formData.append('OwnerName', this.ownerName);
+        formData.append('name', this.ownerName);
+        formData.append('email', this.email);
+        formData.append('password', this.password);
+        formData.append('phoneNumber', this.phoneNumber);
+        formData.append('restaurantName', this.restaurantName);
+        formData.append('address', this.address);
+        formData.append('businessType', this.businessType);
+        formData.append('postalCode', this.postalCode);
+        formData.append('ownerName', this.ownerName);
 
         if (this.profilePicture) {
-            formData.append('ProfilePicture', this.profilePicture);
+            formData.append('profilePicture', this.profilePicture);
         }
 
         if (this.businessLicenseFile) {
-            formData.append('LicenseDocument', this.businessLicenseFile);
+            formData.append('licenseDocument', this.businessLicenseFile);
         }
 
-        // Restaurant Images
         this.selectedRestaurantImages.forEach(image => {
-            formData.append('RestaurantImages', image);
+            formData.append('restaurantImages', image);
         });
 
-        console.log('Submitting application...');
         this.authService.signupRestaurant(formData).subscribe({
-            next: (res) => {
-                this.toastService.show('Restaurant Application Submitted Successfully!', 'success');
+            next: () => {
+                this.toastService.show(
+                    'Restaurant Application Submitted Successfully!',
+                    'success'
+                );
                 this.router.navigate(['/login']);
             },
-            error: (err) => {
+            error: err => {
                 console.error('Signup Error Details:', err);
-                if (err.error && err.error.errors) {
-                    // Log validation errors specifically
-                    console.table(err.error.errors);
-                }
-                this.toastService.show(err.error?.message || 'Submission failed', 'error');
+                this.toastService.show(
+                    err.error?.message || 'Submission failed',
+                    'error'
+                );
             }
         });
     }

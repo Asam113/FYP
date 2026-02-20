@@ -9,6 +9,7 @@ import { ManageRestaurants } from './manage-restaurants/manage-restaurants';
 import { Payments } from './payments/payments';
 import { Reports } from './reports/reports';
 import { Settings } from './settings/settings';
+import { HistoryTours } from './history-tours/history-tours';
 
 const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -22,6 +23,7 @@ const routes: Routes = [
   { path: 'payments', component: Payments },
   { path: 'reports', component: Reports },
   { path: 'settings', component: Settings },
+  { path: 'history', component: HistoryTours },
   { path: 'driver-details/:id', loadComponent: () => import('./driver-details/driver-details.component').then(m => m.DriverDetails) },
   { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) }
 ];
