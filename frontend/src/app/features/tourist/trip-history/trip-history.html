@@ -4,8 +4,28 @@
         <p class="text-muted">View all your completed tours and travel memories</p>
     </div>
 
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="alert alert-danger">
+        {{ error }}
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && !error && trips.length === 0" class="text-center py-5">
+        <i class="bi bi-clock-history fs-1 text-muted"></i>
+        <h4 class="mt-3 text-secondary">No trip history found</h4>
+        <p class="text-muted">You haven't completed any tours yet. Once a tour is finished, it will appear here!</p>
+        <a routerLink="/tourist/explore" class="btn btn-primary px-4 rounded-pill mt-2">Explore Tours</a>
+    </div>
+
     <!-- Summary Cards -->
-    <div class="row g-4 mb-4">
+    <div *ngIf="!isLoading && !error && trips.length > 0" class="row g-4 mb-4">
         <div class="col-md-4">
             <div class="card border-0 text-white h-100" style="background-color: #1a73e8;">
                 <div class="card-body p-4 d-flex justify-content-between align-items-center">
@@ -25,7 +45,7 @@
                 <div class="card-body p-4 d-flex justify-content-between align-items-center">
                     <div>
                         <div class="text-white-50 mb-1 small">Total Spent</div>
-                        <div class="display-6 fw-bold mb-1 text-nowrap">PKR {{ totalSpent | number:'1.0-0' }}k</div>
+                        <div class="display-6 fw-bold mb-1 text-nowrap">PKR {{ totalSpent | number }}</div>
                         <div class="text-white-50 small">On amazing adventures</div>
                     </div>
                     <div class="icon-box bg-white bg-opacity-25 rounded-3 p-3">
@@ -51,7 +71,7 @@
     </div>
 
     <!-- Trip List -->
-    <div class="d-flex flex-column gap-3">
+    <div *ngIf="!isLoading && !error && trips.length > 0" class="d-flex flex-column gap-3">
         <div class="card border-0 shadow-sm animate-fade-in" *ngFor="let trip of trips">
             <div class="card-body p-4">
                 <!-- Header -->
@@ -64,7 +84,7 @@
                     </div>
                     <div class="text-end">
                         <div class="small text-muted mb-1">Amount Paid</div>
-                        <h5 class="fw-bold text-dark mb-0">PKR {{ trip.cost | number }}</h5>
+                        <h5 class="fw-bold text-dark mb-0">PKR {{ trip.totalCost | number }}</h5>
                     </div>
                 </div>
 
@@ -94,23 +114,28 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="text-muted small">Duration & Travelers</div>
-                                <div class="text-dark fw-medium">{{ trip.duration }} • {{ trip.travelers }} persons
-                                </div>
+                                <div class="text-dark fw-medium">{{ trip.duration }} • {{ trip.persons }} persons</div>
                             </div>
-                            <button class="btn btn-primary d-flex align-items-center gap-2 px-4">
-                                <i class="bi bi-download"></i> Download Invoice
+                            <!-- Shimmer button shown only when not yet rated -->
+                            <button *ngIf="!trip.hasRated" class="btn btn-shimmer d-flex align-items-center gap-2 px-4"
+                                (click)="openRatingModal(trip.tourId)">
+                                <i class="bi bi-pencil-square"></i> Complete Rating
                             </button>
+                            <!-- Badge shown when already rated -->
+                            <span *ngIf="trip.hasRated" class="btn-rated">
+                                <i class="bi bi-check-circle-fill"></i> Reviewed
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Review Section -->
-                <div class="bg-light rounded-3 p-3">
+                <div class="bg-light rounded-3 p-3" *ngIf="trip.rating">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="text-dark fw-medium">Your Rating:</span>
                         <div class="text-warning">
                             <i class="bi bi-star-fill" *ngFor="let star of [1,2,3,4,5]"
-                                [ngClass]="{'text-warning': star <= trip.rating, 'text-muted opacity-25': star > trip.rating}"></i>
+                                [ngClass]="{'text-warning': star <= (trip.rating || 0), 'text-muted opacity-25': star > (trip.rating || 0)}"></i>
                         </div>
                     </div>
                     <p class="text-muted mb-0 fst-italic">"{{ trip.review }}"</p>
@@ -120,3 +145,8 @@
         </div>
     </div>
 </div>
+
+<!-- Rating Modal Component -->
+<app-rating-modal *ngIf="showRatingModal" [tourId]="selectedTourIdToRate!" [touristId]="touristId"
+    (close)="closeRatingModal()" (submitted)="onRatingSubmitted()">
+</app-rating-modal>

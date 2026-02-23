@@ -6,11 +6,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 import { environment } from '../../../../environments/environment';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ImageUploaderComponent],
+  imports: [CommonModule, FormsModule, ImageUploaderComponent, ConfirmModal],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
@@ -20,6 +21,14 @@ export class Profile implements OnInit {
   editFormData: any = {};
   selectedImages: File[] = [];
   enlargedImageUrl: string | null = null;
+
+  // Confirm Modal State
+  showConfirmModal = false;
+  confirmTitle = '';
+  confirmMessage = '';
+  confirmAction: () => void = () => { };
+  confirmText = 'Confirm';
+  confirmType: 'primary' | 'danger' | 'warning' | 'info' | 'success' = 'danger';
 
   constructor(
     private restaurantService: RestaurantService,
@@ -116,13 +125,24 @@ export class Profile implements OnInit {
   }
 
   onImageDeleted(imageId: number) {
-    if (confirm('Are you sure you want to delete this image?')) {
+    this.confirmTitle = 'Delete Image';
+    this.confirmMessage = 'Are you sure you want to delete this image?';
+    this.confirmText = 'Delete';
+    this.confirmType = 'danger';
+
+    this.confirmAction = () => {
       this.restaurantService.deleteRestaurantImage(imageId).subscribe({
         next: () => {
           this.toastService.show('Image deleted', 'success');
           this.loadProfile();
+          this.showConfirmModal = false;
+        },
+        error: () => {
+          this.toastService.show('Failed to delete image', 'error');
+          this.showConfirmModal = false;
         }
       });
-    }
+    };
+    this.showConfirmModal = true;
   }
 }

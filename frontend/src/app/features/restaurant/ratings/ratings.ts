@@ -9,9 +9,9 @@ interface Review {
     touristName: string;
     date: string;
     overallStars: number;
-    vehicleStars: number;
-    comfortStars: number;
-    behaviourStars: number;
+    accommodationStars: number;
+    serviceStars: number;
+    staffStars: number;
     comment: string;
 }
 
@@ -22,15 +22,15 @@ interface Review {
     templateUrl: './ratings.html',
     styleUrl: './ratings.css'
 })
-export class Ratings implements OnInit {
+export class RestaurantRatings implements OnInit {
 
     isLoading = true;
     error = '';
 
     overallRating = 0;
-    averageVehicle = 0;
-    averageComfort = 0;
-    averageBehaviour = 0;
+    averageAccommodation = 0;
+    averageService = 0;
+    averageStaff = 0;
     totalReviews = 0;
     reviews: Review[] = [];
 
@@ -57,24 +57,19 @@ export class Ratings implements OnInit {
 
     fetchRatings(userId: number) {
         this.isLoading = true;
-        this.http.get<any>(`${environment.apiUrl}/api/ratings/driver/${userId}`).subscribe({
+        this.http.get<any>(`${environment.apiUrl}/api/ratings/restaurant/${userId}`).subscribe({
             next: (data) => {
                 this.overallRating = data.averageOverall || 0;
-                this.averageVehicle = data.averageVehicle || 0;
-                this.averageComfort = data.averageComfort || 0;
-                this.averageBehaviour = data.averageBehaviour || 0;
+                this.averageAccommodation = data.averageAccommodation || 0;
+                this.averageService = data.averageService || 0;
+                this.averageStaff = data.averageStaff || 0;
                 this.totalReviews = data.totalReviews || 0;
-                this.reviews = (data.reviews || []).map((r: any) => ({
-                    ...r,
-                    vehicleStars: r.vehicleStars,
-                    comfortStars: r.comfortStars,
-                    behaviourStars: r.behaviourStars
-                }));
+                this.reviews = data.reviews || [];
                 this.computeBreakdown();
                 this.isLoading = false;
             },
             error: (err) => {
-                console.error('Failed to load driver ratings', err);
+                console.error('Failed to load restaurant ratings', err);
                 this.error = 'Failed to load ratings. Please try again.';
                 this.isLoading = false;
             }

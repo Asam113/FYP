@@ -18,11 +18,12 @@ interface Vehicle {
 
 import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
 import { VehicleService } from '../../../core/services/vehicle.service';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 @Component({
     selector: 'app-vehicles',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageUploaderComponent],
+    imports: [CommonModule, FormsModule, ImageUploaderComponent, ConfirmModal],
     templateUrl: './vehicles.html',
     styleUrl: './vehicles.css'
 })
@@ -40,6 +41,14 @@ export class Vehicles implements OnInit {
         capacity: undefined,
         status: 'Active'
     };
+
+    // Confirm Modal State
+    showConfirmModal = false;
+    confirmTitle = '';
+    confirmMessage = '';
+    confirmAction: () => void = () => { };
+    confirmText = 'Confirm';
+    confirmType: 'primary' | 'danger' | 'warning' | 'info' | 'success' = 'danger';
 
     constructor(
         private http: HttpClient,
@@ -142,19 +151,27 @@ export class Vehicles implements OnInit {
     deleteVehicle(id?: number): void {
         if (!id) return;
 
-        if (confirm('Are you sure you want to remove this vehicle?')) {
+        this.confirmTitle = 'Remove Vehicle';
+        this.confirmMessage = 'Are you sure you want to remove this vehicle?';
+        this.confirmText = 'Remove';
+        this.confirmType = 'danger';
+
+        this.confirmAction = () => {
             this.http.delete(`${environment.apiUrl}/api/vehicles/${id}`)
                 .subscribe({
                     next: () => {
                         this.toastService.show('Vehicle removed successfully', 'success');
                         this.loadVehicles();
+                        this.showConfirmModal = false;
                     },
                     error: (err) => {
                         console.error('Error deleting vehicle:', err);
                         this.toastService.show('Failed to remove vehicle', 'error');
+                        this.showConfirmModal = false;
                     }
                 });
-        }
+        };
+        this.showConfirmModal = true;
     }
 
     getVehicleIcon(type: string): string {

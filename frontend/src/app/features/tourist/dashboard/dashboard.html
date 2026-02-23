@@ -22,6 +22,12 @@
                 <i class="bi bi-ticket-perforated-fill me-2"></i>My Bookings
             </button>
         </li>
+        <li class="nav-item">
+            <button class="nav-link px-4 py-2 rounded-3 fw-medium" [class.active]="activeTab === 'history'"
+                (click)="setTab('history')">
+                <i class="bi bi-clock-history me-2"></i>Trip History
+            </button>
+        </li>
     </ul>
 
     <!-- Overview Content -->
@@ -179,12 +185,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr *ngIf="allBookings.length === 0">
+                            <tr *ngIf="activeBookings.length === 0">
                                 <td colspan="6" class="text-center py-5 text-muted">
-                                    No bookings found. Start exploring and book your first tour!
+                                    No tours booked yet. Start exploring and book your first tour!
                                 </td>
                             </tr>
-                            <tr *ngFor="let booking of allBookings">
+                            <tr *ngFor="let booking of activeBookings">
                                 <td class="px-4 py-3">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3">
@@ -219,6 +225,72 @@
                                     <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                         [routerLink]="['/tourist/tour-details', booking.tourId]">
                                         View Tour
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trip History Tab -->
+    <div *ngIf="activeTab === 'history'" class="fade-in">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold">My Trip History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4 py-3 border-0">Tour Name</th>
+                                <th class="py-3 border-0 text-center">Persons</th>
+                                <th class="py-3 border-0">Travel Date</th>
+                                <th class="py-3 border-0">Total Spent</th>
+                                <th class="py-3 border-0">Status</th>
+                                <th class="px-4 py-3 border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngIf="completedBookings.length === 0">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    No trip history found. Once you complete a tour, it will appear here!
+                                </td>
+                            </tr>
+                            <tr *ngFor="let trip of completedBookings">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-success bg-opacity-10 text-success p-2 rounded-3">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ trip.tourName }}</div>
+                                            <div class="text-muted small">{{ trip.location }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center py-3">
+                                    <span class="badge bg-light text-dark border">{{ trip.persons }}</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="small">{{ trip.startDate }}</div>
+                                </td>
+                                <td class="py-3 fw-bold text-success">
+                                    PKR {{ trip.totalAmount | number }}
+                                </td>
+                                <td class="py-3">
+                                    <span
+                                        class="badge bg-info-subtle text-info border-info-subtle rounded-pill px-3 py-2 fw-normal">
+                                        Completed
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-end">
+                                    <button class="btn btn-sm btn-outline-success rounded-pill px-3"
+                                        [routerLink]="['/tourist/tour-details', trip.tourId]">
+                                        View Memories
                                     </button>
                                 </td>
                             </tr>

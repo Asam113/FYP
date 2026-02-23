@@ -3,7 +3,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h2 class="fw-bold text-dark">Ratings & Reviews</h2>
-            <p class="text-muted">See what customers are saying about your service</p>
+            <p class="text-muted">See what customers are saying about your establishment</p>
         </div>
     </div>
 
@@ -23,10 +23,11 @@
         <div class="row g-4 mb-5">
             <!-- Overall Rating -->
             <div class="col-md-4">
-                <div class="card border-0 shadow-sm h-100 bg-warning-subtle-custom">
+                <div class="card border-0 shadow-sm h-100"
+                    style="background: linear-gradient(135deg, #f0fff4, #e8f5e9);">
                     <div class="card-body p-4 text-center d-flex flex-column justify-content-center align-items-center">
                         <div class="display-3 fw-bold text-dark mb-2">
-                            <i class="bi bi-star-fill text-warning fs-header"></i>
+                            <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
                             {{ overallRating > 0 ? overallRating.toFixed(1) : 'N/A' }}
                         </div>
                         <div class="mb-3">
@@ -67,19 +68,17 @@
                     <div class="card-body p-4">
                         <h5 class="fw-normal mb-4">Detailed Metrics</h5>
                         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <span class="text-muted"><i class="bi bi-car-front text-info me-2"></i>Vehicle
-                                Condition</span>
-                            <span class="fw-bold">{{ averageVehicle.toFixed(1) }}/5</span>
+                            <span class="text-muted"><i class="bi bi-house text-info me-2"></i>Accommodation</span>
+                            <span class="fw-bold">{{ averageAccommodation.toFixed(1) }}/5</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                            <span class="text-muted"><i class="bi bi-emoji-smile text-success me-2"></i>Ride
-                                Comfort</span>
-                            <span class="fw-bold">{{ averageComfort.toFixed(1) }}/5</span>
+                            <span class="text-muted"><i class="bi bi-cup-hot text-success me-2"></i>Food/Service</span>
+                            <span class="fw-bold">{{ averageService.toFixed(1) }}/5</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted"><i
-                                    class="bi bi-person-check text-warning me-2"></i>Behaviour</span>
-                            <span class="fw-bold">{{ averageBehaviour.toFixed(1) }}/5</span>
+                            <span class="text-muted"><i class="bi bi-person-badge text-warning me-2"></i>Staff
+                                Behaviour</span>
+                            <span class="fw-bold">{{ averageStaff.toFixed(1) }}/5</span>
                         </div>
                     </div>
                 </div>
@@ -97,7 +96,7 @@
         <div *ngIf="reviews.length === 0" class="text-center py-5 text-muted">
             <i class="bi bi-chat-square-text fs-1 mb-3 d-block opacity-50"></i>
             <h5>No reviews yet</h5>
-            <p>Complete more tours to start receiving tourist feedback!</p>
+            <p>Complete more service orders to start receiving tourist feedback!</p>
         </div>
 
         <!-- Reviews List -->
@@ -114,15 +113,15 @@
                             </div>
                             <small class="text-muted">{{ review.date | date:'mediumDate' }}</small>
                         </div>
-                        <div class="text-primary small mb-2">{{ review.tourName }}</div>
+                        <div class="text-primary small mb-2">Tour: {{ review.tourName }}</div>
                         <p class="text-muted mb-3">{{ review.comment || 'No written feedback provided.' }}</p>
                         <div class="d-flex gap-4">
-                            <small class="text-muted"><i class="bi bi-car-front text-info me-1"></i>Vehicle: {{
-                                review.vehicleStars }}/5</small>
-                            <small class="text-muted"><i class="bi bi-emoji-smile text-success me-1"></i>Comfort: {{
-                                review.comfortStars }}/5</small>
-                            <small class="text-muted"><i class="bi bi-person-check text-warning me-1"></i>Behaviour: {{
-                                review.behaviourStars }}/5</small>
+                            <small class="text-muted"><i class="bi bi-house text-info me-1"></i>Space: {{
+                                review.accommodationStars }}/5</small>
+                            <small class="text-muted"><i class="bi bi-cup-hot text-success me-1"></i>Quality: {{
+                                review.serviceStars }}/5</small>
+                            <small class="text-muted"><i class="bi bi-person-badge text-warning me-1"></i>Staff: {{
+                                review.staffStars }}/5</small>
                         </div>
                     </div>
                 </div>

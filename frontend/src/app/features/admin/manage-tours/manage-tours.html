@@ -615,9 +615,10 @@
     </div>
 
     <!-- Confirmation Modal -->
-    <app-confirmation-modal [isVisible]="showConfirmModal" [title]="confirmTitle" [message]="confirmMessage"
-        [confirmText]="confirmText" [cancelText]="cancelText" [type]="confirmType" (onConfirm)="onConfirmAction()"
-        (onCancel)="onCancelAction()">
-    </app-confirmation-modal>
+    <!-- Confirmation Modal -->
+    <app-confirm-modal *ngIf="showConfirmModal" [title]="confirmTitle" [message]="confirmMessage"
+        [confirmText]="confirmText" [cancelText]="cancelText" [confirmVariant]="confirmType" (confirm)="confirmAction()"
+        (cancel)="showConfirmModal = false">
+    </app-confirm-modal>
 
 </div>

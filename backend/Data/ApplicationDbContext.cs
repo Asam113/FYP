@@ -54,6 +54,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<Accommodation> Accommodations { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<Rating> Ratings { get; set; } // Added Ratings DbSet
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Document> Documents { get; set; }
     public virtual DbSet<Earning> Earnings { get; set; }
@@ -71,6 +72,13 @@ public class ApplicationDbContext : DbContext
             .HasDiscriminator<string>("OfferType")
             .HasValue<DriverOffer>("Driver")
             .HasValue<RestaurantOffer>("Restaurant");
+
+        // Configure Table Per Hierarchy (TPH) for Rating inheritance
+        modelBuilder.Entity<Rating>()
+            .HasDiscriminator<string>("RatingType")
+            .HasValue<TourRating>("Tour")
+            .HasValue<DriverRating>("Driver")
+            .HasValue<RestaurantRating>("Restaurant");
 
         // Set all foreign key relationships to Restrict to avoid cascade delete conflicts
         foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))

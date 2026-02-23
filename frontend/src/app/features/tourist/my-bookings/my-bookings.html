@@ -175,6 +175,6 @@
 
     <!-- Review Modal -->
     <app-review-modal *ngIf="showReviewModal && selectedTourId" [tourId]="selectedTourId" (close)="closeReviewModal()"
-        (submitted)="onReviewSubmitted()">
+        (submitted)="submitReview(selectedTourId)">
     </app-review-modal>
 </div>

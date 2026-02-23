@@ -30,4 +30,8 @@ export class DriverService {
     getDriverOffers(driverId: number): Observable<any[]> {
         return this.http.get<any[]>(`${environment.apiUrl}/api/offers/driver?driverId=${driverId}`);
     }
+
+    getDriverRatings(driverId: number): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/api/ratings/driver/${driverId}`);
+    }
 }

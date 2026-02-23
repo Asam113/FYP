@@ -24,9 +24,10 @@ export class Dashboard implements OnInit {
       newNotifications: 0
     };
 
-  activeTab: 'overview' | 'bookings' = 'overview';
+  activeTab: 'overview' | 'bookings' | 'history' = 'overview';
   recentBookings: any[] = [];
-  allBookings: any[] = [];
+  activeBookings: any[] = [];
+  completedBookings: any[] = [];
   upcomingTrips: any[] = [];
 
   constructor(
@@ -46,20 +47,34 @@ export class Dashboard implements OnInit {
     this.bookingService.getTouristBookings(touristId).subscribe({
       next: (bookings) => {
         console.log('Bookings loaded:', bookings);
-        this.allBookings = bookings.map(b => ({
+        const allMapped = bookings.map(b => ({
           id: b.bookingId,
           tourId: b.tourId,
-          tourName: b.tour.title,
-          location: b.tour.destination,
+          tourName: b.tour?.title || 'Unknown Tour',
+          location: b.tour?.destination || 'N/A',
           date: new Date(b.bookingDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-          startDate: new Date(b.tour.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+          startDate: b.tour?.startDate ? new Date(b.tour.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA',
           persons: b.numberOfPeople,
           totalAmount: b.totalAmount,
           status: b.status,
           tour: b.tour
         }));
 
-        this.recentBookings = this.allBookings.slice(0, 5);
+        const activeList = allMapped.filter(b => {
+          const status = b.status?.toLowerCase();
+          const tourStatus = b.tour?.status?.toLowerCase();
+          return status !== 'completed' && status !== 'cancelled' && tourStatus !== 'completed' && tourStatus !== 'cancelled';
+        });
+
+        const historyList = allMapped.filter(b => {
+          const status = b.status?.toLowerCase();
+          const tourStatus = b.tour?.status?.toLowerCase();
+          return status === 'completed' || status === 'cancelled' || tourStatus === 'completed' || tourStatus === 'cancelled';
+        });
+
+        this.recentBookings = activeList.slice(0, 5);
+        this.activeBookings = activeList;
+        this.completedBookings = historyList;
 
         // Filter for upcoming trips
         this.upcomingTrips = bookings
@@ -73,9 +88,17 @@ export class Dashboard implements OnInit {
           }));
 
         // Calculate stats
-        this.stats.activeBookings = bookings.filter(b => b.status === 'Confirmed').length;
+        this.stats.activeBookings = bookings.filter(b => {
+          const s = b.status?.toLowerCase();
+          const ts = b.tour?.status?.toLowerCase();
+          return s === 'confirmed' && ts !== 'completed' && ts !== 'cancelled';
+        }).length;
         this.stats.upcomingTrips = this.upcomingTrips.length;
-        this.stats.completedTrips = bookings.filter(b => b.status === 'Completed').length;
+        this.stats.completedTrips = bookings.filter(b => {
+          const s = b.status?.toLowerCase();
+          const ts = b.tour?.status?.toLowerCase();
+          return s === 'completed' || ts === 'completed';
+        }).length;
         this.stats.newNotifications = 0;
       },
       error: (err) => {
@@ -84,7 +107,7 @@ export class Dashboard implements OnInit {
     });
   }
 
-  setTab(tab: 'overview' | 'bookings'): void {
+  setTab(tab: 'overview' | 'bookings' | 'history'): void {
     this.activeTab = tab;
   }
 

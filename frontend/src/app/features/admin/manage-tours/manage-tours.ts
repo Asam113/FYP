@@ -1,12 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms'; // Added form module
 import { MenuSelectionModal } from '../../../shared/menu-selection-modal/menu-selection-modal';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { environment } from '../../../../environments/environment';
 
 // Backend API Interfaces
@@ -174,7 +175,7 @@ interface RoomCategory {
 @Component({
   selector: 'app-manage-tours',
   standalone: true,
-  imports: [CommonModule, FormsModule, MenuSelectionModal, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MenuSelectionModal, ConfirmationModalComponent, ConfirmModal],
   templateUrl: './manage-tours.html',
   styleUrls: ['./manage-tours.css']
 })
@@ -210,8 +211,8 @@ export class ManageTours implements OnInit {
   confirmMessage: string = '';
   confirmText: string = 'Confirm';
   cancelText: string = 'Cancel';
-  confirmType: 'danger' | 'warning' | 'info' = 'info';
-  private confirmAction: (() => void) | null = null;
+  confirmType: 'primary' | 'danger' | 'warning' | 'info' | 'success' = 'danger';
+  confirmAction: () => void = () => { };
 
   // Store raw API data
   private apiTours: ApiTour[] = [];
@@ -691,7 +692,7 @@ export class ManageTours implements OnInit {
 
   onCancelAction() {
     this.showConfirmModal = false;
-    this.confirmAction = null;
+    this.confirmAction = () => { };
   }
 
   canFinalizeTour(): boolean {
@@ -740,64 +741,73 @@ export class ManageTours implements OnInit {
   }
 
   startTour(tourId: number) {
-    if (!confirm('Are you sure you want to start this tour? This will notify all tourists.')) {
-      return;
-    }
+    this.confirmTitle = 'Start Tour';
+    this.confirmMessage = 'Are you sure you want to start this tour? This will notify all tourists.';
+    this.confirmText = 'Start Tour';
+    this.confirmType = 'primary';
 
-    this.http.post(`${environment.apiUrl}/api/tours/${tourId}/start`, {})
-      .subscribe({
-        next: () => {
-          this.toastService.show('Tour started successfully', 'success');
-          this.loadTours();
-          this.clearSelection();
-        },
-        error: (err) => {
-          console.error('Error starting tour:', err);
-          this.toastService.show(err.error?.message || 'Failed to start tour', 'error');
-        }
-      });
+    this.confirmAction = () => {
+      this.http.post(`${environment.apiUrl}/api/tours/${tourId}/start`, {})
+        .subscribe({
+          next: () => {
+            this.toastService.show('Tour started successfully', 'success');
+            this.loadTours();
+            this.clearSelection();
+          },
+          error: (err) => {
+            console.error('Error starting tour:', err);
+            this.toastService.show(err.error?.message || 'Failed to start tour', 'error');
+          }
+        });
+    };
+    this.showConfirmModal = true;
   }
 
   completeTour(tourId: number) {
-    if (!confirm('Are you sure you want to complete this tour? This will mark all bookings as completed.')) {
-      return;
-    }
+    this.confirmTitle = 'Complete Tour';
+    this.confirmMessage = 'Are you sure you want to complete this tour? This will mark all bookings as completed.';
+    this.confirmText = 'Complete Tour';
+    this.confirmType = 'success';
 
-    this.http.post(`${environment.apiUrl}/api/tours/${tourId}/complete`, {})
-      .subscribe({
-        next: () => {
-          this.toastService.show('Tour completed successfully', 'success');
-          this.loadTours();
-          this.clearSelection();
-        },
-        error: (err) => {
-          console.error('Error completing tour:', err);
-          this.toastService.show(err.error?.message || 'Failed to complete tour', 'error');
-        }
-      });
+    this.confirmAction = () => {
+      this.http.post(`${environment.apiUrl}/api/tours/${tourId}/complete`, {})
+        .subscribe({
+          next: () => {
+            this.toastService.show('Tour completed successfully', 'success');
+            this.loadTours();
+            this.clearSelection();
+          },
+          error: (err) => {
+            console.error('Error completing tour:', err);
+            this.toastService.show(err.error?.message || 'Failed to complete tour', 'error');
+          }
+        });
+    };
+    this.showConfirmModal = true;
   }
 
   publishTour(tourId: number) {
-    if (!confirm('Are you sure you want to publish this tour? It will become visible to tourists for browsing.')) {
-      return;
-    }
+    this.confirmTitle = 'Publish Tour';
+    this.confirmMessage = 'Are you sure you want to publish this tour? It will become visible to tourists for browsing.';
+    this.confirmText = 'Publish Tour';
+    this.confirmType = 'info';
 
-    this.http.post(`${environment.apiUrl}/api/tours/${tourId}/publish`, {})
-      .subscribe({
-        next: (response: any) => {
-          this.toastService.show('Tour published successfully!', 'success');
-          // Reload tours to reflect the change
-          this.loadTours();
-          // If the published tour was selected, update its local status
-          if (this.selectedTour && this.selectedTour.id === tourId) {
-            this.selectedTour.status = 'Published';
+    this.confirmAction = () => {
+      this.http.post(`${environment.apiUrl}/api/tours/${tourId}/publish`, {})
+        .subscribe({
+          next: (response: any) => {
+            this.toastService.show('Tour published successfully!', 'success');
+            // Reload tours to reflect the change
+            this.loadTours();
+            this.clearSelection(); // Deselect the tour so the start button isn't immediately shown
+          },
+          error: (err: any) => {
+            console.error('Publishing failed:', err);
+            this.toastService.show('Publishing failed: ' + (err.error?.message || 'Unknown error'), 'error');
           }
-        },
-        error: (err) => {
-          console.error('Publishing failed:', err);
-          this.toastService.show('Publishing failed: ' + (err.error?.message || 'Unknown error'), 'error');
-        }
-      });
+        });
+    };
+    this.showConfirmModal = true;
   }
 
   // Helper to sync local state after updates

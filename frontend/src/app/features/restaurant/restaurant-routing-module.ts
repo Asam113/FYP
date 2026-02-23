@@ -47,6 +47,10 @@ const routes: Routes = [
   {
     path: 'tour-requests',
     loadComponent: () => import('./tour-requests/tour-requests').then(m => m.TourRequests)
+  },
+  {
+    path: 'ratings',
+    loadComponent: () => import('./ratings/ratings').then(m => m.RestaurantRatings)
   }
 ];
 

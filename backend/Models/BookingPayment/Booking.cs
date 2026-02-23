@@ -41,9 +41,7 @@ public class Booking
     public string? CancellationReason { get; set; }
 
     // Navigation Properties
-    [JsonIgnore]
     public virtual Tour Tour { get; set; } = null!;
-    [JsonIgnore]
     public virtual Tourist Tourist { get; set; } = null!;
     public virtual Payment? Payment { get; set; }
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

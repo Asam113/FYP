@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { BookingService } from '../../../core/services/booking.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { ReviewModal } from '../../../shared/components/review-modal/review-modal';
 
 interface DisplayBooking {
@@ -38,7 +39,8 @@ export class MyBookings implements OnInit {
 
   constructor(
     private bookingService: BookingService,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -51,20 +53,26 @@ export class MyBookings implements OnInit {
   loadBookings(touristId: number): void {
     this.bookingService.getTouristBookings(touristId).subscribe({
       next: (data) => {
-        this.bookings = data.map(b => ({
-          id: b.bookingId,
-          tourId: b.tourId,
-          title: b.tour.title,
-          location: b.tour.destination,
-          status: b.status,
-          bookingDate: new Date(b.bookingDate).toLocaleDateString(),
-          startDate: b.tour.startDate ? new Date(b.tour.startDate).toLocaleDateString() : 'TBA',
-          endDate: b.tour.endDate ? new Date(b.tour.endDate).toLocaleDateString() : 'TBA',
-          duration: `${b.tour.durationDays} Days`,
-          totalCost: b.totalAmount,
-          persons: b.numberOfPeople,
-          tour: b.tour
-        }));
+        this.bookings = data
+          .filter(b => {
+            const s = b.status?.toLowerCase();
+            const ts = b.tour?.status?.toLowerCase();
+            return s !== 'completed' && s !== 'cancelled' && ts !== 'completed' && ts !== 'cancelled';
+          })
+          .map(b => ({
+            id: b.bookingId,
+            tourId: b.tourId,
+            title: b.tour?.title || 'Unknown Tour',
+            location: b.tour?.destination || 'N/A',
+            status: b.status,
+            bookingDate: new Date(b.bookingDate).toLocaleDateString(),
+            startDate: b.tour?.startDate ? new Date(b.tour.startDate).toLocaleDateString() : 'TBA',
+            endDate: b.tour?.endDate ? new Date(b.tour.endDate).toLocaleDateString() : 'TBA',
+            duration: b.tour ? `${b.tour.durationDays} Days` : 'N/A',
+            totalCost: b.totalAmount,
+            persons: b.numberOfPeople,
+            tour: b.tour
+          }));
         this.isLoading = false;
       },
       error: (err) => {
@@ -84,8 +92,10 @@ export class MyBookings implements OnInit {
     this.selectedTourId = null;
   }
 
-  onReviewSubmitted() {
-    alert('Thank you for your review!');
+  submitReview(bookingId: number) {
+    // In a real app, this would open a modal or navigate to a review form
+    // For now, we'll just mock it
+    this.toastService.show('Thank you for your review!', 'success');
     // Optionally refresh bookings or mark this tour as reviewed locally to hide the button
   }
 

@@ -57,6 +57,14 @@ export class RestaurantService {
         return this.http.post(`${this.apiUrl}/${restaurantId}/room-categories/${categoryId}/images`, formData);
     }
 
+    getRestaurantOffers(restaurantId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/${restaurantId}/offers`);
+    }
+
+    getRestaurantRatings(userId: number): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/api/ratings/restaurant/${userId}`);
+    }
+
     deleteRoomImage(restaurantId: number, imageId: number): Observable<any> {
         return this.http.delete(`${this.apiUrl}/${restaurantId}/room-categories/images/${imageId}`);
     }

@@ -20,6 +20,18 @@ interface ActivityItem {
   badgeStatus: 'Pending' | 'Approved' | 'Confirmed';
 }
 
+interface Review {
+  ratingId: number;
+  tourName: string;
+  touristName: string;
+  date: string;
+  overallStars: number;
+  accommodationStars: number;
+  serviceStars: number;
+  staffStars: number;
+  comment: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -28,10 +40,21 @@ interface ActivityItem {
   styleUrl: './dashboard.css'
 })
 export class Dashboard implements OnInit {
+  activeTab: 'overview' | 'ratings' = 'overview';
   hasMenuItems = true; // Assume true initially
   hasRooms = true; // Assume true initially
   businessType: string = '';
   restaurantId: number = 0;
+  userId: number = 0;
+
+  // Rating Data
+  averageOverall: number = 0;
+  averageAccommodation: number = 0;
+  averageService: number = 0;
+  averageStaff: number = 0;
+  totalReviews: number = 0;
+  reviews: Review[] = [];
+  isLoadingRatings: boolean = false;
 
   constructor(private http: HttpClient) { }
 
@@ -41,6 +64,7 @@ export class Dashboard implements OnInit {
       const user = JSON.parse(userStr);
       this.businessType = user.businessType || '';
       this.restaurantId = user.roleSpecificId || 0;
+      this.userId = user.id || 0; // Fix: use user.id instead of userId
     }
 
     if (this.showMenuAlert()) {
@@ -48,6 +72,10 @@ export class Dashboard implements OnInit {
     }
     if (this.showRoomsAlert()) {
       this.checkRoomCategories();
+    }
+
+    if (this.userId > 0) {
+      this.fetchRatings();
     }
   }
 
@@ -82,6 +110,33 @@ export class Dashboard implements OnInit {
 
   showRoomsAlert(): boolean {
     return this.businessType === 'GuestHouse' || this.businessType === 'Guest House' || this.businessType === 'Hotel';
+  }
+
+  setTab(tab: 'overview' | 'ratings') {
+    this.activeTab = tab;
+  }
+
+  fetchRatings() {
+    this.isLoadingRatings = true;
+    this.http.get<any>(`${environment.apiUrl}/api/ratings/restaurant/${this.userId}`).subscribe({
+      next: (data) => {
+        this.averageOverall = data.averageOverall;
+        this.averageAccommodation = data.averageAccommodation;
+        this.averageService = data.averageService;
+        this.averageStaff = data.averageStaff;
+        this.totalReviews = data.totalReviews;
+        this.reviews = data.reviews;
+        this.isLoadingRatings = false;
+      },
+      error: (err) => {
+        console.error('Failed to load restaurant ratings', err);
+        this.isLoadingRatings = false;
+      }
+    });
+  }
+
+  getStarsArray(rating: number): number[] {
+    return Array(5).fill(0).map((x, i) => i + 1);
   }
 
   stats: StatCard[] = [
