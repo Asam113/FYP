@@ -178,7 +178,7 @@ public class AuthService : IAuthService
 
             user = new User
             {
-                Name = request.Name,
+                Name = request.Name ?? "",
                 Email = request.Email,
                 PasswordHash = passwordHash,
                 PhoneNumber = request.PhoneNumber,
@@ -438,7 +438,7 @@ public class AuthService : IAuthService
             if (!user.IsVerified) throw new Exception("Please verify your email first.");
             
             // Update personal data
-            user.Name = request.Name;
+            user.Name = request.Name ?? "";
             user.PhoneNumber = request.PhoneNumber;
 
             Console.WriteLine($"[SignupRestaurant] User found: {user.Email}, Id: {user.Id}");
@@ -817,5 +817,67 @@ public class AuthService : IAuthService
 
         // Send OTP Email
         await _emailService.SendEmailAsync(user.Email, "Verify your account", $"Your new OTP code is: <b>{otp}</b>. It expires in 10 minutes.");
+    }
+
+    public async Task UpdatePasswordAsync(int userId, UpdatePasswordDto request)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            throw new Exception("User not found");
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            throw new Exception("Incorrect current password.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task ForgotPasswordAsync(string email)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+            throw new Exception("User not found"); 
+
+        // Generate 6 digit OTP
+        var otp = new Random().Next(100000, 999999).ToString();
+
+        user.OtpCode = otp;
+        user.OtpExpiry = DateTime.UtcNow.AddMinutes(10);
+        
+        await _context.SaveChangesAsync();
+
+        // Send OTP Email
+        await _emailService.SendEmailAsync(user.Email, "Reset Your Password", $"Your OTP code for password reset is: <b>{otp}</b>. It expires in 10 minutes.");
+    }
+
+    public async Task<bool> VerifyPasswordResetOtpAsync(VerifyOtpDto request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null) throw new Exception("User not found");
+
+        if (user.OtpCode != request.OtpCode) throw new Exception("Invalid OTP");
+
+        if (user.OtpExpiry < DateTime.UtcNow) throw new Exception("OTP expired");
+
+        return true;
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordDto request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null) throw new Exception("User not found");
+
+        if (user.OtpCode != request.OtpCode) throw new Exception("Invalid OTP");
+
+        if (user.OtpExpiry < DateTime.UtcNow) throw new Exception("OTP expired");
+
+        // Hash new password
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        
+        // Clear OTP
+        user.OtpCode = null;
+        user.OtpExpiry = null;
+        
+        await _context.SaveChangesAsync();
     }
 }

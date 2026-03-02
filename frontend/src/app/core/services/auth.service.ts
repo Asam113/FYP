@@ -102,11 +102,36 @@ export class AuthService {
         return user ? JSON.parse(user) : null;
     }
 
+    getUserId(): number | null {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.id;
+        }
+        return null;
+    }
+
+    updatePassword(data: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/update-password`, data);
+    }
+
     isLoggedIn(): boolean {
         return !!this.getToken();
     }
 
     resendOtp(email: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/resend-otp`, { email });
+    }
+
+    forgotPassword(email: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+    }
+
+    verifyPasswordResetOtp(email: string, otpCode: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/verify-password-reset-otp`, { email, otpCode });
+    }
+
+    resetPassword(data: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/reset-password`, data);
     }
 }

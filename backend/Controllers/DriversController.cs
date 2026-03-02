@@ -38,4 +38,27 @@ public class DriversController : ControllerBase
         if (!success) return NotFound(new { message = "Driver not found" });
         return Ok(new { message = $"Driver status updated to {request.Status}" });
     }
+
+    [HttpGet("{id}/dashboard-stats")]
+    public async Task<IActionResult> GetDashboardStats(int id)
+    {
+        var stats = await _driverService.GetDashboardStatsAsync(id);
+        if (stats == null) return NotFound(new { message = "Driver not found" });
+        return Ok(stats);
+    }
+
+    [HttpPost("{id}/onboarding-link")]
+    [Authorize]
+    public async Task<IActionResult> GetOnboardingLink(int id, [FromBody] OnboardingRequestDto request)
+    {
+        try
+        {
+            var url = await _driverService.GetStripeOnboardingLinkAsync(id, request.ReturnUrl, request.RefreshUrl);
+            return Ok(new { url });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

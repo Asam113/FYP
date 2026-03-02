@@ -46,6 +46,11 @@ public class Restaurant
     [MaxLength(20)]
     public string? PostalCode { get; set; }
 
+    [MaxLength(100)]
+    public string? StripeAccountId { get; set; }
+
+    public bool PayoutsEnabled { get; set; } = false;
+
     // Navigation Properties
     public virtual User User { get; set; } = null!;
     public virtual ICollection<Menu> Menus { get; set; } = new List<Menu>();

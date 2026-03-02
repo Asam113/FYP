@@ -6,6 +6,7 @@ public class BookedToursResultDto
 {
     public List<BookedTourDto> ConfirmedTours { get; set; } = new();
     public List<BookedTourDto> PendingTours { get; set; } = new();
+    public List<BookedTourDto> ReadyTours { get; set; } = new();
 }
 
 public class BookedTourDto

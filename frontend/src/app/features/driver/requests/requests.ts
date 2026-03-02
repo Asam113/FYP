@@ -50,8 +50,16 @@ export class Requests implements OnInit {
 
     this.loading = true;
     this.driverService.getDriverOffers(driverId).subscribe({
-      next: (offers: any[]) => {
-        this.requests = offers.map(offer => {
+      next: (response: any) => {
+        const offers = Array.isArray(response) ? response : (response?.data || []);
+
+        if (offers.length === 0) {
+          this.requests = [];
+          this.loading = false;
+          return;
+        }
+
+        this.requests = offers.map((offer: any) => {
           const tour = offer.tour;
           const statusMap: { [key: string]: { label: string, class: string, admin: string } } = {
             'pending': { label: 'Pending', class: 'bg-warning-subtle text-warning', admin: 'Awaiting admin approval' },
@@ -60,15 +68,15 @@ export class Requests implements OnInit {
             'rejected': { label: 'Rejected', class: 'bg-danger-subtle text-danger', admin: 'Rejected by admin' }
           };
 
-          const s = statusMap[offer.status.toLowerCase()] || { label: offer.status, class: 'bg-secondary-subtle text-secondary', admin: 'Status Unknown' };
+          const s = statusMap[(offer.status || '').toString().toLowerCase()] || { label: offer.status, class: 'bg-secondary-subtle text-secondary', admin: 'Status Unknown' };
 
           return {
             id: offer.offerId,
-            title: tour.title,
-            route: `${tour.departureLocation} → ${tour.destination}`,
-            duration: `${(new Date(tour.endDate).getTime() - new Date(tour.startDate).getTime()) / (1000 * 3600 * 24) + 1} Days`,
-            date: new Date(tour.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            appliedDate: new Date(offer.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            title: tour?.title || 'Unknown Tour',
+            route: `${tour?.departureLocation || ''} → ${tour?.destination || ''}`,
+            duration: tour ? `${(new Date(tour.endDate).getTime() - new Date(tour.startDate).getTime()) / (1000 * 3600 * 24) + 1} Days` : 'N/A',
+            date: tour ? new Date(tour.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A',
+            appliedDate: new Date(offer.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             price: offer.transportationFare,
             status: s.label,
             statusClass: s.class,
@@ -79,7 +87,13 @@ export class Requests implements OnInit {
       },
       error: (err) => {
         console.error('Error loading driver offers:', err);
-        this.error = 'Failed to load requests. Please try again later.';
+        // If 404, just show empty list gracefully
+        if (err.status === 404) {
+          this.requests = [];
+          this.error = null;
+        } else {
+          this.error = 'Failed to load requests. Please try again later.';
+        }
         this.loading = false;
       }
     });

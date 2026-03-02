@@ -49,7 +49,7 @@ public class DriverOffersController : ControllerBase
         // Validate vehicle exists
         var vehicle = await _context.Vehicles
             .Include(v => v.Driver)
-                .ThenInclude(d => d.User)
+                .ThenInclude(d => d!.User)
             .FirstOrDefaultAsync(v => v.VehicleId == dto.VehicleId);
 
         if (vehicle == null)
@@ -90,7 +90,7 @@ public class DriverOffersController : ControllerBase
             await _notificationService.CreateNotificationAsync(
                 admin.Id,
                 "New Driver Offer! 🚛",
-                $"Driver {vehicle.Driver.User.Name} submitted an offer for tour '{tour.Title}'",
+                $"Driver {vehicle.Driver?.User?.Name ?? "Unknown"} submitted an offer for tour '{tour.Title}'",
                 "NewOffer",
                 $"/admin/manage-tours"
             );
@@ -132,6 +132,9 @@ public class DriverOffersController : ControllerBase
             .Include(o => o.Tour)
             .Include(o => o.Vehicle)
                 .ThenInclude(v => v.Driver)
+            .Where(o => o.Tour!.Status == TourStatus.Published || 
+                        o.Tour!.Status == TourStatus.Finalized || 
+                        o.Tour!.Status == TourStatus.Ready)
             .AsQueryable();
 
         if (driverId.HasValue)
@@ -172,7 +175,7 @@ public class DriverOffersController : ControllerBase
     {
         var driverOffers = await _context.DriverOffers
             .Include(o => o.Tour)
-                .ThenInclude(t => t.ServiceRequirements)
+                .ThenInclude(t => t!.ServiceRequirements)
             .Include(o => o.Vehicle)
             .Where(o => o.DriverId == driverId && 
                        (o.Status == OfferStatus.Accepted || o.Status == OfferStatus.Confirmed))
@@ -183,28 +186,47 @@ public class DriverOffersController : ControllerBase
         foreach (var offer in driverOffers)
         {
             var tour = offer.Tour;
-            var isConfirmed = tour.Status == TourStatus.Finalized && tour.CurrentBookings >= tour.MaxCapacity;
+            if (tour == null) continue;
+            // Never show Completed or Cancelled in Booked Tours
+            if (tour.Status == TourStatus.Completed || tour.Status == TourStatus.Cancelled || tour.Status == TourStatus.InProgress) 
+                continue;
+
+            string statusText = "Pending Completion";
+            string statusClass = "warning";
+
+            if (tour.Status == TourStatus.Finalized)
+            {
+                statusText = "Confirmed";
+                statusClass = "success";
+            }
+            else if (tour.Status == TourStatus.Ready)
+            {
+                statusText = "Ready to start";
+                statusClass = "primary";
+            }
 
             var dto = new BookedTourDto
             {
                 Id = tour.TourId,
                 Title = tour.Title,
-                Status = isConfirmed ? "Confirmed" : "Pending Completion",
+                Status = statusText,
                 Route = $"{tour.DepartureLocation} → {tour.Destination}",
                 Date = tour.StartDate.ToString("MMM dd, yyyy"),
                 Duration = $"{(tour.EndDate.Date - tour.StartDate.Date).Days + 1} Days",
                 Participants = tour.CurrentBookings,
                 Price = $"PKR {offer.TransportationFare:N0}",
-                RequirementsStatus = isConfirmed 
-                    ? "All requirements completed • Tour finalized" 
+                RequirementsStatus = tour.Status == TourStatus.Finalized || tour.Status == TourStatus.Ready
+                    ? $"Tour {tour.Status.ToString().ToLower()}"
                     : GetPendingStatus(tour, offer),
-                RequirementsStatusClass = isConfirmed ? "success" : "warning"
+                RequirementsStatusClass = statusClass
             };
 
-            if (isConfirmed)
+            if (tour.Status == TourStatus.Finalized)
                 result.ConfirmedTours.Add(dto);
+            else if (tour.Status == TourStatus.Ready)
+                result.ReadyTours.Add(dto);
             else
-                result.PendingTours.Add(dto);
+                result.PendingTours.Add(dto); // Any other state like Published goes to pending
         }
 
         return Ok(result);
@@ -221,5 +243,35 @@ public class DriverOffersController : ControllerBase
         }
         
         return $"Tour finalized • Booking in progress ({tour.CurrentBookings}/{tour.MaxCapacity})";
+    }
+
+    // GET: api/offers/driver/trip-history/{driverId}
+    [HttpGet("trip-history/{driverId}")]
+    public async Task<ActionResult<IEnumerable<object>>> GetTripHistory(int driverId)
+    {
+        var driverOffers = await _context.DriverOffers
+            .Include(o => o.Tour)
+            .Include(o => o.Vehicle)
+            .Where(o => o.DriverId == driverId && 
+                       (o.Status == OfferStatus.Accepted || o.Status == OfferStatus.Confirmed) &&
+                       o.Tour!.Status == TourStatus.Completed)
+            .OrderByDescending(o => o.Tour!.EndDate)
+            .ToListAsync();
+
+        var history = driverOffers.Where(o => o.Tour != null).Select(offer => new
+        {
+            offer.Tour!.TourId,
+            offer.Tour!.Title,
+            Status = "Completed",
+            Route = $"{offer.Tour!.DepartureLocation} → {offer.Tour!.Destination}",
+            Date = offer.Tour!.StartDate.ToString("MMM dd, yyyy"),
+            Duration = $"{(offer.Tour!.EndDate.Date - offer.Tour!.StartDate.Date).Days + 1} Days",
+            Price = offer.TransportationFare,
+            // rating logic could be expanded here if there's a specific TourRating for strictly this driver
+            rating = 5,
+            feedback = "Excellent service!"
+        });
+
+        return Ok(history);
     }
 }

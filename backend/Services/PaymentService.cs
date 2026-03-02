@@ -8,10 +8,12 @@ namespace backend.Services;
 public class PaymentService : IPaymentService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IStripeService _stripeService;
 
-    public PaymentService(ApplicationDbContext context)
+    public PaymentService(ApplicationDbContext context, IStripeService stripeService)
     {
         _context = context;
+        _stripeService = stripeService;
     }
 
     public async Task<bool> ProcessTourEarningsAsync(int tourId)
@@ -92,5 +94,95 @@ public class PaymentService : IPaymentService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<bool> ProcessRestaurantPayoutAsync(int assignmentId)
+    {
+        var assignment = await _context.RestaurantAssignments
+            .Include(a => a.Restaurant)
+            .Include(a => a.Tour)
+            .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
+
+        if (assignment == null || string.IsNullOrEmpty(assignment.Restaurant.StripeAccountId))
+            return false;
+
+        // Create Earning record
+        var earning = new Earning
+        {
+            TourId = assignment.TourId,
+            RestaurantId = assignment.RestaurantId,
+            Amount = assignment.FinalPrice,
+            Type = "RestaurantPayout",
+            Status = "Processing",
+            EarnedAt = DateTime.UtcNow
+        };
+        _context.Earnings.Add(earning);
+        await _context.SaveChangesAsync();
+
+        // Trigger Stripe Transfer
+        var success = await _stripeService.TransferToConnectedAccountAsync(
+            assignment.Restaurant.StripeAccountId,
+            assignment.FinalPrice,
+            $"Payout for Tour: {assignment.Tour.Title} - Order Served");
+
+        if (success)
+        {
+            earning.Status = "Paid";
+            await _context.SaveChangesAsync();
+        }
+
+        return success;
+    }
+
+    public async Task<bool> ProcessDriverPayoutsAsync(int tourId)
+    {
+        var tour = await _context.Tours
+            .Include(t => t.DriverOffers)
+                .ThenInclude(o => o.Driver)
+            .FirstOrDefaultAsync(t => t.TourId == tourId);
+
+        if (tour == null) return false;
+
+        bool allSuccess = true;
+        foreach (var offer in tour.DriverOffers.Where(o => o.Status == OfferStatus.Confirmed))
+        {
+            if (string.IsNullOrEmpty(offer.Driver.StripeAccountId))
+            {
+                allSuccess = false;
+                continue;
+            }
+
+            // Create Earning record
+            var earning = new Earning
+            {
+                TourId = tourId,
+                DriverId = offer.DriverId,
+                Amount = offer.OfferedAmount,
+                Type = "DriverPayout",
+                Status = "Processing",
+                EarnedAt = DateTime.UtcNow
+            };
+            _context.Earnings.Add(earning);
+            await _context.SaveChangesAsync();
+
+            // Trigger Stripe Transfer
+            var success = await _stripeService.TransferToConnectedAccountAsync(
+                offer.Driver.StripeAccountId!,
+                offer.OfferedAmount,
+                $"Payout for Tour: {tour.Title} - Tour Completed");
+
+            if (success)
+            {
+                earning.Status = "Paid";
+                offer.Driver.TotalEarnings += offer.OfferedAmount;
+            }
+            else
+            {
+                allSuccess = false;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return allSuccess;
     }
 }

@@ -19,7 +19,8 @@ const routes: Routes = [
   { path: 'trip-history', loadComponent: () => import('./trip-history/trip-history').then(m => m.TripHistory) },
   { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) },
   { path: 'settings', loadComponent: () => import('./settings/settings').then(m => m.Settings) },
-  { path: 'profile', component: Profile }
+  { path: 'profile', component: Profile },
+  { path: 'booking-success', loadComponent: () => import('./booking-success/booking-success').then(m => m.BookingSuccess) }
 ];
 
 @NgModule({

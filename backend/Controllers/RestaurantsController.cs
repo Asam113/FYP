@@ -8,6 +8,7 @@ using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using backend.Models.DTOs;
 
 namespace backend.Controllers;
 
@@ -17,11 +18,41 @@ public class RestaurantsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly IImageService _imageService;
+    private readonly IStripeService _stripeService;
 
-    public RestaurantsController(ApplicationDbContext context, IImageService imageService)
+    public RestaurantsController(ApplicationDbContext context, IImageService imageService, IStripeService stripeService)
     {
         _context = context;
         _imageService = imageService;
+        _stripeService = stripeService;
+    }
+
+    [HttpPost("{id}/onboarding-link")]
+    [Authorize]
+    public async Task<IActionResult> GetOnboardingLink(int id, [FromBody] OnboardingRequestDto request)
+    {
+        var restaurant = await _context.Restaurants.Include(r => r.User).FirstOrDefaultAsync(r => r.RestaurantId == id);
+        if (restaurant == null) return NotFound("Restaurant not found");
+
+        try
+        {
+            if (string.IsNullOrEmpty(restaurant.StripeAccountId))
+            {
+                var accountId = await _stripeService.CreateConnectedAccountAsync(
+                    restaurant.User.Email, 
+                    restaurant.RestaurantName, 
+                    "Restaurant");
+                restaurant.StripeAccountId = accountId;
+                await _context.SaveChangesAsync();
+            }
+
+            var url = await _stripeService.CreateOnboardingLinkAsync(restaurant.StripeAccountId, request.ReturnUrl, request.RefreshUrl);
+            return Ok(new { url });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     // GET: api/restaurants/5
@@ -39,6 +70,23 @@ public class RestaurantsController : ControllerBase
         }
 
         return Ok(restaurant);
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Restaurant,Admin")]
+    public async Task<IActionResult> UpdateRestaurant(int id, [FromBody] UpdateRestaurantProfileDto dto)
+    {
+        var restaurant = await _context.Restaurants.FindAsync(id);
+        if (restaurant == null) return NotFound("Restaurant not found");
+
+        // Update fields
+        restaurant.RestaurantName = dto.RestaurantName;
+        restaurant.BusinessType = dto.BusinessType;
+        restaurant.OwnerName = dto.OwnerName;
+        restaurant.Address = dto.Address;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Profile updated successfully", restaurant });
     }
 
     [HttpPost("{id}/images")]

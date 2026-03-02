@@ -161,9 +161,18 @@
                                     <i class="bi bi-star-fill me-2"></i>Rate & Review
                                 </button>
 
-                                <button *ngIf="booking.status !== 'Completed'"
-                                    class="btn btn-primary px-4 rounded-pill">
-                                    <i class="bi bi-chat-dots me-2"></i>Contact Support
+                                <!-- Pay Now for Pending -->
+                                <button *ngIf="booking.status === 'Pending'" class="btn btn-success px-4 rounded-pill"
+                                    (click)="payNow(booking.id)" [disabled]="isPayingId === booking.id">
+                                    <span *ngIf="isPayingId === booking.id"
+                                        class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <i *ngIf="isPayingId !== booking.id" class="bi bi-credit-card me-2"></i>
+                                    {{ isPayingId === booking.id ? 'Redirecting...' : 'Pay Now' }}
+                                </button>
+
+                                <button *ngIf="booking.status === 'Confirmed'"
+                                    class="btn btn-outline-secondary px-4 rounded-pill" disabled>
+                                    <i class="bi bi-check-circle me-2"></i>Payment Received
                                 </button>
                             </div>
                         </div>

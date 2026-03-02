@@ -40,6 +40,12 @@ public class Booking
     [MaxLength(500)]
     public string? CancellationReason { get; set; }
 
+    [MaxLength(200)]
+    public string? StripeSessionId { get; set; }
+
+    [MaxLength(200)]
+    public string? PaymentIntentId { get; set; }
+
     // Navigation Properties
     public virtual Tour Tour { get; set; } = null!;
     public virtual Tourist Tourist { get; set; } = null!;

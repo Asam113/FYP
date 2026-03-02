@@ -13,12 +13,13 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class BookedTours implements OnInit {
 
-    activeTab: 'confirmed' | 'pending' = 'confirmed';
+    activeTab: 'confirmed' | 'pending' | 'ready' = 'confirmed';
     loading: boolean = false;
     error: string = '';
 
     confirmedTours: any[] = [];
     pendingTours: any[] = [];
+    readyTours: any[] = [];
 
     constructor(
         private driverService: DriverService,
@@ -39,8 +40,9 @@ export class BookedTours implements OnInit {
         this.loading = true;
         this.driverService.getBookedTours(user.roleSpecificId).subscribe({
             next: (data) => {
-                this.confirmedTours = data.confirmedTours;
-                this.pendingTours = data.pendingTours;
+                this.confirmedTours = data.confirmedTours || [];
+                this.pendingTours = data.pendingTours || [];
+                this.readyTours = data.readyTours || [];
                 this.loading = false;
             },
             error: (err) => {
@@ -51,7 +53,7 @@ export class BookedTours implements OnInit {
         });
     }
 
-    setActiveTab(tab: 'confirmed' | 'pending') {
+    setActiveTab(tab: 'confirmed' | 'pending' | 'ready') {
         this.activeTab = tab;
     }
 }

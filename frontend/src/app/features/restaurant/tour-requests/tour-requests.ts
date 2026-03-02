@@ -6,6 +6,34 @@ import { HttpClient } from '@angular/common/http';
 import { ToastService } from '../../../core/services/toast.service';
 import { environment } from '../../../../environments/environment';
 
+// Raw API tour shape (from /api/tours)
+interface ApiTour {
+    tourId: number;
+    title: string;
+    destination: string;
+    departureLocation: string;
+    startDate: string;
+    endDate: string;
+    durationDays: number;
+    maxCapacity: number;
+    pricePerHead: number;
+    status: string;
+    serviceRequirements: ApiServiceRequirement[];
+}
+
+interface ApiServiceRequirement {
+    requirementId: number;
+    type: string;
+    location: string;
+    dateNeeded: string;
+    time?: string;
+    stayDurationDays?: number;
+    estimatedPeople: number;
+    estimatedBudget?: number;
+    status: string;
+}
+
+// Display shape
 interface Tour {
     tourId: number;
     title: string;
@@ -29,14 +57,6 @@ interface ServiceRequirement {
     estimatedPeople: number;
     estimatedBudget?: number;
     status: string;
-    tour?: {
-        tourId: number;
-        title: string;
-        startDate: string;
-        endDate: string;
-        destination: string;
-        durationDays: number;
-    };
 }
 
 @Component({
@@ -134,71 +154,79 @@ export class TourRequests implements OnInit {
     }
 
     loadTourRequirements() {
-        const params = this.filterStatus !== 'All' ? `?status=${this.filterStatus}` : '';
-
-        this.http.get<ServiceRequirement[]>(`${environment.apiUrl}/api/servicerequirements${params}`).subscribe({
-            next: (data) => {
-                this.groupRequirementsByTour(data);
+        this.isLoading = true;
+        // Mirror the driver Find Tours approach: fetch all tours and filter locally
+        this.http.get<ApiTour[]>(`${environment.apiUrl}/api/tours`).subscribe({
+            next: (apiTours) => {
+                // Filter for intermediate tours only (same as driver Find Tours logic)
+                // Include Draft and Published tours - exclude Finalized, InProgress, Completed, Cancelled
+                const intermediateTours = apiTours.filter(t =>
+                    t.status === 'Draft' || t.status === 'Published'
+                );
+                this.buildToursFromApiData(intermediateTours);
                 this.isLoading = false;
             },
             error: (err) => {
-                console.error('Error loading requirements:', err);
+                console.error('Error loading tour requirements:', err);
                 this.isLoading = false;
             }
         });
     }
 
-    groupRequirementsByTour(requirements: ServiceRequirement[]) {
-        const tourMap = new Map<number, Tour>();
+    buildToursFromApiData(apiTours: ApiTour[]) {
+        const result: Tour[] = [];
 
-        requirements.forEach(req => {
-            if (req.tour) {
-                // Filter requirements based on business type
-                const shouldInclude = this.shouldIncludeRequirement(req.type);
-                if (!shouldInclude) {
-                    return; // Skip this requirement
-                }
+        for (const apiTour of apiTours) {
+            const requirements = (apiTour.serviceRequirements || []);
+            // Filter requirements based on business type
+            const matchingReqs = requirements.filter(req => this.shouldIncludeRequirement(req.type));
 
-                if (!tourMap.has(req.tour.tourId)) {
-                    tourMap.set(req.tour.tourId, {
-                        tourId: req.tour.tourId,
-                        title: req.tour.title,
-                        destination: req.tour.destination,
-                        startDate: req.tour.startDate,
-                        endDate: req.tour.endDate,
-                        durationDays: req.tour.durationDays,
-                        mealRequirementsCount: 0,
-                        accommodationRequirementsCount: 0,
-                        requirements: []
-                    });
-                }
+            if (matchingReqs.length === 0) continue;
 
-                const tour = tourMap.get(req.tour.tourId)!;
-                tour.requirements.push(req);
+            const displayReqs: ServiceRequirement[] = matchingReqs.map(req => ({
+                requirementId: req.requirementId,
+                type: req.type,
+                location: req.location,
+                dateNeeded: req.dateNeeded,
+                time: req.time,
+                stayDurationDays: req.stayDurationDays,
+                estimatedPeople: req.estimatedPeople,
+                estimatedBudget: req.estimatedBudget,
+                status: req.status
+            }));
 
-                if (req.type === 'Meal') {
-                    tour.mealRequirementsCount++;
-                } else if (req.type === 'Accommodation') {
-                    tour.accommodationRequirementsCount++;
-                }
-            }
-        });
+            result.push({
+                tourId: apiTour.tourId,
+                title: apiTour.title,
+                destination: apiTour.destination,
+                startDate: apiTour.startDate,
+                endDate: apiTour.endDate,
+                durationDays: apiTour.durationDays || 0,
+                mealRequirementsCount: displayReqs.filter(r => r.type === 'Meal').length,
+                accommodationRequirementsCount: displayReqs.filter(r => r.type === 'Accommodation').length,
+                requirements: displayReqs
+            });
+        }
 
-        // Filter out tours with no matching requirements
-        this.tours = Array.from(tourMap.values()).filter(tour => tour.requirements.length > 0);
+        this.tours = result;
     }
 
     shouldIncludeRequirement(requirementType: string): boolean {
-        if (this.businessType === 'Restaurant') {
+        if (!this.businessType) return true;
+
+        const type = this.businessType.toLowerCase().replace(/\s/g, '');
+
+        if (type === 'restaurant') {
             return requirementType === 'Meal';
-        } else if (this.businessType === 'GuestHouse' || this.businessType === 'Guest House') {
+        } else if (type === 'guesthouse' || type === 'guest house') {
             return requirementType === 'Accommodation';
-        } else if (this.businessType === 'Hotel') {
+        } else if (type === 'hotel') {
             return true; // Hotels can offer on both
         }
         // Default: show all if businessType is unknown
         return true;
     }
+
 
     viewTourDetails(tour: Tour) {
         this.selectedTour = tour;

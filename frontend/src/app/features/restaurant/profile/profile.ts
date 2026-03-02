@@ -73,23 +73,37 @@ export class Profile implements OnInit {
   }
 
   saveProfile() {
-    // In a real app, we would call a service here to update the restaurant info
-    // For now, let's focus on the images
-    if (this.selectedImages.length > 0 && this.profile) {
-      this.restaurantService.uploadRestaurantImages(this.profile.restaurantId, this.selectedImages).subscribe({
-        next: () => {
-          this.toastService.show('Profile updated with images', 'success');
-          this.selectedImages = [];
-          this.isEditMode = false;
-          this.loadProfile();
-        },
-        error: () => {
-          this.toastService.show('Failed to upload images', 'error');
+    if (!this.profile) return;
+
+    // First update the profile details
+    this.restaurantService.updateRestaurantProfile(this.profile.restaurantId, this.editFormData).subscribe({
+      next: () => {
+        // If there are images to upload, upload them next
+        if (this.selectedImages.length > 0) {
+          this.restaurantService.uploadRestaurantImages(this.profile.restaurantId, this.selectedImages).subscribe({
+            next: () => {
+              this.handleSaveSuccess('Profile and images updated successfully');
+            },
+            error: () => {
+              this.toastService.show('Profile updated, but failed to upload images', 'warning');
+              this.handleSaveSuccess();
+            }
+          });
+        } else {
+          this.handleSaveSuccess('Profile updated successfully');
         }
-      });
-    } else {
-      this.isEditMode = false;
-    }
+      },
+      error: () => {
+        this.toastService.show('Failed to update profile details', 'error');
+      }
+    });
+  }
+
+  private handleSaveSuccess(message?: string) {
+    if (message) this.toastService.show(message, 'success');
+    this.selectedImages = [];
+    this.isEditMode = false;
+    this.loadProfile();
   }
 
   onImagesSelected(files: File[]) {

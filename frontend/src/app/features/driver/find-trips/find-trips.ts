@@ -60,10 +60,13 @@ export class FindTrips implements OnInit {
     loadTours() {
         this.isLoading = true;
         this.http.get<Tour[]>(`${environment.apiUrl}/api/tours`).subscribe({
-            next: (data) => {
-                // Filter open tours that might need transport
-                // In a real app, maybe only show tours with status "Draft" or "Open"
-                this.tours = data;
+            next: (data: any[]) => {
+                // Filter open tours that need transport
+                // Only show tours that are NOT Completed, InProgress, Finalized, or Cancelled
+                this.tours = data.filter(t => {
+                    const status = (t.tourStatus || t.status || '').toString().toLowerCase();
+                    return status !== 'completed' && status !== 'inprogress' && status !== 'finalized' && status !== 'cancelled' && status !== '6' && status !== '2' && status !== '5' && status !== '3' && status !== '4';
+                });
                 this.isLoading = false;
             },
             error: (err) => {

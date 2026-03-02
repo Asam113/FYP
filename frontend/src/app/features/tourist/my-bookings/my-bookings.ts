@@ -32,6 +32,7 @@ export class MyBookings implements OnInit {
 
   bookings: DisplayBooking[] = [];
   isLoading: boolean = true;
+  isPayingId: number | null = null;
 
   // Review Modal State
   selectedTourId: number | null = null;
@@ -93,10 +94,21 @@ export class MyBookings implements OnInit {
   }
 
   submitReview(bookingId: number) {
-    // In a real app, this would open a modal or navigate to a review form
-    // For now, we'll just mock it
     this.toastService.show('Thank you for your review!', 'success');
-    // Optionally refresh bookings or mark this tour as reviewed locally to hide the button
+  }
+
+  payNow(bookingId: number): void {
+    this.isPayingId = bookingId;
+    this.bookingService.createCheckoutSession(bookingId).subscribe({
+      next: (res) => {
+        window.location.href = res.url;
+      },
+      error: (err) => {
+        console.error('Checkout error:', err);
+        this.toastService.show('Failed to initiate payment. Please try again.', 'error');
+        this.isPayingId = null;
+      }
+    });
   }
 
   get completedCount(): number {

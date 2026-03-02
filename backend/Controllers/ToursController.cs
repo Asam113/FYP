@@ -341,7 +341,17 @@ public class ToursController : ControllerBase
         tour.Status = TourStatus.Completed;
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Tour successfully completed", status = tour.Status.ToString() });
+        // Trigger Stripe Payouts for Drivers
+        try
+        {
+            await _paymentService.ProcessDriverPayoutsAsync(id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Driver payouts failed: {ex.Message}");
+        }
+
+        return Ok(new { message = "Tour successfully completed and payouts initiated.", status = tour.Status.ToString() });
     }
 
     // POST: api/tours/{id}/publish

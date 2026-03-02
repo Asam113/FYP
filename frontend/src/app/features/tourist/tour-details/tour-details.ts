@@ -19,6 +19,7 @@ export class TourDetailsComponent implements OnInit {
 
     tour: Tour | undefined;
     isLoading: boolean = true;
+    isBooking: boolean = false;
     seatsRemaining: number = 0;
     isAlreadyBooked: boolean = false;
 
@@ -66,22 +67,23 @@ export class TourDetailsComponent implements OnInit {
         let price = this.tour.pricePerHead || 0;
         let discount = 0;
 
-        if (this.selectedBookingType === 'Couple') {
+        if (this.selectedBookingType === 'Individual') {
+            this.numberOfPeople = 1;
+            this.minPeople = 1;
+            discount = 0;
+        } else if (this.selectedBookingType === 'Couple') {
             this.numberOfPeople = 2;
             this.minPeople = 2;
             if (this.tour.coupleDiscountPercentage) {
                 discount = (price * 2) * (this.tour.coupleDiscountPercentage / 100);
             }
         } else if (this.selectedBookingType === 'Bulk') {
-            this.minPeople = this.tour.bulkBookingMinPersons || 3;
-            if (this.numberOfPeople < this.minPeople) this.numberOfPeople = this.minPeople;
+            this.minPeople = 3;
+            if (this.numberOfPeople < 3) this.numberOfPeople = 3;
 
             if (this.tour.bulkDiscountPercentage) {
                 discount = (price * this.numberOfPeople) * (this.tour.bulkDiscountPercentage / 100);
             }
-        } else {
-            this.minPeople = 1;
-            discount = 0;
         }
 
         this.totalPrice = (price * this.numberOfPeople) - discount;
@@ -100,7 +102,7 @@ export class TourDetailsComponent implements OnInit {
     }
 
     bookTour() {
-        if (!this.tour) return;
+        if (!this.tour || this.isBooking) return;
 
         const user = this.authService.getUser();
         if (!user || !user.roleSpecificId) {
@@ -109,23 +111,39 @@ export class TourDetailsComponent implements OnInit {
             return;
         }
 
+        this.isBooking = true;
+
         const bookingRequest = {
             tourId: this.tour.id,
             touristId: user.roleSpecificId,
             numberOfPeople: this.numberOfPeople,
             totalAmount: this.totalPrice,
-            bookingType: this.selectedBookingType // Now sending 'Individual', 'Couple' or 'Bulk' directly
+            bookingType: this.selectedBookingType
         };
 
         this.bookingService.createBooking(bookingRequest).subscribe({
             next: (res) => {
-                this.toastService.show('Booking Successful!', 'success');
-                this.router.navigate(['/tourist/dashboard']);
+                const bookingId = res.bookingId;
+                this.toastService.show('Booking created! Redirecting to payment...', 'success');
+
+                // Immediately initiate Stripe checkout
+                this.bookingService.createCheckoutSession(bookingId).subscribe({
+                    next: (session) => {
+                        window.location.href = session.url;
+                    },
+                    error: (err) => {
+                        console.error('Checkout session error:', err);
+                        this.toastService.show('Booking created but payment redirect failed. You can pay from My Bookings page.', 'error');
+                        this.router.navigate(['/tourist/my-bookings']);
+                        this.isBooking = false;
+                    }
+                });
             },
             error: (err) => {
                 console.error('Booking failed', err);
                 const errorMsg = err.error?.message || err.error || err.message || 'Unknown error';
                 this.toastService.show('Booking Failed: ' + errorMsg, 'error');
+                this.isBooking = false;
             }
         });
     }

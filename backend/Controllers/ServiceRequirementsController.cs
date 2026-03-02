@@ -35,7 +35,14 @@ public class ServiceRequirementsController : ControllerBase
 
         if (!string.IsNullOrEmpty(status))
         {
-            query = query.Where(r => r.Status == status);
+            if (status == "Open")
+            {
+                query = query.Where(r => r.Status == "Open" || r.Status == "AwaitingOffers");
+            }
+            else
+            {
+                query = query.Where(r => r.Status == status);
+            }
         }
 
         var requirements = await query.OrderBy(r => r.DateNeeded).ToListAsync();

@@ -121,7 +121,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Number of Persons</label>
                         <input type="number" class="form-control" [(ngModel)]="numberOfPeople" (change)="updatePrice()"
-                            [min]="minPeople" [disabled]="selectedBookingType === 'Couple'">
+                            [min]="minPeople" [disabled]="selectedBookingType !== 'Bulk'">
                     </div>
 
                     <div class="d-flex justify-content-between mb-4 mt-4 p-3 bg-light rounded-3">
@@ -130,9 +130,10 @@
                     </div>
 
                     <button class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm mb-3" (click)="bookTour()"
-                        [disabled]="isAlreadyBooked || tour.seatsBooked >= tour.totalSeats">
-                        {{ isAlreadyBooked ? 'Already Booked' : (tour.seatsBooked >= tour.totalSeats ? 'Full' : 'Book
-                        This Tour') }}
+                        [disabled]="isAlreadyBooked || isBooking || tour.seatsBooked >= tour.totalSeats">
+                        <span *ngIf="isBooking" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        {{ isBooking ? 'Processing Payment...' : (isAlreadyBooked ? 'Already Booked' : (tour.seatsBooked
+                        >= tour.totalSeats ? 'Full' : 'Book & Pay Now')) }}
                     </button>
                     <button class="btn btn-outline-secondary w-100 py-2 fw-bold rounded-pill">Contact Organizer</button>
 

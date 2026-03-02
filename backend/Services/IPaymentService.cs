@@ -5,4 +5,6 @@ namespace backend.Services;
 public interface IPaymentService
 {
     Task<bool> ProcessTourEarningsAsync(int tourId);
+    Task<bool> ProcessRestaurantPayoutAsync(int assignmentId);
+    Task<bool> ProcessDriverPayoutsAsync(int tourId);
 }

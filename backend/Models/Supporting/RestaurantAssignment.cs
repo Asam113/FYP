@@ -42,6 +42,8 @@ public class RestaurantAssignment
 
     public int ExpectedPeople { get; set; }
 
+    public bool IsServed { get; set; } = false; // NEW: Indicates if the order has been served
+
     [Column(TypeName = "decimal(18,2)")]
     public decimal FinalPrice { get; set; }
 

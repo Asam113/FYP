@@ -33,6 +33,12 @@
                     (click)="setActiveTab('pending')">
                     Pending Completion ({{pendingTours.length}})
                 </button>
+                <button class="btn rounded-pill px-4" [class.bg-white]="activeTab === 'ready'"
+                    [class.text-dark]="activeTab === 'ready'" [class.fw-bold]="activeTab === 'ready'"
+                    [class.shadow-sm]="activeTab === 'ready'" [class.text-muted]="activeTab !== 'ready'"
+                    (click)="setActiveTab('ready')">
+                    Ready Tours ({{readyTours.length}})
+                </button>
             </div>
         </div>
     </div>
@@ -45,7 +51,7 @@
                     <i class="bi bi-calendar-check text-muted fs-1"></i>
                 </div>
                 <h5>No confirmed tours yet</h5>
-                <p class="text-muted">Once bookings are complete and the tour is ready, it will show up here.</p>
+                <p class="text-muted">Once all the tour requirements are fullfilled, it will show up here.</p>
             </div>
             <div *ngFor="let tour of confirmedTours" class="card border-0 shadow-sm mb-3">
                 <div class="card-body p-4">
@@ -145,6 +151,69 @@
                         <div class="col-md-3 text-md-end">
                             <h4 class="fw-bold mb-0">{{ tour.price }}</h4>
                             <p class="text-muted small">Quoted Price</p>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">{{ tour.participants }} Bookings</span>
+                        <a [routerLink]="['/driver/tour-details', tour.id]"
+                            class="text-primary text-decoration-none small">
+                            View Details <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ready Tours List -->
+    <div class="row" *ngIf="activeTab === 'ready' && !loading && !error">
+        <div class="col-12">
+            <div *ngIf="readyTours.length === 0" class="text-center py-5">
+                <div class="bg-light d-inline-block rounded-circle p-4 mb-3">
+                    <i class="bi bi-geo-alt-fill text-muted fs-1"></i>
+                </div>
+                <h5>No ready tours</h5>
+                <p class="text-muted">Tours that are ready for departure will appear here.</p>
+            </div>
+            <div *ngFor="let tour of readyTours" class="card border-0 shadow-sm mb-3">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <!-- Left Content -->
+                        <div class="col-md-9">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="fw-medium mb-0 me-3">{{ tour.title }}</h5>
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3">
+                                    <i class="bi bi-car-front-fill me-1"></i> Ready
+                                </span>
+                            </div>
+
+                            <div class="row text-muted small mb-3">
+                                <div class="col-md-5 d-flex align-items-center">
+                                    <i class="bi bi-geo-alt me-2"></i> {{ tour.route }}
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <i class="bi bi-calendar3 me-2"></i> {{ tour.date }}
+                                </div>
+                                <div class="col-md-3 d-flex align-items-center">
+                                    <i class="bi bi-clock me-2"></i> {{ tour.duration }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <span
+                                    class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-normal border border-primary-subtle">
+                                    <i class="bi bi-info-circle me-2"></i> {{ tour.requirementsStatus }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Right Content -->
+                        <div class="col-md-3 text-md-end">
+                            <h4 class="fw-bold mb-0">{{ tour.price }}</h4>
+                            <p class="text-muted small">Transport Fare</p>
                         </div>
                     </div>
 

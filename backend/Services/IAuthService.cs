@@ -13,4 +13,10 @@ public interface IAuthService
     Task<AuthResponse> VerifyOtpAsync(VerifyOtpDto request);
     Task ResendOtpAsync(string email);
     Task<UserDto?> GetUserByIdAsync(int userId);
+    Task UpdatePasswordAsync(int userId, UpdatePasswordDto request);
+
+    // Password Reset
+    Task ForgotPasswordAsync(string email);
+    Task<bool> VerifyPasswordResetOtpAsync(VerifyOtpDto request);
+    Task ResetPasswordAsync(ResetPasswordDto request);
 }

@@ -39,6 +39,11 @@ public class Driver
     [Column(TypeName = "decimal(18,2)")]
     public decimal TotalEarnings { get; set; } = 0;
 
+    [MaxLength(100)]
+    public string? StripeAccountId { get; set; }
+
+    public bool PayoutsEnabled { get; set; } = false;
+
     // Navigation Properties
     public virtual User User { get; set; } = null!;
     [JsonIgnore]

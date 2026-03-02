@@ -23,8 +23,8 @@ builder.Services.AddControllers()
         options.InvalidModelStateResponseFactory = context =>
         {
             var errors = context.ModelState
-                .Where(e => e.Value.Errors.Count > 0)
-                .Select(e => new { Field = e.Key, Message = e.Value.Errors.First().ErrorMessage })
+                .Where(e => e.Value?.Errors.Count > 0)
+                .Select(e => new { Field = e.Key, Message = e.Value?.Errors.First().ErrorMessage })
                 .ToList();
 
             return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(new { message = "Validation Failed", errors });
@@ -44,6 +44,7 @@ builder.Services.AddScoped<IDriverService, DriverService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>(); // Registering PaymentService explicitly
+builder.Services.AddScoped<IStripeService, StripeService>();
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key not configured");

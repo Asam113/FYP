@@ -46,8 +46,16 @@ namespace backend.Migrations
                     b.Property<int>("NumberOfPeople")
                         .HasColumnType("int");
 
+                    b.Property<string>("PaymentIntentId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("StripeSessionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
@@ -744,6 +752,9 @@ namespace backend.Migrations
                     b.Property<decimal>("FinalPrice")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("IsServed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("MealScheduleText")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -1262,6 +1273,13 @@ namespace backend.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<bool>("PayoutsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("StripeAccountId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<decimal>("TotalEarnings")
                         .HasColumnType("decimal(18,2)");
 
@@ -1303,6 +1321,9 @@ namespace backend.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("PayoutsEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -1320,6 +1341,10 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("StripeAccountId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");

@@ -170,4 +170,71 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    // PUT: api/auth/update-password
+    [Authorize]
+    [HttpPut("update-password")]
+    public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(new { message = "Invalid token" });
+            }
+
+            await _authService.UpdatePasswordAsync(userId, request);
+            return Ok(new { message = "Password updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // POST: api/auth/forgot-password
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto request)
+    {
+        try
+        {
+            await _authService.ForgotPasswordAsync(request.Email);
+            return Ok(new { message = "If this email is registered, an OTP will be sent." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // POST: api/auth/verify-password-reset-otp
+    [HttpPost("verify-password-reset-otp")]
+    public async Task<IActionResult> VerifyPasswordResetOtp([FromBody] VerifyOtpDto request)
+    {
+        try
+        {
+            await _authService.VerifyPasswordResetOtpAsync(request);
+            return Ok(new { message = "OTP verified successfully." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    // POST: api/auth/reset-password
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
+    {
+        try
+        {
+            await _authService.ResetPasswordAsync(request);
+            return Ok(new { message = "Password reset successfully." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

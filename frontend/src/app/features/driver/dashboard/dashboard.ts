@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { DriverService } from '../../../core/services/driver.service';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -35,17 +37,46 @@ export class Dashboard implements OnInit {
   reviews: Review[] = [];
   isLoadingRatings: boolean = false;
 
+  // Dashboard Stats
+  stats: any = {
+    totalEarnings: 0,
+    completedTrips: 0,
+    activeTours: 0,
+    upcomingTours: [],
+    recentTours: []
+  };
+  isLoadingStats: boolean = true;
+
   constructor(
     private driverService: DriverService,
-    private authService: AuthService
+    private authService: AuthService,
+    private http: HttpClient
   ) { }
 
   ngOnInit() {
     const user = this.authService.getUser();
-    if (user && user.id) { // Fix: use user.id instead of userId
+    if (user && user.id) {
       this.driverId = user.id;
-      this.fetchRatings();
+      // We must map user.id (userId) to driverId (RoleSpecificId).
+      // If user.roleSpecificId exists, we should use that for driver operations that expect DriverId.
+      const trueDriverId = user.roleSpecificId || user.id;
+      this.fetchRatings(); // This endpoint expects UserId
+      this.fetchStats(trueDriverId); // Driver service expects DriverId
     }
+  }
+
+  fetchStats(driverId: number) {
+    this.isLoadingStats = true;
+    this.http.get<any>(`${environment.apiUrl}/api/drivers/${driverId}/dashboard-stats`).subscribe({
+      next: (data) => {
+        this.stats = data;
+        this.isLoadingStats = false;
+      },
+      error: (err) => {
+        console.error('Failed to load dashboard stats', err);
+        this.isLoadingStats = false;
+      }
+    });
   }
 
   setTab(tab: 'overview' | 'ratings') {

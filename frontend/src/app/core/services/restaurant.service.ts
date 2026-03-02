@@ -16,6 +16,10 @@ export class RestaurantService {
         return this.http.get(`${this.apiUrl}/${id}`);
     }
 
+    updateRestaurantProfile(id: number, data: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/${id}`, data);
+    }
+
     uploadRestaurantImages(restaurantId: number, images: File[]): Observable<any> {
         const formData = new FormData();
         images.forEach(image => {

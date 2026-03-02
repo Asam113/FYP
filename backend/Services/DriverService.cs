@@ -9,11 +9,13 @@ public class DriverService : IDriverService
 {
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
+    private readonly IStripeService _stripeService;
 
-    public DriverService(ApplicationDbContext context, IEmailService emailService)
+    public DriverService(ApplicationDbContext context, IEmailService emailService, IStripeService stripeService)
     {
         _context = context;
         _emailService = emailService;
+        _stripeService = stripeService;
     }
     public async Task<IEnumerable<object>> GetAllDriversAsync()
     {
@@ -118,5 +120,84 @@ public class DriverService : IDriverService
         }
 
         return true;
+    }
+
+    public async Task<object?> GetDashboardStatsAsync(int driverId)
+    {
+        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.DriverId == driverId);
+        if (driver == null) return null;
+
+        var assignments = await _context.TourAssignments
+            .Include(a => a.Tour)
+            .Where(a => a.DriverId == driverId)
+            .ToListAsync();
+
+        var completedTrips = assignments.Where(a => a.Status == AssignmentStatus.Completed).Count();
+        
+        // Calculate earnings from completed tours where driver got paid
+        var totalEarnings = assignments
+            .Where(a => a.Status == AssignmentStatus.Completed)
+            .Sum(a => a.FinalPrice);
+
+        // Active/Upcoming Tours (Finalized or Intermediate, future or current dates)
+        var upcomingTours = assignments
+            .Where(a => a.Status != AssignmentStatus.Completed && a.Status != AssignmentStatus.Cancelled && a.Status != AssignmentStatus.Rejected)
+            .Select(a => new
+            {
+                a.Tour.TourId,
+                a.Tour.Title,
+                a.Tour.Destination,
+                a.Tour.StartDate,
+                a.Tour.EndDate,
+                Price = a.FinalPrice,
+                a.Status
+            })
+            .OrderBy(t => t.StartDate)
+            .Take(5)
+            .ToList();
+
+        // Recent Booked/Completed
+        var recentTours = assignments
+            .Where(a => a.Status == AssignmentStatus.Completed)
+            .Select(a => new
+            {
+                a.Tour.TourId,
+                a.Tour.Title,
+                a.Tour.Destination,
+                a.Tour.StartDate,
+                a.Tour.EndDate,
+                Price = a.FinalPrice,
+                a.Status
+            })
+            .OrderByDescending(t => t.EndDate)
+            .Take(5)
+            .ToList();
+
+        return new
+        {
+            totalEarnings,
+            completedTrips,
+            activeTours = upcomingTours.Count(),
+            upcomingTours,
+            recentTours
+        };
+    }
+
+    public async Task<string> GetStripeOnboardingLinkAsync(int driverId, string returnUrl, string refreshUrl)
+    {
+        var driver = await _context.Drivers.Include(d => d.User).FirstOrDefaultAsync(d => d.DriverId == driverId);
+        if (driver == null) throw new Exception("Driver not found");
+
+        if (string.IsNullOrEmpty(driver.StripeAccountId))
+        {
+            var accountId = await _stripeService.CreateConnectedAccountAsync(
+                driver.User.Email, 
+                driver.User.Name, 
+                "Driver");
+            driver.StripeAccountId = accountId;
+            await _context.SaveChangesAsync();
+        }
+
+        return await _stripeService.CreateOnboardingLinkAsync(driver.StripeAccountId, returnUrl, refreshUrl);
     }
 }

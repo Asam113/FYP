@@ -46,3 +46,8 @@ backend/wwwroot/uploads
 
 # Environment Variables
 frontend/.env
+
+# Local Testing Suite
+/testing_suite/
+/backend.Tests/
+frontend/coverage

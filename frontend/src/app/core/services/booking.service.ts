@@ -23,4 +23,8 @@ export class BookingService {
     submitReview(reviewData: any): Observable<any> {
         return this.http.post(`${environment.apiUrl}/api/reviews`, reviewData);
     }
+
+    createCheckoutSession(bookingId: number): Observable<{ sessionId: string; url: string }> {
+        return this.http.post<{ sessionId: string; url: string }>(`${this.apiUrl}/${bookingId}/checkout`, {});
+    }
 }
