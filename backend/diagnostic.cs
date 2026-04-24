@@ -9,9 +9,9 @@ using System.Collections.Generic;
 
 namespace Diagnostic
 {
-    class Program
+    class DiagnosticTool
     {
-        static void Main(string[] args)
+        public static void Run(string[] args)
         {
             var config = new ConfigurationBuilder()
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())

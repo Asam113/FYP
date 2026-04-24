@@ -44,6 +44,15 @@ public class RestaurantAssignment
 
     public bool IsServed { get; set; } = false; // NEW: Indicates if the order has been served
 
+    public DateTime? ServedAt { get; set; }
+
+    [MaxLength(20)]
+    public string? PaymentMethod { get; set; } // "Cash" or "Online"
+
+    public bool IsPaid { get; set; } = false; // NEW: Indicates if the payout has been completed
+
+    public DateTime? PaidAt { get; set; }
+
     [Column(TypeName = "decimal(18,2)")]
     public decimal FinalPrice { get; set; }
 

@@ -25,6 +25,7 @@ const routes: Routes = [
   { path: 'settings', component: Settings },
   { path: 'history', component: HistoryTours },
   { path: 'driver-details/:id', loadComponent: () => import('./driver-details/driver-details.component').then(m => m.DriverDetails) },
+  { path: 'driver-payouts/:id', loadComponent: () => import('./driver-payouts/driver-payouts').then(m => m.DriverPayouts) },
   { path: 'notifications', loadComponent: () => import('../../shared/components/notifications/notifications.component').then(m => m.SharedNotificationsComponent) }
 ];
 

@@ -136,8 +136,29 @@
     border-radius: 1rem;
     width: 100%;
     max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: slideUp 0.3s ease-out;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.modal-content-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content-wrapper::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.modal-content-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
 }
 
 .form-control {

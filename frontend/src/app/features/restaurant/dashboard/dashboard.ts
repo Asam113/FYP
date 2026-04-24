@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { RestaurantService } from '../../../core/services/restaurant.service';
 
 interface StatCard {
   title: string;
@@ -55,8 +56,11 @@ export class Dashboard implements OnInit {
   totalReviews: number = 0;
   reviews: Review[] = [];
   isLoadingRatings: boolean = false;
+  payoutsEnabled: boolean = false;
+  stripeAccountId: string | null = null;
+  isStripeLoading: boolean = false;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private restaurantService: RestaurantService) { }
 
   ngOnInit() {
     const userStr = localStorage.getItem('user');
@@ -77,6 +81,59 @@ export class Dashboard implements OnInit {
     if (this.userId > 0) {
       this.fetchRatings();
     }
+
+    if (this.restaurantId > 0) {
+      this.fetchDashboardStats();
+    }
+  }
+
+  fetchDashboardStats() {
+    this.http.get<any>(`${environment.apiUrl}/api/restaurants/${this.restaurantId}/dashboard-stats`).subscribe({
+      next: (data) => {
+        // Update the counts in the stats array while keeping the icons/colors
+        this.stats[0].count = data.totalOffersSent;
+        this.stats[1].count = data.pendingRequests;
+        this.stats[2].count = data.confirmedOrders;
+        this.stats[3].count = data.activeMenuItems;
+
+        if (data.activeMenuItems > 0) {
+          this.stats[3].subtext = `Across your menus`;
+        }
+
+        if (data.recentActivities && data.recentActivities.length > 0) {
+          this.recentActivities = data.recentActivities;
+        } else {
+          this.recentActivities = [];
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    });
+
+    // Also fetch restaurant profile to check stripe status
+    this.restaurantService.getRestaurant(this.restaurantId).subscribe({
+      next: (res: any) => {
+        this.payoutsEnabled = res.payoutsEnabled;
+        this.stripeAccountId = res.stripeAccountId;
+      }
+    });
+  }
+
+  setupStripeOnboarding() {
+    this.isStripeLoading = true;
+    const returnUrl = window.location.href;
+    const refreshUrl = window.location.href;
+
+    this.restaurantService.getStripeOnboardingLink(this.restaurantId, returnUrl, refreshUrl).subscribe({
+      next: (res: { url: string }) => {
+        window.location.href = res.url;
+      },
+      error: (err: any) => {
+        console.error('Failed to get onboarding link', err);
+        this.isStripeLoading = false;
+      }
+    });
   }
 
   checkMenuItems() {

@@ -61,4 +61,32 @@ public class DriversController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpGet("{id}/dashboard-link")]
+    public async Task<IActionResult> GetDashboardLink(int id)
+    {
+        try
+        {
+            var url = await _driverService.GetStripeDashboardLinkAsync(id);
+            return Ok(new { url });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/verify-stripe")]
+    public async Task<IActionResult> VerifyStripeStatus(int id)
+    {
+        var isComplete = await _driverService.VerifyStripeStatusAsync(id);
+        return Ok(new { payoutsEnabled = isComplete });
+    }
+
+    [HttpGet("{id}/earnings")]
+    public async Task<IActionResult> GetEarnings(int id)
+    {
+        var earnings = await _driverService.GetEarningsAsync(id);
+        return Ok(earnings);
+    }
 }

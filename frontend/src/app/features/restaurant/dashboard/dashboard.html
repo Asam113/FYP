@@ -29,6 +29,27 @@
     <div *ngIf="activeTab === 'overview'" class="fade-in">
         <div class="row mb-4">
             <div class="col-12">
+                <!-- Stripe Payout Setup Alert -->
+                <div *ngIf="!payoutsEnabled" class="alert alert-primary border-0 shadow-sm rounded-4 mb-3" role="alert"
+                    style="background: linear-gradient(135deg, #f0f7ff 0%, #e1effe 100%);">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-primary text-white me-3 rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 45px; height: 45px;">
+                            <i class="bi bi-wallet2 fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading fw-bold mb-1 text-primary">Setup Your Payout Account</h6>
+                            <p class="mb-0 text-muted small">To receive payments for your orders, you must link your bank
+                                account via Stripe.</p>
+                        </div>
+                        <button (click)="setupStripeOnboarding()" class="btn btn-primary rounded-pill px-4 ms-3"
+                            [disabled]="isStripeLoading">
+                            <span *ngIf="isStripeLoading" class="spinner-border spinner-border-sm me-2"></span>
+                            {{ stripeAccountId ? 'Complete Setup' : 'Link Bank Account' }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Menu Validation Alert (For Restaurant & Hotel) -->
                 <div *ngIf="showMenuAlert() && !hasMenuItems"
                     class="alert alert-warning border-0 shadow-sm rounded-4 mb-3" role="alert">
@@ -110,6 +131,12 @@
                                                 [ngClass]="getBadgeClass(activity.badgeStatus)">
                                                 {{activity.badgeStatus}}
                                             </span>
+                                        </td>
+                                    </tr>
+                                    <tr *ngIf="recentActivities.length === 0">
+                                        <td colspan="3" class="text-center py-5 text-muted">
+                                            <i class="bi bi-activity fs-1 mb-2 d-block opacity-25"></i>
+                                            <p class="mb-0">No recent activity found.</p>
                                         </td>
                                     </tr>
                                 </tbody>

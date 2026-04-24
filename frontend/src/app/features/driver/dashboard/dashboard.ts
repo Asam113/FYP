@@ -46,6 +46,9 @@ export class Dashboard implements OnInit {
     recentTours: []
   };
   isLoadingStats: boolean = true;
+  payoutsEnabled: boolean = false;
+  stripeAccountId: string | null = null;
+  isStripeLoading: boolean = false;
 
   constructor(
     private driverService: DriverService,
@@ -62,7 +65,36 @@ export class Dashboard implements OnInit {
       const trueDriverId = user.roleSpecificId || user.id;
       this.fetchRatings(); // This endpoint expects UserId
       this.fetchStats(trueDriverId); // Driver service expects DriverId
+      this.fetchDriverProfile(trueDriverId);
     }
+  }
+
+  fetchDriverProfile(driverId: number) {
+    this.driverService.getDriverById(driverId).subscribe({
+      next: (res: any) => {
+        this.payoutsEnabled = res.payoutsEnabled;
+        this.stripeAccountId = res.stripeAccountId;
+      }
+    });
+  }
+
+  setupStripeOnboarding() {
+    this.isStripeLoading = true;
+    const returnUrl = window.location.href;
+    const refreshUrl = window.location.href;
+
+    const user = this.authService.getUser();
+    const driverId = user.roleSpecificId || user.id;
+
+    this.driverService.getStripeOnboardingLink(driverId, returnUrl, refreshUrl).subscribe({
+      next: (res: { url: string }) => {
+        window.location.href = res.url;
+      },
+      error: (err: any) => {
+        console.error('Failed to get onboarding link', err);
+        this.isStripeLoading = false;
+      }
+    });
   }
 
   fetchStats(driverId: number) {

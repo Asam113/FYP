@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using backend.Models.OfferSystem;
+using backend.Models.Supporting;
 using System.Text.Json.Serialization;
 
 namespace backend.Models.TourManagement;
@@ -44,4 +45,5 @@ public class ServiceRequirement
     // Navigation Properties
     public virtual Tour Tour { get; set; } = null!;
     public virtual ICollection<RestaurantOffer> RestaurantOffers { get; set; } = new List<RestaurantOffer>();
+    public virtual RestaurantAssignment? Assignment { get; set; }
 }

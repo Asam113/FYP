@@ -103,7 +103,7 @@ export class Orders implements OnInit {
         if (!confirm('Are you sure you want to mark this order as served?')) return;
 
         this.loading = true;
-        this.http.put(`${environment.apiUrl}/api/restaurantassignments/${order.id}/serve`, {})
+        this.http.put(`${environment.apiUrl}/api/restaurantassignments/${order.id}/serve`, { isServed: true, paymentMethod: 'Online' })
             .subscribe({
                 next: () => {
                     order.isServed = true;

@@ -81,7 +81,9 @@ public class DriverService : IDriverService
                     v.Model,
                     v.Capacity,
                     v.Status
-                })
+                }),
+                d.StripeAccountId,
+                d.PayoutsEnabled
             })
             .FirstOrDefaultAsync();
     }
@@ -199,5 +201,50 @@ public class DriverService : IDriverService
         }
 
         return await _stripeService.CreateOnboardingLinkAsync(driver.StripeAccountId, returnUrl, refreshUrl);
+    }
+
+    public async Task<string> GetStripeDashboardLinkAsync(int driverId)
+    {
+        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.DriverId == driverId);
+        if (driver == null || string.IsNullOrEmpty(driver.StripeAccountId)) 
+            throw new Exception("Stripe account not found for this driver.");
+
+        return await _stripeService.CreateLoginLinkAsync(driver.StripeAccountId);
+    }
+
+    public async Task<bool> VerifyStripeStatusAsync(int driverId)
+    {
+        var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.DriverId == driverId);
+        if (driver == null || string.IsNullOrEmpty(driver.StripeAccountId)) return false;
+
+        var isComplete = await _stripeService.IsAccountOnboardedAsync(driver.StripeAccountId);
+        
+        if (isComplete != driver.PayoutsEnabled)
+        {
+            driver.PayoutsEnabled = isComplete;
+            await _context.SaveChangesAsync();
+        }
+
+        return isComplete;
+    }
+
+    public async Task<IEnumerable<object>> GetEarningsAsync(int driverId)
+    {
+        return await _context.DriverOffers
+            .Include(o => o.Tour)
+            .Where(o => o.DriverId == driverId && (o.Status == OfferStatus.Confirmed || o.Status == OfferStatus.Accepted))
+            .OrderByDescending(o => o.PaidAt ?? DateTime.MinValue)
+            .ThenByDescending(o => o.OfferId)
+            .Select(o => new
+            {
+                o.OfferId,
+                TourTitle = o.Tour != null ? o.Tour.Title : "Custom Trip",
+                Date = o.PaidAt ?? (o.Tour != null ? o.Tour.EndDate : DateTime.UtcNow),
+                Amount = o.TransportationFare,
+                Status = o.IsPaid ? "Paid" : "Pending",
+                Method = o.IsPaid ? "Bank Transfer" : "N/A",
+                TourId = o.TourId
+            })
+            .ToListAsync();
     }
 }

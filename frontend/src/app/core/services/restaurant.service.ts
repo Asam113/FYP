@@ -72,4 +72,8 @@ export class RestaurantService {
     deleteRoomImage(restaurantId: number, imageId: number): Observable<any> {
         return this.http.delete(`${this.apiUrl}/${restaurantId}/room-categories/images/${imageId}`);
     }
+
+    getStripeOnboardingLink(restaurantId: number, returnUrl: string, refreshUrl: string): Observable<{ url: string }> {
+        return this.http.post<{ url: string }>(`${this.apiUrl}/${restaurantId}/onboarding-link`, { returnUrl, refreshUrl });
+    }
 }

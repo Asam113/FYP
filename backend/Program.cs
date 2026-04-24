@@ -115,11 +115,12 @@ using (var scope = app.Services.CreateScope())
 
         // Ensure Admin User Exists with Correct Password
         var defaultEmail = "admin@travel.com";
-        var exists = context.Users.Any(u => u.Role == UserRole.Admin || u.Email == defaultEmail);
+        var adminUser = context.Users.FirstOrDefault(u => u.Email == defaultEmail);
         
-        if (!exists)
+        if (adminUser == null)
         {
-            var adminUser = new User
+            Console.WriteLine($"Seeding Admin User: {defaultEmail}...");
+            adminUser = new User
             {
                 Name = "Administrator",
                 Email = defaultEmail,
@@ -132,7 +133,24 @@ using (var scope = app.Services.CreateScope())
             };
             context.Users.Add(adminUser);
             context.SaveChanges();
-            Console.WriteLine("Admin user seeded.");
+            Console.WriteLine("✅ Admin user seeded successfully.");
+        }
+        else 
+        {
+            // Ensure existing user has Admin role
+            if (adminUser.Role != UserRole.Admin)
+            {
+                Console.WriteLine($"Updating user {defaultEmail} to Admin role...");
+                adminUser.Role = UserRole.Admin;
+                adminUser.IsVerified = true;
+                adminUser.RegistrationStep = 4;
+                context.SaveChanges();
+                Console.WriteLine("✅ Admin role updated.");
+            }
+            else 
+            {
+                Console.WriteLine("ℹ️ Admin user already exists and is configured correctly.");
+            }
         }
     }
     catch (Exception ex)

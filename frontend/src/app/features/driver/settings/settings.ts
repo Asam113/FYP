@@ -14,6 +14,7 @@ import { environment } from '../../../../environments/environment';
 export class DriverSettings implements OnInit {
     isStripeConnected = false;
     isConnecting = false;
+    isVerifying = false;
 
     constructor(
         private http: HttpClient,
@@ -22,16 +23,41 @@ export class DriverSettings implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.verifyStripeStatus(true); // Silent verify on init
+    }
+
+    verifyStripeStatus(silent: boolean = false): void {
         const user = this.authService.getUser();
-        if (user?.roleSpecificId) {
-            this.http.get<any>(`${environment.apiUrl}/api/drivers/${user.roleSpecificId}`)
-                .subscribe({
-                    next: (driver) => {
-                        this.isStripeConnected = !!driver?.stripeAccountId;
-                    },
-                    error: () => { }
-                });
-        }
+        if (!user?.roleSpecificId) return;
+
+        if (!silent) this.isVerifying = true;
+
+        this.http.post<any>(`${environment.apiUrl}/api/drivers/${user.roleSpecificId}/verify-stripe`, {})
+            .subscribe({
+                next: (res) => {
+                    this.isStripeConnected = res.payoutsEnabled;
+                    if (!silent && res.payoutsEnabled) {
+                        this.toastService.show('Stripe account verified successfully!', 'success');
+                    } else if (!silent && !res.payoutsEnabled) {
+                        this.toastService.show('Account not yet fully onboarded. Please complete the setup.', 'info');
+                    }
+                    this.isVerifying = false;
+                },
+                error: () => {
+                    this.fetchDriverStatus(user.roleSpecificId);
+                    this.isVerifying = false;
+                }
+            });
+    }
+
+    private fetchDriverStatus(driverId: number): void {
+        this.http.get<any>(`${environment.apiUrl}/api/drivers/${driverId}`)
+            .subscribe({
+                next: (driver) => {
+                    this.isStripeConnected = !!driver?.payoutsEnabled;
+                },
+                error: () => { }
+            });
     }
 
     connectStripe(): void {

@@ -50,6 +50,10 @@ export class Profile {
   constructor(private authService: AuthService) { }
 
   ngOnInit(): void {
+    this.fetchData();
+  }
+
+  fetchData(): void {
     const userData = this.authService.getUser();
     if (userData) {
       this.user = {
@@ -60,6 +64,40 @@ export class Profile {
         role: userData.role,
         profilePicture: userData.profilePicture
       };
+    }
+
+    this.authService.getCurrentUser().subscribe({
+      next: (freshUser) => {
+        this.user = {
+          ...this.user,
+          name: freshUser.name,
+          email: freshUser.email,
+          phone: freshUser.phoneNumber || 'Not Provided',
+          role: freshUser.role,
+          profilePicture: freshUser.profilePicture
+        };
+      },
+      error: (err) => console.error('Failed to refresh tourist profile', err)
+    });
+  }
+
+  getProfilePictureUrl(path: string | null | undefined): string | null {
+    return this.authService.getProfilePictureUrl(path);
+  }
+
+  onProfilePicSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      
+      this.authService.updateProfile(formData).subscribe({
+        next: () => {
+          this.fetchData();
+          alert('Profile picture updated!');
+        },
+        error: (err) => alert('Failed to update: ' + (err.error?.message || err.message))
+      });
     }
   }
 

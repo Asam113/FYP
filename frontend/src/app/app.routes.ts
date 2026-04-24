@@ -18,9 +18,11 @@ import { DriverLayout } from './features/driver/layout/driver-layout';
 import { RestaurantLayout } from './features/restaurant/layout/restaurant-layout';
 import { AdminLayout } from './features/admin/layout/admin-layout';
 import { AccountPendingComponent } from './features/common-feature/account-pending/account-pending';
+import { AiTest } from './features/ai-test/ai-test';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'ai-test', component: AiTest },
 
   { path: 'login', component: Login },
   { path: 'account-pending', component: AccountPendingComponent },

@@ -880,4 +880,31 @@ public class AuthService : IAuthService
         
         await _context.SaveChangesAsync();
     }
+
+    public async Task<UserDto> UpdateProfileAsync(int userId, UpdateProfileDto request)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) throw new Exception("User not found");
+
+        if (!string.IsNullOrEmpty(request.Name)) user.Name = request.Name;
+        if (!string.IsNullOrEmpty(request.PhoneNumber)) user.PhoneNumber = request.PhoneNumber;
+
+        if (request.ProfilePicture != null)
+        {
+            user.ProfilePicture = await SaveFileAsync(request.ProfilePicture, "profiles");
+        }
+
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        return new UserDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Role = user.Role,
+            ProfilePicture = user.ProfilePicture
+        };
+    }
 }

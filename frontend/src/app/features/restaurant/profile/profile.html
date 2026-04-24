@@ -26,9 +26,18 @@
             <!-- Profile Card -->
             <div class="card border-0 shadow-sm p-4 rounded-4 mb-4 text-center">
                 <div class="mb-3 d-flex justify-content-center">
-                    <div
-                        class="avatar-circle d-flex align-items-center justify-content-center bg-primary text-white rounded-circle">
-                        <h2 class="mb-0 fw-bold">{{profile.restaurantName.substring(0,2).toUpperCase()}}</h2>
+                    <div class="avatar-circle overflow-hidden d-flex align-items-center justify-content-center bg-primary text-white rounded-circle border position-relative profile-img-container"
+                        style="width: 100px; height: 100px; cursor: pointer;" (click)="fileInput.click()">
+                        <input #fileInput type="file" (change)="onProfilePicSelected($event)" hidden accept="image/*">
+                        <ng-container *ngIf="getProfilePictureUrl(profile.user?.profilePicture) as profileUrl; else initials">
+                            <img [src]="profileUrl" alt="Profile" class="w-100 h-100" style="object-fit: cover;">
+                        </ng-container>
+                        <ng-template #initials>
+                            <h2 class="mb-0 fw-bold">{{profile.restaurantName.substring(0,2).toUpperCase()}}</h2>
+                        </ng-template>
+                        <div class="upload-overlay">
+                            <i class="bi bi-camera"></i>
+                        </div>
                     </div>
                 </div>
 

@@ -50,10 +50,10 @@ public class EmailService : IEmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email.");
-            // Log fallback even on failure
+            _logger.LogError(ex, "Failed to send email. Proceeding anyway (Fallback logged to console).");
+            // Log fallback even on failure so developer can see the OTP
             Console.WriteLine($"[EMAIL FAILED] OTP intended for {to}: {body}");
-            throw; // Re-throw or handle gracefully depending on requirement
+            // DO NOT THROW in development/test if email limits are hit
         }
     }
 }

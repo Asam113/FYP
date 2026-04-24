@@ -23,6 +23,10 @@ public class DriverOffer : Offer
 
     public bool IncludesFuel { get; set; } = true;
 
+    public bool IsPaid { get; set; } = false;
+
+    public DateTime? PaidAt { get; set; }
+
     // Navigation Properties
     [ForeignKey("DriverId")]
     public virtual Driver Driver { get; set; } = null!;

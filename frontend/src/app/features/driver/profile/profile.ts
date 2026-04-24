@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface Document {
   name: string;
@@ -15,7 +16,8 @@ interface Document {
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
-export class Profile {
+export class Profile implements OnInit {
+  user: any;
   profile = {
     name: 'Ahmed Khan',
     email: 'ahmed.khan@safarnama.com',
@@ -26,6 +28,53 @@ export class Profile {
     cnic: '12345-6789012-3',
     address: 'House 123, Street 45, F-10 Markaz, Islamabad'
   };
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit() {
+    this.fetchData();
+  }
+
+  fetchData() {
+    this.user = this.authService.getUser();
+    if (this.user) {
+        this.profile.name = this.user.name;
+        this.profile.email = this.user.email;
+        this.profile.phone = this.user.phoneNumber || 'Not provided';
+        this.profile.status = this.user.status || 'Active';
+    }
+    
+    this.authService.getCurrentUser().subscribe({
+        next: (userData) => {
+            this.user = userData;
+            this.profile.name = userData.name;
+            this.profile.email = userData.email;
+            this.profile.phone = userData.phoneNumber || 'Not provided';
+            this.profile.status = userData.status || 'Active';
+        },
+        error: (err) => console.error('Failed to load user profile', err)
+    });
+  }
+
+  getProfilePictureUrl(path: string | null | undefined): string | null {
+      return this.authService.getProfilePictureUrl(path);
+  }
+
+  onProfilePicSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        
+        this.authService.updateProfile(formData).subscribe({
+            next: () => {
+                this.fetchData(); // Refresh
+                alert('Profile picture updated successfully!');
+            },
+            error: (err) => alert('Failed to update profile picture: ' + (err.error?.message || err.message))
+        });
+    }
+  }
 
   license = {
     number: 'ISB-2345678',

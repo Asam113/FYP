@@ -34,4 +34,8 @@ export class DriverService {
     getDriverRatings(driverId: number): Observable<any> {
         return this.http.get<any>(`${environment.apiUrl}/api/ratings/driver/${driverId}`);
     }
+
+    getStripeOnboardingLink(driverId: number, returnUrl: string, refreshUrl: string): Observable<{ url: string }> {
+        return this.http.post<{ url: string }>(`${this.apiUrl}/${driverId}/onboarding-link`, { returnUrl, refreshUrl });
+    }
 }

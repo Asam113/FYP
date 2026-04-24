@@ -32,6 +32,9 @@ public class Earning
     [MaxLength(20)]
     public string Status { get; set; } = "Pending"; // "Pending", "Paid", "Cancelled"
 
+    [MaxLength(20)]
+    public string? PaymentMethod { get; set; } // "Cash" or "Online"
+
     // Navigation Properties
     public virtual Driver? Driver { get; set; }
     public virtual Restaurant? Restaurant { get; set; }

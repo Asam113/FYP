@@ -159,4 +159,31 @@ export class Profile implements OnInit {
     };
     this.showConfirmModal = true;
   }
+
+  getProfilePictureUrl(path: string | null | undefined): string | null {
+    return this.authService.getProfilePictureUrl(path);
+  }
+
+  onProfilePicSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      
+      this.authService.updateProfile(formData).subscribe({
+        next: () => {
+          this.refreshProfile();
+          alert('Profile picture updated!');
+        },
+        error: (err) => alert('Failed to update: ' + (err.error?.message || err.message))
+      });
+    }
+  }
+
+  private refreshProfile() {
+    this.authService.getCurrentUser().subscribe({
+      next: () => this.loadProfile(),
+      error: (err) => console.error('Failed to sync profile', err)
+    });
+  }
 }

@@ -128,5 +128,12 @@ public class ApplicationDbContext : DbContext
             .WithMany(ra => ra.Orders) // The collection of all orders
             .HasForeignKey(o => o.RestaurantAssignmentId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure ServiceRequirement <-> RestaurantAssignment (one-to-one via RequirementId FK on RestaurantAssignment)
+        modelBuilder.Entity<RestaurantAssignment>()
+            .HasOne(ra => ra.ServiceRequirement)
+            .WithOne(sr => sr.Assignment)
+            .HasForeignKey<RestaurantAssignment>(ra => ra.RequirementId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

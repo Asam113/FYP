@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using backend.Models.DTOs;
 using backend.Services;
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers;
 
@@ -236,5 +238,35 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [Authorize]
+    [HttpPut("update-profile")]
+    public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileDto request)
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Unauthorized(new { message = "Invalid token" });
+            }
+
+            var response = await _authService.UpdateProfileAsync(userId, request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("debug-users")]
+    public async Task<IActionResult> DebugUsers([FromServices] ApplicationDbContext context)
+    {
+        var users = await context.Users
+            .Select(u => new { u.Id, u.Name, u.Email, u.ProfilePicture, u.Role })
+            .ToListAsync();
+        return Ok(users);
     }
 }

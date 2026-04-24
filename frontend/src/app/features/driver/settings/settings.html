@@ -17,7 +17,12 @@
                 <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
                 <div>
                     <h6 class="mb-0 fw-bold">Bank Account Not Connected</h6>
-                    <small class="text-muted">You won't receive payouts until you connect a bank account.</small>
+                    <p class="text-muted small mb-2">You won't receive payouts until you connect a bank account.</p>
+                    <button class="btn btn-sm btn-outline-warning" (click)="verifyStripeStatus()" [disabled]="isVerifying">
+                        <span *ngIf="isVerifying" class="spinner-border spinner-border-sm me-1"></span>
+                        <i *ngIf="!isVerifying" class="bi bi-arrow-clockwise me-1"></i>
+                        Refresh Status
+                    </button>
                 </div>
             </div>
 

@@ -9,4 +9,7 @@ public interface IDriverService
     Task<bool> UpdateDriverStatusAsync(int driverId, string status);
     Task<object?> GetDashboardStatsAsync(int driverId);
     Task<string> GetStripeOnboardingLinkAsync(int driverId, string returnUrl, string refreshUrl);
+    Task<string> GetStripeDashboardLinkAsync(int driverId);
+    Task<bool> VerifyStripeStatusAsync(int driverId);
+    Task<IEnumerable<object>> GetEarningsAsync(int driverId);
 }

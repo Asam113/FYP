@@ -15,14 +15,21 @@
         <div class="col-md-4">
             <div class="card border-0 shadow-sm p-4 text-center h-100">
                 <div class="d-flex justify-content-center mb-3">
-                    <div class="avatar-circle">
-                        <ng-container *ngIf="user.profilePicture; else initialsIcon">
-                            <img [src]="user.profilePicture" alt="Profile"
-                                style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+                    <div class="avatar-circle overflow-hidden d-flex align-items-center justify-content-center position-relative profile-img-container"
+                        style="cursor: pointer;" (click)="fileInput.click()">
+                        <input #fileInput type="file" (change)="onProfilePicSelected($event)" hidden accept="image/*">
+                        <ng-container *ngIf="getProfilePictureUrl(user.profilePicture) as profileUrl; else initialsIcon">
+                            <img [src]="profileUrl" alt="Profile"
+                                style="width: 120px; height: 120px; object-fit: cover;">
                         </ng-container>
                         <ng-template #initialsIcon>
-                            {{ initials }}
+                            <div class="display-4 fw-bold text-white bg-primary w-100 h-100 d-flex align-items-center justify-content-center">
+                                {{ initials }}
+                            </div>
                         </ng-template>
+                        <div class="upload-overlay">
+                            <i class="bi bi-camera"></i>
+                        </div>
                     </div>
                 </div>
                 <h4 class="fw-bold text-dark mb-1">{{ user.name }}</h4>

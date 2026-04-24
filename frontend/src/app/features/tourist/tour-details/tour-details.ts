@@ -78,8 +78,8 @@ export class TourDetailsComponent implements OnInit {
                 discount = (price * 2) * (this.tour.coupleDiscountPercentage / 100);
             }
         } else if (this.selectedBookingType === 'Bulk') {
-            this.minPeople = 3;
-            if (this.numberOfPeople < 3) this.numberOfPeople = 3;
+            this.minPeople = 6;
+            // Removed auto-reset to allow validation error to show
 
             if (this.tour.bulkDiscountPercentage) {
                 discount = (price * this.numberOfPeople) * (this.tour.bulkDiscountPercentage / 100);
@@ -104,6 +104,17 @@ export class TourDetailsComponent implements OnInit {
     bookTour() {
         if (!this.tour || this.isBooking) return;
 
+        // Validation
+        if (this.selectedBookingType === 'Bulk' && this.numberOfPeople < 6) {
+            this.toastService.show('Bulk booking requires at least 6 people', 'warning');
+            return;
+        }
+
+        if (this.numberOfPeople > this.seatsRemaining) {
+            this.toastService.show(`Only ${this.seatsRemaining} seats left for this tour`, 'error');
+            return;
+        }
+
         const user = this.authService.getUser();
         if (!user || !user.roleSpecificId) {
             this.toastService.show('Please log in as a tourist to book', 'error');
@@ -121,23 +132,11 @@ export class TourDetailsComponent implements OnInit {
             bookingType: this.selectedBookingType
         };
 
-        this.bookingService.createBooking(bookingRequest).subscribe({
-            next: (res) => {
-                const bookingId = res.bookingId;
-                this.toastService.show('Booking created! Redirecting to payment...', 'success');
+        this.toastService.show('Initiating payment session...', 'info');
 
-                // Immediately initiate Stripe checkout
-                this.bookingService.createCheckoutSession(bookingId).subscribe({
-                    next: (session) => {
-                        window.location.href = session.url;
-                    },
-                    error: (err) => {
-                        console.error('Checkout session error:', err);
-                        this.toastService.show('Booking created but payment redirect failed. You can pay from My Bookings page.', 'error');
-                        this.router.navigate(['/tourist/my-bookings']);
-                        this.isBooking = false;
-                    }
-                });
+        this.bookingService.createBookingSession(bookingRequest).subscribe({
+            next: (session) => {
+                window.location.href = session.url;
             },
             error: (err) => {
                 console.error('Booking failed', err);

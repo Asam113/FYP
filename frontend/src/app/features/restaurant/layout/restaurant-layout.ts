@@ -28,7 +28,17 @@ export class RestaurantLayout implements OnInit {
 
     ngOnInit() {
         this.loadUnreadCount();
+        this.fetchCurrentUser();
         setInterval(() => this.loadUnreadCount(), 30000);
+    }
+
+    fetchCurrentUser() {
+        this.authService.getCurrentUser().subscribe({
+            next: (user) => {
+                this.user = user;
+            },
+            error: (err) => console.error('Failed to fetch user', err)
+        });
     }
 
     loadUnreadCount() {
@@ -55,5 +65,9 @@ export class RestaurantLayout implements OnInit {
 
     showRoomsTab(): boolean {
         return this.businessType === 'GuestHouse' || this.businessType === 'Guest House' || this.businessType === 'Hotel';
+    }
+
+    getProfilePictureUrl(path: string | null | undefined): string | null {
+        return this.authService.getProfilePictureUrl(path);
     }
 }

@@ -27,4 +27,12 @@ export class BookingService {
     createCheckoutSession(bookingId: number): Observable<{ sessionId: string; url: string }> {
         return this.http.post<{ sessionId: string; url: string }>(`${this.apiUrl}/${bookingId}/checkout`, {});
     }
+
+    createBookingSession(bookingData: any): Observable<{ sessionId: string; url: string }> {
+        return this.http.post<{ sessionId: string; url: string }>(`${this.apiUrl}/initiate-booking`, bookingData);
+    }
+
+    verifySession(sessionId: string): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/verify-session?sessionId=${sessionId}`);
+    }
 }

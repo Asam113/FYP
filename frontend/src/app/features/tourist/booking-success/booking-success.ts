@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { BookingService } from '../../../core/services/booking.service';
 
 @Component({
     selector: 'app-booking-success',
@@ -23,7 +24,10 @@ import { CommonModule } from '@angular/common';
         <div class="card bg-light border-0 rounded-3 p-3 mb-4 text-start">
           <div class="d-flex justify-content-between mb-2">
             <span class="text-muted small">Booking ID</span>
-            <span class="fw-medium">#{{ bookingId }}</span>
+            <span class="fw-medium">
+              <span *ngIf="isVerifying" class="spinner-border spinner-border-sm text-primary me-2"></span>
+              #{{ bookingId }}
+            </span>
           </div>
           <div class="d-flex justify-content-between">
             <span class="text-muted small">Session ID</span>
@@ -31,7 +35,18 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
 
+        <div *ngIf="bookingId === '...' && !verificationError" class="alert alert-info py-2 small mb-4">
+          Verification in progress... If this takes too long, click verify below.
+        </div>
+
+        <div *ngIf="verificationError" class="alert alert-danger py-2 small mb-4">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ verificationError }}
+        </div>
+
         <div class="d-grid gap-2">
+          <button *ngIf="bookingId === '...'" (click)="verifyBooking()" class="btn btn-primary rounded-pill py-2 mb-2" [disabled]="isVerifying">
+             <i class="bi bi-shield-check me-2"></i>Verify Payment Now
+          </button>
           <a routerLink="/tourist/my-bookings" class="btn btn-success rounded-pill py-2">
             <i class="bi bi-ticket-perforated me-2"></i>View My Bookings
           </a>
@@ -44,15 +59,44 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class BookingSuccess implements OnInit {
-    bookingId: string = '';
+    bookingId: string = '...';
     sessionId: string = '';
+    isVerifying: boolean = true;
+    verificationError: string | null = null;
 
-    constructor(private route: ActivatedRoute) { }
+    constructor(
+        private route: ActivatedRoute,
+        private bookingService: BookingService
+    ) { }
 
     ngOnInit(): void {
         this.route.queryParams.subscribe(params => {
-            this.bookingId = params['booking_id'] || '';
             this.sessionId = params['session_id'] || '';
+            if (this.sessionId) {
+                this.verifyBooking();
+            } else {
+                this.isVerifying = false;
+            }
+        });
+    }
+
+    verifyBooking() {
+        this.isVerifying = true;
+        this.verificationError = null;
+        this.bookingService.verifySession(this.sessionId).subscribe({
+            next: (res) => {
+                if (res.success) {
+                    this.bookingId = res.bookingId;
+                } else {
+                    this.verificationError = res.message || 'Payment could not be verified.';
+                }
+                this.isVerifying = false;
+            },
+            error: (err) => {
+                console.error('Verification failed', err);
+                this.verificationError = 'Server error during verification. Please check your internet connection and try again.';
+                this.isVerifying = false;
+            }
         });
     }
 }

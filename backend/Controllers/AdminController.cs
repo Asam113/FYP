@@ -472,11 +472,13 @@ public class AdminController : ControllerBase
             // 1. Break circular dependency between RestaurantAssignments and Orders
             await _context.Database.ExecuteSqlRawAsync("UPDATE RestaurantAssignments SET OrderId = NULL");
 
-            // 2. Clear Notifications and Logs
+            // 2. Clear Notifications, Logs and Ratings
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Notifications");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Reviews");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Ratings");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Documents");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Earnings");
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomImages");
 
             // 3. Clear Payments and Bookings
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Refunds");
@@ -496,7 +498,8 @@ public class AdminController : ControllerBase
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM OfferMenuItems");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Offers");
 
-            // 6. Clear Tour Definitions
+            // 6. Clear Tour Definitions and Room Data
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomCategories");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM ServiceRequirements");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM TourImages");
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Accommodations");
@@ -573,16 +576,20 @@ public class AdminController : ControllerBase
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Offers WHERE OfferId IN (SELECT OfferId FROM RestaurantOffers WHERE RestaurantId = {0})", restaurantId);
 
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM RestaurantImages WHERE RestaurantId = {0}", restaurantId);
-                await _context.Database.ExecuteSqlRawAsync("DELETE FROM MenuItemImages WHERE MenuItemId IN (SELECT MenuItemId FROM MenuItems WHERE MenuId IN (SELECT MenuId FROM Menus WHERE RestaurantId = {0}))", restaurantId);
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomImages WHERE RoomCategoryId IN (SELECT RoomCategoryId FROM RoomCategories WHERE RestaurantId = {0})", restaurantId);
+                await _context.Database.ExecuteSqlRawAsync("DELETE FROM RoomCategories WHERE RestaurantId = {0}", restaurantId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM MenuItems WHERE MenuId IN (SELECT MenuId FROM Menus WHERE RestaurantId = {0})", restaurantId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Menus WHERE RestaurantId = {0}", restaurantId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM RestaurantAssignments WHERE RestaurantId = {0}", restaurantId);
                 await _context.Database.ExecuteSqlRawAsync("DELETE FROM Restaurants WHERE RestaurantId = {0}", restaurantId);
             }
 
-            // 3. Delete Notifications, Bookings, Reviews etc.
+            // 3. Delete Notifications, Bookings, Reviews, Ratings etc.
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Notifications WHERE UserId = {0}", userId);
             await _context.Database.ExecuteSqlRawAsync("DELETE FROM Reviews WHERE UserId = {0}", userId);
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Ratings WHERE TouristId IN (SELECT TouristId FROM Tourists WHERE UserId = {0})", userId);
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Ratings WHERE DriverId IN (SELECT DriverId FROM Drivers WHERE UserId = {0})", userId);
+            await _context.Database.ExecuteSqlRawAsync("DELETE FROM Ratings WHERE RestaurantId IN (SELECT RestaurantId FROM Restaurants WHERE UserId = {0})", userId);
             
             // If Tourist, delete bookings and related
             var tourist = await _context.Tourists.FirstOrDefaultAsync(t => t.UserId == userId);

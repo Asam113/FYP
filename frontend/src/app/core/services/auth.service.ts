@@ -111,6 +111,12 @@ export class AuthService {
         return null;
     }
 
+    getProfilePictureUrl(path: string | null | undefined): string | null {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        return `${environment.apiUrl}${path}`;
+    }
+
     updatePassword(data: any): Observable<any> {
         return this.http.put(`${this.apiUrl}/update-password`, data);
     }
@@ -133,5 +139,30 @@ export class AuthService {
 
     resetPassword(data: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/reset-password`, data);
+    }
+
+    getCurrentUser(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/me`).pipe(
+            tap(user => {
+                // Update localStorage with fresh user data
+                const currentUser = this.getUser();
+                if (currentUser) {
+                    const updatedUser = { ...currentUser, ...user };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+            })
+        );
+    }
+
+    updateProfile(formData: FormData): Observable<any> {
+        return this.http.put(`${this.apiUrl}/update-profile`, formData).pipe(
+            tap((response: any) => {
+                const currentUser = this.getUser();
+                if (currentUser) {
+                    const updatedUser = { ...currentUser, ...response };
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+            })
+        );
     }
 }

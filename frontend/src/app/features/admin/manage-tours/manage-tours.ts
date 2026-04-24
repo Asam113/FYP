@@ -566,17 +566,16 @@ export class ManageTours implements OnInit {
           this.syncApiTourState(this.selectedTour!.id);
           this.showMenuModal = false;
           this.toastService.show('Restaurant offer accepted successfully', 'success');
+
+          // Close modal and clear selection ONLY after success
+          this.selectedRequirement = null;
+          this.selectedOffer = null;
         },
         error: (err) => {
           console.error('Error approving offer:', err);
           this.toastService.show('Failed to approve offer', 'error');
         }
       });
-
-    // Close modal
-    this.showMenuModal = false;
-    this.selectedRequirement = null;
-    this.selectedOffer = null;
   }
 
   onMenuModalClose() {
@@ -621,17 +620,16 @@ export class ManageTours implements OnInit {
           this.syncApiTourState(this.selectedTour!.id);
           this.showAccommodationModal = false;
           this.toastService.show('Accommodation offer accepted successfully', 'success');
+          
+          // Clear selection ONLY after success
+          this.selectedRequirement = null;
+          this.selectedOffer = null;
         },
         error: (err) => {
           console.error('Error approving accommodation offer:', err);
           this.toastService.show('Failed to approve accommodation offer', 'error');
         }
       });
-
-    // Close modal
-    this.showAccommodationModal = false;
-    this.selectedRequirement = null;
-    this.selectedOffer = null;
   }
 
   unapproveRestaurantOffer(requirement: ServiceRequirement, offer: RestaurantOffer) {

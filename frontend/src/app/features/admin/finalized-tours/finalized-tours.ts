@@ -43,6 +43,14 @@ interface ServiceRequirement {
     stayDurationDays?: number;
     estimatedPeople: number;
     restaurantOffers: RestaurantOffer[];
+    assignment?: {
+        assignmentId: number;
+        isServed: boolean;
+        isPaid?: boolean;
+        paidAt?: string;
+        paymentMethod?: string;
+        servedAt?: string;
+    };
 }
 
 interface DriverOffer {
@@ -99,6 +107,7 @@ interface DisplayTour {
     status: string;
 }
 
+import { Router } from '@angular/router';
 import { ConfirmationModalComponent } from '../../../shared/components/confirmation-modal/confirmation-modal.component';
 
 @Component({
@@ -126,7 +135,7 @@ export class FinalizedTours implements OnInit {
     confirmType: 'danger' | 'warning' | 'info' = 'info';
     private confirmAction: (() => void) | null = null;
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private router: Router) { }
 
     ngOnInit(): void {
         this.loadTours();
@@ -217,6 +226,59 @@ export class FinalizedTours implements OnInit {
         return `${h12}:${m < 10 ? '0' + m : m} ${ampm}`;
     }
 
+    initiatePayout(req: ServiceRequirement): void {
+        if (!req.assignment) return;
+        this.http.post(`${environment.apiUrl}/api/payouts/restaurant/${req.assignment.assignmentId}/initiate`, {})
+            .subscribe({
+                next: (res: any) => {
+                    alert(res.message);
+                },
+                error: (err) => alert('Failed to initiate payout')
+            });
+    }
+
+    confirmPayout(req: ServiceRequirement): void {
+        if (!req.assignment) return;
+        this.http.post(`${environment.apiUrl}/api/payouts/restaurant/${req.assignment.assignmentId}/confirm`, {})
+            .subscribe({
+                next: (res: any) => {
+                    req.assignment!.isPaid = true;
+                    req.assignment!.paidAt = new Date().toISOString();
+                },
+                error: (err) => alert('Failed to confirm payout')
+            });
+    }
+
+    markAsServed(req: ServiceRequirement, paymentMethod: 'Cash' | 'Online'): void {
+        if (!req.assignment) return;
+
+        if (paymentMethod === 'Online' && !req.assignment.isPaid) {
+            alert('Payout must be completed before marking as served.');
+            return;
+        }
+
+        this.confirmTitle = `Mark as Served (${paymentMethod})`;
+        this.confirmMessage = `Are you sure you want to mark this ${req.type} as served via ${paymentMethod}?`;
+        this.confirmText = 'Mark Served';
+        this.confirmType = 'info';
+        this.confirmAction = () => {
+            this.http.put(`${environment.apiUrl}/api/RestaurantAssignments/${req.assignment!.assignmentId}/serve`, {
+                isServed: true,
+                paymentMethod: paymentMethod
+            }).subscribe({
+                next: () => {
+                    req.assignment!.isServed = true;
+                    req.assignment!.paymentMethod = paymentMethod;
+                    req.assignment!.servedAt = new Date().toISOString();
+                },
+                error: (err: any) => {
+                    alert(err.error || 'Error marking as served');
+                }
+            });
+        };
+        this.showConfirmModal = true;
+    }
+
     markTourAsReady(tourId: number): void {
         this.confirmTitle = 'Mark as Ready';
         this.confirmMessage = 'Are you sure you want to mark this tour as Ready? This indicates all bookings are confirmed and the tour is prepared for departure.';
@@ -256,20 +318,12 @@ export class FinalizedTours implements OnInit {
     }
 
     completeTour(tourId: number): void {
-        this.confirmTitle = 'End Tour';
-        this.confirmMessage = 'Are you sure you want to complete this tour? This will change the status to Completed.';
-        this.confirmText = 'End Tour';
+        this.confirmTitle = 'Proceed to End Tour';
+        this.confirmMessage = 'This will take you to the Driver Payout page to complete payments and finalize the tour.';
+        this.confirmText = 'Proceed';
         this.confirmType = 'info';
         this.confirmAction = () => {
-            this.http.post(`${environment.apiUrl}/api/tours/${tourId}/complete`, {})
-                .subscribe({
-                    next: () => {
-                        this.loadTours();
-                    },
-                    error: (err) => {
-                        console.error('Error completing tour:', err);
-                    }
-                });
+            this.router.navigate(['/admin/driver-payouts', tourId]);
         };
         this.showConfirmModal = true;
     }

@@ -37,6 +37,17 @@ public class Accommodation
 
     public DateTime? CheckOutDate { get; set; }
 
+    public bool IsServed { get; set; } = false;
+
+    public DateTime? ServedAt { get; set; }
+
+    public bool IsPaid { get; set; } = false;
+
+    public DateTime? PaidAt { get; set; }
+
+    [MaxLength(20)]
+    public string? PaymentMethod { get; set; } // "Cash" or "Online"
+
     // Navigation Properties
     public virtual Tour Tour { get; set; } = null!;
 }

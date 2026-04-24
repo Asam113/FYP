@@ -261,7 +261,35 @@
                                             </div>
                                         </div>
                                         <div class="text-end">
-                                            <span
+                                            <div *ngIf="req.assignment && !req.assignment.isServed && selectedTour.status === 'InProgress'" class="d-flex flex-column gap-2 align-items-end">
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-outline-success rounded-pill" (click)="markAsServed(req, 'Cash')">
+                                                        <i class="bi bi-cash me-1"></i> Cash
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-primary rounded-pill" 
+                                                            [disabled]="!req.assignment.isPaid"
+                                                            (click)="markAsServed(req, 'Online')">
+                                                        <i class="bi bi-credit-card me-1"></i> Online
+                                                    </button>
+                                                </div>
+                                                <div *ngIf="!req.assignment.isPaid" class="d-flex gap-2">
+                                                    <button class="btn btn-xs btn-primary rounded-pill" (click)="initiatePayout(req)">
+                                                        Initiate Payout
+                                                    </button>
+                                                    <button class="btn btn-xs btn-success rounded-pill" (click)="confirmPayout(req)">
+                                                        Confirm Payout
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="req.assignment?.isServed">
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                                    <i class="bi bi-check2-circle me-1"></i> Served ({{req.assignment?.paymentMethod}})
+                                                </span>
+                                                <div class="small text-muted mt-1" *ngIf="req.assignment?.servedAt">
+                                                    {{req.assignment?.servedAt | date:'shortTime'}}
+                                                </div>
+                                            </div>
+                                            <span *ngIf="!req.assignment?.isServed && (selectedTour.status !== 'InProgress' || !req.assignment)"
                                                 class="badge bg-success-subtle text-success border border-success-subtle">Fulfilled</span>
                                         </div>
                                     </div>

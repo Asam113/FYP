@@ -96,14 +96,18 @@ public class PaymentService : IPaymentService
         }
     }
 
-    public async Task<bool> ProcessRestaurantPayoutAsync(int assignmentId)
+    public async Task<bool> ProcessRestaurantPayoutAsync(int assignmentId, string? paymentMethod)
     {
         var assignment = await _context.RestaurantAssignments
             .Include(a => a.Restaurant)
             .Include(a => a.Tour)
             .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
 
-        if (assignment == null || string.IsNullOrEmpty(assignment.Restaurant.StripeAccountId))
+        if (assignment == null)
+            return false;
+
+        // If online payment and no stripe account, return false
+        if (paymentMethod == "Online" && string.IsNullOrEmpty(assignment.Restaurant.StripeAccountId))
             return false;
 
         // Create Earning record
@@ -113,17 +117,28 @@ public class PaymentService : IPaymentService
             RestaurantId = assignment.RestaurantId,
             Amount = assignment.FinalPrice,
             Type = "RestaurantPayout",
-            Status = "Processing",
+            Status = paymentMethod == "Cash" ? "Paid" : "Processing",
+            PaymentMethod = paymentMethod,
             EarnedAt = DateTime.UtcNow
         };
         _context.Earnings.Add(earning);
         await _context.SaveChangesAsync();
 
-        // Trigger Stripe Transfer
+        if (paymentMethod == "Cash")
+        {
+            return true;
+        }
+
+        // Trigger Stripe Transfer for Online payments
+        if (string.IsNullOrEmpty(assignment.Restaurant?.StripeAccountId))
+        {
+            return false; // Cannot payout if restaurant has no stripe account
+        }
+
         var success = await _stripeService.TransferToConnectedAccountAsync(
             assignment.Restaurant.StripeAccountId,
             assignment.FinalPrice,
-            $"Payout for Tour: {assignment.Tour.Title} - Order Served");
+            $"Payout for Tour: {assignment.Tour?.Title ?? "Unknown"} - Order Served");
 
         if (success)
         {
@@ -184,5 +199,44 @@ public class PaymentService : IPaymentService
 
         await _context.SaveChangesAsync();
         return allSuccess;
+    }
+
+    public async Task<bool> ProcessSingleDriverPayoutAsync(int offerId)
+    {
+        var offer = await _context.DriverOffers
+            .Include(o => o.Driver)
+            .Include(o => o.Tour)
+            .FirstOrDefaultAsync(o => o.OfferId == offerId);
+
+        if (offer == null || string.IsNullOrEmpty(offer.Driver.StripeAccountId))
+            return false;
+
+        // Create Earning record
+        var earning = new Earning
+        {
+            TourId = offer.TourId ?? 0,
+            DriverId = offer.DriverId,
+            Amount = offer.OfferedAmount,
+            Type = "DriverPayout",
+            Status = "Processing",
+            EarnedAt = DateTime.UtcNow
+        };
+        _context.Earnings.Add(earning);
+        await _context.SaveChangesAsync();
+
+        // Trigger Stripe Transfer
+        var success = await _stripeService.TransferToConnectedAccountAsync(
+            offer.Driver.StripeAccountId,
+            offer.OfferedAmount,
+            $"Payout for Tour: {offer.Tour?.Title} - Individual Driver Payout");
+
+        if (success)
+        {
+            earning.Status = "Paid";
+            offer.Driver.TotalEarnings += offer.OfferedAmount;
+            await _context.SaveChangesAsync();
+        }
+
+        return success;
     }
 }

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
-import { ConfirmModal } from '../components/confirm-modal/confirm-modal';
 
 interface MenuItem {
   itemId: number;
@@ -17,7 +16,7 @@ interface MenuItem {
 @Component({
   selector: 'app-menu-selection-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModal],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="modal fade show d-block" *ngIf="isVisible" tabindex="-1" style="background: rgba(0,0,0,0.5); position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 11000;">
       <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -118,16 +117,6 @@ interface MenuItem {
       </div>
     </div>
 
-    <!-- Custom Confirm Modal -->
-    <app-confirm-modal
-        *ngIf="showConfirmModal"
-        title="Confirm Menu Selection"
-        message="Are you sure you want to approve this offer with the selected items? The tourist will be notified."
-        confirmText="Yes, Approve"
-        confirmVariant="success"
-        (confirm)="confirm()"
-        (cancel)="showConfirmModal = false">
-    </app-confirm-modal>
   `,
   styles: [`
     .modal.show {
@@ -152,8 +141,6 @@ export class MenuSelectionModal {
   differencePercent: number = 0;
   isWithinTolerance: boolean = true; // Default true to allow proceeding if prices match exactly initially or are ignored? No, logic updates it.
   loading: boolean = false;
-
-  showConfirmModal: boolean = false;
 
   constructor(private http: HttpClient) { }
 
@@ -214,12 +201,11 @@ export class MenuSelectionModal {
 
   triggerConfirm() {
     if (this.isWithinTolerance && this.selectedItems.length > 0) {
-      this.showConfirmModal = true;
+      this.confirm();
     }
   }
 
   confirm() {
-    this.showConfirmModal = false;
     this.onConfirm.emit(this.selectedItems);
   }
 

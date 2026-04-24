@@ -35,6 +35,8 @@ public class ToursController : ControllerBase
                 .ThenInclude(offer => offer.Driver)
                     .ThenInclude(driver => driver.User)
             .Include(t => t.ServiceRequirements)
+                .ThenInclude(req => req.Assignment)
+            .Include(t => t.ServiceRequirements)
                 .ThenInclude(req => req.RestaurantOffers)
                     .ThenInclude(offer => offer.Restaurant)
                         .ThenInclude(r => r.User)
@@ -55,6 +57,8 @@ public class ToursController : ControllerBase
             .Include(t => t.DriverOffers)
                 .ThenInclude(offer => offer.Driver)
                     .ThenInclude(driver => driver.User)
+            .Include(t => t.ServiceRequirements)
+                .ThenInclude(req => req.Assignment)
             .Include(t => t.ServiceRequirements)
                 .ThenInclude(req => req.RestaurantOffers)
                     .ThenInclude(offer => offer.Restaurant)
@@ -341,17 +345,7 @@ public class ToursController : ControllerBase
         tour.Status = TourStatus.Completed;
         await _context.SaveChangesAsync();
 
-        // Trigger Stripe Payouts for Drivers
-        try
-        {
-            await _paymentService.ProcessDriverPayoutsAsync(id);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Driver payouts failed: {ex.Message}");
-        }
-
-        return Ok(new { message = "Tour successfully completed and payouts initiated.", status = tour.Status.ToString() });
+        return Ok(new { message = "Tour successfully completed. Please proceed to driver payouts.", status = tour.Status.ToString() });
     }
 
     // POST: api/tours/{id}/publish

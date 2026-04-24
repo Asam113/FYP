@@ -9,8 +9,28 @@ using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using backend.Models.DTOs;
+using backend.Models.Enums;
+
 
 namespace backend.Controllers;
+ 
+public class RestaurantDashboardStatsDto
+{
+    public int TotalOffersSent { get; set; }
+    public int PendingRequests { get; set; }
+    public int ConfirmedOrders { get; set; }
+    public int ActiveMenuItems { get; set; }
+    public List<DashboardActivityDto> RecentActivities { get; set; } = [];
+}
+
+public class DashboardActivityDto
+{
+    public string TourName { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Time { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public string BadgeStatus { get; set; } = string.Empty;
+}
 
 [ApiController]
 [Route("api/[controller]")]
@@ -127,5 +147,60 @@ public class RestaurantsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    // GET: api/restaurants/{id}/dashboard-stats
+    [HttpGet("{id}/dashboard-stats")]
+    [Authorize(Roles = "Restaurant,Admin")]
+    public async Task<ActionResult<RestaurantDashboardStatsDto>> GetDashboardStats(int id)
+    {
+        var restaurant = await _context.Restaurants
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.RestaurantId == id);
+
+        if (restaurant == null) return NotFound("Restaurant not found");
+
+        var stats = new RestaurantDashboardStatsDto();
+
+        // 1. Total Offers Sent
+        stats.TotalOffersSent = await _context.RestaurantOffers
+            .CountAsync(ro => ro.RestaurantId == id);
+
+        // 2. Pending Requests (Open requirements matching restaurant capabilities)
+        var requirementTypes = new List<string>();
+        if (restaurant.ProvidesMeal) requirementTypes.Add("Meal");
+        if (restaurant.ProvidesRoom) requirementTypes.Add("Accommodation");
+
+        stats.PendingRequests = await _context.ServiceRequirements
+            .CountAsync(sr => sr.Status == "Open" && requirementTypes.Contains(sr.Type));
+
+        // 3. Confirmed Orders
+        stats.ConfirmedOrders = await _context.RestaurantAssignments
+            .CountAsync(ra => ra.RestaurantId == id && (ra.Status == AssignmentStatus.Accepted || ra.Status == AssignmentStatus.Completed));
+
+        // 4. Active Menu Items
+        stats.ActiveMenuItems = await _context.MenuItems
+            .CountAsync(mi => mi.Menu.RestaurantId == id);
+
+        // 5. Recent Activities (Latest 5 Offers)
+        var recentOffers = await _context.RestaurantOffers
+            .Include(ro => ro.ServiceRequirement)
+                .ThenInclude(sr => sr.Tour)
+            .Where(ro => ro.RestaurantId == id)
+            .OrderByDescending(ro => ro.CreatedAt)
+            .Take(5)
+            .Select(ro => new DashboardActivityDto
+            {
+                TourName = ro.ServiceRequirement.Tour.Title,
+                Status = "Offer Sent",
+                Time = ro.CreatedAt.ToString("MMM dd, HH:mm"),
+                Price = ro.PricePerHead,
+                BadgeStatus = "Pending"
+            })
+            .ToListAsync();
+
+        stats.RecentActivities = recentOffers;
+
+        return Ok(stats);
     }
 }

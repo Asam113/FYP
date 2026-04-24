@@ -23,6 +23,27 @@
     <!-- OVERVIEW TAB CONTENT -->
     <div *ngIf="activeTab === 'overview'" class="fade-in">
 
+        <!-- Stripe Payout Setup Alert -->
+        <div *ngIf="!payoutsEnabled" class="alert alert-primary border-0 shadow-sm rounded-4 mb-4" role="alert"
+            style="background: linear-gradient(135deg, #f0f7ff 0%, #e1effe 100%);">
+            <div class="d-flex align-items-center">
+                <div class="icon-box bg-primary text-white me-3 rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 45px; height: 45px;">
+                    <i class="bi bi-wallet2 fs-5"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading fw-bold mb-1 text-primary">Setup Your Payout Account</h6>
+                    <p class="mb-0 text-muted small">To receive payments for your tours, you must link your bank account
+                        via Stripe.</p>
+                </div>
+                <button (click)="setupStripeOnboarding()" class="btn btn-primary rounded-pill px-4 ms-3"
+                    [disabled]="isStripeLoading">
+                    <span *ngIf="isStripeLoading" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ stripeAccountId ? 'Complete Setup' : 'Link Bank Account' }}
+                </button>
+            </div>
+        </div>
+
         <!-- Loading State for Stats -->
         <div *ngIf="isLoadingStats" class="text-center py-5">
             <div class="spinner-border text-primary" role="status"></div>
