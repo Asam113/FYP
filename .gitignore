@@ -44,6 +44,10 @@ Thumbs.db
 
 backend/wwwroot/uploads
 
+# .NET Build Output (NEVER commit these - they contain appsettings.json with secrets)
+backend/bin/
+backend/obj/
+
 # Environment Variables
 frontend/.env
 backend/.env
