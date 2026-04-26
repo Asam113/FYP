@@ -24,13 +24,13 @@ public class Driver
 
     public DateTime? LicenceExpiryDate { get; set; }
 
-    [MaxLength(200)]
+    [MaxLength(500)]
     public string? LicenceImage { get; set; }
 
-    [MaxLength(200)]
+    [MaxLength(500)]
     public string? CnicFront { get; set; }
 
-    [MaxLength(200)]
+    [MaxLength(500)]
     public string? CnicBack { get; set; }
 
     [MaxLength(20)]

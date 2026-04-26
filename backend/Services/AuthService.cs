@@ -38,7 +38,7 @@ public class AuthService : IAuthService
             throw new Exception("Email already registered");
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        string? profilePicturePath = await SaveFileAsync(request.ProfilePicture, "profiles");
+        string? profilePicturePath = await _imageService.SaveImageAsync(request.ProfilePicture, "profiles");
 
         // Generate 6 digit OTP
         var otp = new Random().Next(100000, 999999).ToString();
@@ -174,7 +174,7 @@ public class AuthService : IAuthService
 
             Console.WriteLine("[SignupDriver] Creating new User entity");
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            string? profilePicPath = await SaveFileAsync(request.ProfilePicture, "profiles");
+            string? profilePicPath = await _imageService.SaveImageAsync(request.ProfilePicture, "profiles");
 
             user = new User
             {
@@ -215,7 +215,7 @@ public class AuthService : IAuthService
             try {
                 if (request.ProfilePicture != null)
                 {
-                    user.ProfilePicture = await SaveFileAsync(request.ProfilePicture, "profiles");
+                    user.ProfilePicture = await _imageService.SaveImageAsync(request.ProfilePicture, "profiles");
                     Console.WriteLine($"[SignupDriver] Profile picture successfully updated to: {user.ProfilePicture}");
                 }
                 _context.Users.Update(user);
@@ -272,9 +272,9 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         // Handle Documents
-        string? cnicFrontPath = await SaveFileAsync(request.CnicFront, "documents");
-        string? cnicBackPath = await SaveFileAsync(request.CnicBack, "documents");
-        string? licencePath = await SaveFileAsync(request.LicenceImage, "documents");
+        string? cnicFrontPath = await _imageService.SaveImageAsync(request.CnicFront, "documents");
+        string? cnicBackPath = await _imageService.SaveImageAsync(request.CnicBack, "documents");
+        string? licencePath = await _imageService.SaveImageAsync(request.LicenceImage, "documents");
 
         if (cnicFrontPath != null) _context.Documents.Add(new Document { DriverId = driverEntry.DriverId, DocumentType = "CNIC Front", DocumentUrl = cnicFrontPath, UploadedAt = DateTime.UtcNow });
         if (cnicBackPath != null) _context.Documents.Add(new Document { DriverId = driverEntry.DriverId, DocumentType = "CNIC Back", DocumentUrl = cnicBackPath, UploadedAt = DateTime.UtcNow });
@@ -413,7 +413,7 @@ public class AuthService : IAuthService
             if (string.IsNullOrEmpty(request.Name)) throw new Exception("Name is required for new users");
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            string? profilePicPath = await SaveFileAsync(request.ProfilePicture, "profiles");
+            string? profilePicPath = await _imageService.SaveImageAsync(request.ProfilePicture, "profiles");
 
             user = new User
             {
@@ -446,7 +446,7 @@ public class AuthService : IAuthService
             try {
                 if (request.ProfilePicture != null)
                 {
-                    user.ProfilePicture = await SaveFileAsync(request.ProfilePicture, "profiles");
+                    user.ProfilePicture = await _imageService.SaveImageAsync(request.ProfilePicture, "profiles");
                     Console.WriteLine($"[SignupRestaurant] Profile picture successfully updated to: {user.ProfilePicture}");
                 }
                 _context.Users.Update(user);
@@ -519,7 +519,7 @@ public class AuthService : IAuthService
 
         if (request.LicenseDocument != null)
         {
-            string? licensePath = await SaveFileAsync(request.LicenseDocument, "documents");
+            string? licensePath = await _imageService.SaveImageAsync(request.LicenseDocument, "documents");
             if (licensePath != null)
             {
                 _context.Documents.Add(new Document 
@@ -555,65 +555,7 @@ public class AuthService : IAuthService
         return await GenerateAuthResponseAsync(user, restaurant.RestaurantId);
     }
 
-    private async Task<string?> SaveBase64ImageAsync(string base64String, string folderName)
-    {
-        try
-        {
-            var commaIndex = base64String.IndexOf(',');
-            if (commaIndex != -1)
-            {
-                base64String = base64String.Substring(commaIndex + 1);
-            }
-
-            // Simple validation could be added here
-            byte[] imageBytes = Convert.FromBase64String(base64String);
-
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", folderName);
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueFileName = Guid.NewGuid().ToString() + ".png"; // Assuming png or verify mime type if needed
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            await File.WriteAllBytesAsync(filePath, imageBytes);
-
-            return $"/uploads/{folderName}/{uniqueFileName}";
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
-
-    private async Task<string?> SaveFileAsync(IFormFile? file, string folderName)
-    {
-        if (file == null || file.Length == 0) 
-        {
-            Console.WriteLine($"[SaveFileAsync] No file received for {folderName}");
-            return null;
-        }
-
-        Console.WriteLine($"[SaveFileAsync] Receiving file: {file.FileName}, Size: {file.Length}, Target Folder: {folderName}");
-
-        var uploadsFolder = Path.Combine(_environment.WebRootPath ?? Directory.GetCurrentDirectory(), "wwwroot", "uploads", folderName);
-        if (_environment.WebRootPath == null) Console.WriteLine("[SaveFileAsync] WARNING: WebRootPath is NULL. Using current directory fallback.");
-        Console.WriteLine($"[SaveFileAsync] Physical target folder: {uploadsFolder}");
-
-        if (!Directory.Exists(uploadsFolder))
-            Directory.CreateDirectory(uploadsFolder);
-
-        var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        var relativePath = $"/uploads/{folderName}/{uniqueFileName}";
-        Console.WriteLine($"[SaveFileAsync] File saved successfully: {relativePath}");
-        return relativePath;
-    }
+    // Private helper methods for file saving removed in favor of ImageService
 
     private async Task<AuthResponse> GenerateAuthResponseAsync(User user, int roleSpecificId)
     {
@@ -891,7 +833,7 @@ public class AuthService : IAuthService
 
         if (request.ProfilePicture != null)
         {
-            user.ProfilePicture = await SaveFileAsync(request.ProfilePicture, "profiles");
+            user.ProfilePicture = await _imageService.SaveImageAsync(request.ProfilePicture, "profiles");
         }
 
         _context.Users.Update(user);

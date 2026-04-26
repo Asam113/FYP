@@ -15,12 +15,14 @@ public class ToursController : ControllerBase
     private readonly ApplicationDbContext _context;
     private readonly INotificationService _notificationService;
     private readonly IPaymentService _paymentService;
+    private readonly IImageService _imageService;
 
-    public ToursController(ApplicationDbContext context, INotificationService notificationService, IPaymentService paymentService)
+    public ToursController(ApplicationDbContext context, INotificationService notificationService, IPaymentService paymentService, IImageService imageService)
     {
         _context = context;
         _notificationService = notificationService;
         _paymentService = paymentService;
+        _imageService = imageService;
     }
 
     // GET: api/tours
@@ -77,7 +79,7 @@ public class ToursController : ControllerBase
 
     // POST: api/tours
     [HttpPost]
-    public async Task<ActionResult<Tour>> CreateTour(CreateTourDto tourDto)
+    public async Task<ActionResult<Tour>> CreateTour([FromForm] CreateTourDto tourDto)
     {
         if (!ModelState.IsValid)
         {
@@ -89,8 +91,11 @@ public class ToursController : ControllerBase
         {
             Title = tourDto.Title,
             Description = tourDto.Description,
-            DepartureLocation = tourDto.DepartureLocation,  // NEW
-            Destination = tourDto.Destination,              // NEW
+            DepartureCity = tourDto.DepartureCity,
+            DepartureLocation = tourDto.DepartureLocation,
+            DepartureLatitude = tourDto.DepartureLatitude,
+            DepartureLongitude = tourDto.DepartureLongitude,
+            Destination = tourDto.Destination,
             DurationDays = (int)(tourDto.EndDate.Date - tourDto.StartDate.Date).TotalDays + 1,  // Updated to use Date component
             StartDate = tourDto.StartDate,
             EndDate = tourDto.EndDate,
@@ -102,6 +107,13 @@ public class ToursController : ControllerBase
             BulkBookingMinPersons = tourDto.BulkBookingMinPersons,
             CreatedAt = DateTime.UtcNow
         };
+
+        // Handle Image Upload
+        if (tourDto.Image != null)
+        {
+            var imageUrl = await _imageService.SaveImageAsync(tourDto.Image, "tours");
+            tour.ImageUrl = imageUrl;
+        }
 
         // Add tour to context
         _context.Tours.Add(tour);

@@ -7,6 +7,7 @@ using backend.Models.RestaurantMenu;
 using backend.Models.Enums;
 using backend.Models.UserManagement;
 using backend.Models.DTOs; // Assuming we might need DTOs, or we can use primitives/Models
+using backend.Services;
 
 namespace backend.Controllers;
 
@@ -16,12 +17,14 @@ namespace backend.Controllers;
 public class RestaurantMenuController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IImageService _imageService;
     private readonly IWebHostEnvironment _environment;
 
-    public RestaurantMenuController(ApplicationDbContext context, IWebHostEnvironment environment)
+    public RestaurantMenuController(ApplicationDbContext context, IWebHostEnvironment environment, IImageService imageService)
     {
         _context = context;
         _environment = environment;
+        _imageService = imageService;
     }
 
     private int GetRestaurantId()
@@ -173,7 +176,7 @@ public class RestaurantMenuController : ControllerBase
             string? imagePath = null;
             if (itemDto.ImageFile != null)
             {
-                imagePath = await SaveFileAsync(itemDto.ImageFile, "menu_items");
+                imagePath = await _imageService.SaveImageAsync(itemDto.ImageFile, "menu_items");
             }
 
             var menuItem = new MenuItem
@@ -218,7 +221,7 @@ public class RestaurantMenuController : ControllerBase
 
             if (itemDto.ImageFile != null)
             {
-                menuItem.Image = await SaveFileAsync(itemDto.ImageFile, "menu_items");
+                menuItem.Image = await _imageService.SaveImageAsync(itemDto.ImageFile, "menu_items");
             }
 
             await _context.SaveChangesAsync();
@@ -279,24 +282,7 @@ public class RestaurantMenuController : ControllerBase
         }
     }
 
-    private async Task<string?> SaveFileAsync(IFormFile? file, string folderName)
-    {
-        if (file == null || file.Length == 0) return null;
-
-        var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", folderName);
-        if (!Directory.Exists(uploadsFolder))
-            Directory.CreateDirectory(uploadsFolder);
-
-        var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(stream);
-        }
-
-        return $"/uploads/{folderName}/{uniqueFileName}";
-    }
+    // Local SaveFileAsync removed in favor of ImageService (Cloudinary)
 }
 
 public class CreateMenuDto

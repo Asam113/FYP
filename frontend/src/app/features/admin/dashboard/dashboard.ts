@@ -1,16 +1,68 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, BaseChartDirective, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
+
+  stats = {
+    totalTours: 0,
+    totalDrivers: 0,
+    totalPartners: 0,
+    pendingVerifications: 0
+  };
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit() {
+    this.loadStats();
+  }
+
+  loadStats() {
+    this.http.get<any>(`${environment.apiUrl}/api/admin/dashboard-stats`).subscribe({
+      next: (data) => this.stats = data,
+      error: (err) => console.error('Error loading stats', err)
+    });
+    
+    this.loadRecentTours();
+  }
+
+  loadRecentTours() {
+    this.http.get<any[]>(`${environment.apiUrl}/api/tours`).subscribe({
+      next: (tours) => {
+        this.recentTours = tours.slice(0, 5).map(t => ({
+          id: `T${t.tourId.toString().padStart(3, '0')}`,
+          destination: t.destination,
+          client: t.title, // Using title as a display name
+          status: t.status,
+          statusClass: this.getStatusClass(t.status),
+          amount: `${t.pricePerHead.toLocaleString()} PKR`
+        }));
+      },
+      error: (err) => console.error('Error loading tours', err)
+    });
+  }
+
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'Draft': return 'bg-secondary-subtle text-secondary';
+      case 'Published': return 'bg-info-subtle text-info';
+      case 'Finalized': return 'bg-success-subtle text-success';
+      case 'InProgress': return 'bg-warning-subtle text-warning';
+      case 'Completed': return 'bg-primary-subtle text-primary';
+      default: return 'bg-light text-dark';
+    }
+  }
 
   // Charts Configuration
   public lineChartData: ChartConfiguration<'line'>['data'] = {
@@ -48,12 +100,6 @@ export class Dashboard {
     plugins: { legend: { display: false } }
   };
 
-  // Recent Tours Data
-  recentTours = [
-    { id: 'T001', destination: 'Northern Areas Package', client: 'John Smith', status: 'Active', statusClass: 'bg-success-subtle text-success', amount: '$2,400' },
-    { id: 'T002', destination: 'Lahore Heritage Tour', client: 'Sarah Khan', status: 'Completed', statusClass: 'bg-primary-subtle text-primary', amount: '$1,200' },
-    { id: 'T003', destination: 'Karachi Coastal Drive', client: 'Ahmed Ali', status: 'Active', statusClass: 'bg-success-subtle text-success', amount: '$800' },
-    { id: 'T004', destination: 'Murree Hills Retreat', client: 'Emma Wilson', status: 'Pending', statusClass: 'bg-warning-subtle text-warning', amount: '$1,500' }
-  ];
+  recentTours: any[] = [];
 
 }

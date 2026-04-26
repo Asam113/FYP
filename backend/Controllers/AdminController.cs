@@ -20,6 +20,40 @@ public class AdminController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly INotificationService _notificationService;
 
+    // GET: api/admin/dashboard-stats
+    [HttpGet("dashboard-stats")]
+    public async Task<ActionResult<DashboardStatsDto>> GetDashboardStats()
+    {
+        try
+        {
+            var totalTours = await _context.Tours.CountAsync();
+            var totalDrivers = await _context.Drivers.CountAsync();
+            var totalPartners = await _context.Restaurants.CountAsync();
+            
+            var pendingDrivers = await _context.Drivers
+                .Where(d => d.AccountStatus == "Pending" || d.AccountStatus == "New")
+                .CountAsync();
+                
+            var pendingRestaurants = await _context.Restaurants
+                .Where(r => r.ApplicationStatus == ApplicationStatus.Submitted)
+                .CountAsync();
+
+            var stats = new DashboardStatsDto
+            {
+                TotalTours = totalTours,
+                TotalDrivers = totalDrivers,
+                TotalPartners = totalPartners,
+                PendingVerifications = pendingDrivers + pendingRestaurants
+            };
+
+            return Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     public AdminController(ApplicationDbContext context, IEmailService emailService, INotificationService notificationService)
     {
         _context = context;

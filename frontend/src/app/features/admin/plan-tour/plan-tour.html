@@ -64,9 +64,20 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small">Departure Location</label>
-                    <input type="text" class="form-control bg-light border-0 py-2" placeholder="e.g., Islamabad"
+                    <label class="form-label fw-bold small">Departure City</label>
+                    <input type="text" class="form-control bg-light border-0 py-2" placeholder="e.g., Rawalpindi"
+                        [(ngModel)]="departureCity">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Exact Departure Location</label>
+                    <input type="text" class="form-control bg-light border-0 py-2" placeholder="e.g., Faizabad Bus Stop"
                         [(ngModel)]="departureLocation">
+                    <small class="text-muted">Or pick a location on the map below</small>
+                </div>
+
+                <div class="col-12">
+                    <div #mapContainer id="map" style="height: 300px; width: 100%; border-radius: 12px;" class="shadow-sm border"></div>
                 </div>
 
                 <div class="col-md-6">
@@ -95,6 +106,22 @@
                         <option value="family">Family</option>
                         <option value="honeymoon">Honeymoon</option>
                     </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-bold small">Tour Cover Image</label>
+                    <div class="image-upload-wrapper" (click)="imageInput.click()">
+                        <input type="file" #imageInput hidden (change)="onImageSelected($event)" accept="image/*">
+                        <div class="image-placeholder" *ngIf="!imagePreview">
+                            <i class="bi bi-cloud-arrow-up fs-2"></i>
+                            <p class="mb-0 small">Click to upload cover image</p>
+                            <span class="text-muted extra-small">Supports JPG, PNG (Max 5MB)</span>
+                        </div>
+                        <img [src]="imagePreview" *ngIf="imagePreview" class="preview-img">
+                        <div class="change-overlay" *ngIf="imagePreview">
+                            <i class="bi bi-camera"></i> Change Image
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-12">

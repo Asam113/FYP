@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ImageUploaderComponent } from '../../../shared/components/image-uploader/image-uploader.component';
@@ -50,11 +52,18 @@ export class DriverSignup implements OnDestroy {
     cnicFrontFile: File | null = null;
     cnicBackFile: File | null = null;
 
+    // AI Verification State
+    isVerifyingAI = false;
+    private apiKey: string = environment.geminiApiKey;
+    private aiUrl: string = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+
     constructor(
         private router: Router,
         private authService: AuthService,
         private toastService: ToastService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private http: HttpClient,
+        private cdr: ChangeDetectorRef
     ) {
         // Check for resume parameters
         this.route.queryParams.subscribe(params => {
@@ -248,8 +257,108 @@ export class DriverSignup implements OnDestroy {
                 this.toastService.show('Please upload all required documents', 'error');
                 return;
             }
-            this.currentStep++;
+
+            // TRIGGER AI VERIFICATION
+            this.verifyWithAI();
         }
+    }
+
+    private async verifyWithAI() {
+        this.isVerifyingAI = true;
+        this.toastService.show('AI is verifying your documents... please wait', 'info');
+
+        try {
+            const cnicFrontBase64 = await this.fileToBase64(this.cnicFrontFile!);
+            const licenseBase64 = await this.fileToBase64(this.licenseFile!);
+            const today = new Date().toISOString().split('T')[0];
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        {
+                            text: `You are a document verification expert. Compare the two provided images: a Pakistani CNIC (Front) and a Driving License.
+                            Also compare them with these user-entered values:
+                            - User-entered CNIC: ${this.cnic}
+                            - User-entered License Number: ${this.licenseNumber}
+                            - Current Date: ${today}
+
+                            Perform these specific checks:
+                            1. Extract the CNIC number from both cards. They MUST match each other.
+                            2. Compare the extracted CNIC number from the cards with the User-entered CNIC (${this.cnic}). They MUST match.
+                            3. Extract the License Number from the License card and compare it with the User-entered License Number (${this.licenseNumber}). They MUST match.
+                            4. Extract the Expiry Date from the License card. It MUST be later than ${today}.
+
+                            Return ONLY a JSON object in this format:
+                            {
+                                "isValid": boolean,
+                                "checks": {
+                                    "cnicMatchBetweenCards": boolean,
+                                    "cnicMatchWithForm": boolean,
+                                    "licenseMatchWithForm": boolean,
+                                    "licenseNotExpired": boolean
+                                },
+                                "message": "string (Details about failure or success)"
+                            }`
+                        },
+                        {
+                            inline_data: {
+                                mime_type: this.cnicFrontFile!.type,
+                                data: cnicFrontBase64
+                            }
+                        },
+                        {
+                            inline_data: {
+                                mime_type: this.licenseFile!.type,
+                                data: licenseBase64
+                            }
+                        }
+                    ]
+                }]
+            };
+
+            this.http.post(this.aiUrl, payload).subscribe({
+                next: (res: any) => {
+                    this.isVerifyingAI = false;
+                    try {
+                        const text = res.candidates[0].content.parts[0].text;
+                        const jsonMatch = text.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const result = JSON.parse(jsonMatch[0]);
+                            if (result.isValid) {
+                                this.toastService.show('Documents verified successfully by AI!', 'success');
+                                this.currentStep++;
+                            } else {
+                                this.toastService.show(result.message || 'AI verification failed', 'error');
+                            }
+                        } else {
+                            throw new Error('Could not parse AI response');
+                        }
+                    } catch (e) {
+                        this.toastService.show('AI Verification failed. Please ensure images are clear.', 'error');
+                    }
+                    this.cdr.detectChanges();
+                },
+                error: (err) => {
+                    this.isVerifyingAI = false;
+                    this.toastService.show('AI Service error. Please try again.', 'error');
+                    this.cdr.detectChanges();
+                }
+            });
+
+        } catch (e) {
+            this.isVerifyingAI = false;
+            this.toastService.show('Failed to process images', 'error');
+            console.error('AI Processing Error:', e);
+        }
+    }
+
+    private fileToBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
     }
 
     prevStep() {

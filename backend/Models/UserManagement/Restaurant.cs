@@ -36,7 +36,7 @@ public class Restaurant
 
     public ApplicationStatus ApplicationStatus { get; set; } = ApplicationStatus.Draft;
 
-    [MaxLength(100)]
+    [MaxLength(500)]
     public string? BusinessLicense { get; set; }
 
     [Required]

@@ -1,12 +1,18 @@
 using backend.Models.TourManagement;
 
+using Microsoft.AspNetCore.Http;
+
 namespace backend.Models.DTOs;
 
 public class CreateTourDto
 {
+    public IFormFile? Image { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string DepartureLocation { get; set; } = string.Empty; // NEW
+    public string DepartureCity { get; set; } = string.Empty;
+    public string DepartureLocation { get; set; } = string.Empty;
+    public double? DepartureLatitude { get; set; }
+    public double? DepartureLongitude { get; set; }
     public string Destination { get; set; } = string.Empty;       // NEW
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

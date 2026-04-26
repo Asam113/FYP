@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { BookingService } from '../../../core/services/booking.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ReviewModal } from '../../../shared/components/review-modal/review-modal';
+import * as L from 'leaflet';
+import { HttpClient } from '@angular/common/http';
 
 interface DisplayBooking {
   id: number;
@@ -38,10 +40,18 @@ export class MyBookings implements OnInit {
   selectedTourId: number | null = null;
   showReviewModal: boolean = false;
 
+  // Map Modal State
+  selectedBookingForMap: DisplayBooking | null = null;
+  showMapModal: boolean = false;
+  @ViewChild('bookingMapContainer') bookingMapContainer!: ElementRef;
+  bookingMap!: L.Map;
+  bookingMarker!: L.Marker;
+
   constructor(
     private bookingService: BookingService,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
@@ -95,6 +105,76 @@ export class MyBookings implements OnInit {
 
   submitReview(bookingId: number) {
     this.toastService.show('Thank you for your review!', 'success');
+  }
+
+  openMapModal(booking: DisplayBooking) {
+    this.selectedBookingForMap = booking;
+    this.showMapModal = true;
+    
+    // Give time for modal to render
+    setTimeout(() => {
+        this.initializeMapForBooking();
+    }, 100);
+  }
+
+  closeMapModal() {
+    this.showMapModal = false;
+    this.selectedBookingForMap = null;
+  }
+
+  initializeMapForBooking() {
+    if (!this.selectedBookingForMap || !this.bookingMapContainer) return;
+
+    const tour = this.selectedBookingForMap.tour;
+    const lat = tour.departureLatitude;
+    const lng = tour.departureLongitude;
+
+    const initLeafletMap = (position: [number, number]) => {
+        // clean up existing map if any
+        if (this.bookingMap) {
+            this.bookingMap.remove();
+        }
+
+        this.bookingMap = L.map(this.bookingMapContainer.nativeElement).setView(position, 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(this.bookingMap);
+
+        const icon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        this.bookingMarker = L.marker(position, { icon }).addTo(this.bookingMap)
+            .bindPopup('Departure Point').openPopup();
+            
+        setTimeout(() => {
+            this.bookingMap.invalidateSize();
+        }, 100);
+    };
+
+    if (lat && lng) {
+        initLeafletMap([lat, lng]);
+    } else {
+        // Fallback to geocoding the address if coords are missing
+        const q = encodeURIComponent(tour.departureLocation);
+        this.http.get<any[]>(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`).subscribe({
+            next: (results) => {
+                if (results && results.length > 0) {
+                    initLeafletMap([parseFloat(results[0].lat), parseFloat(results[0].lon)]);
+                } else {
+                    this.toastService.show('Location map unavailable', 'warning');
+                }
+            },
+            error: () => this.toastService.show('Location map unavailable', 'warning')
+        });
+    }
   }
 
   payNow(bookingId: number): void {

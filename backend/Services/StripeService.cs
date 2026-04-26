@@ -18,7 +18,7 @@ public class StripeService : IStripeService
     {
         _config = config;
         _context = context;
-        StripeConfiguration.ApiKey = _config["Stripe:SecretKey"];
+        StripeConfiguration.ApiKey = _config["STRIPE_SECRET_KEY"] ?? _config["Stripe:SecretKey"];
     }
 
     public async Task<Session> CreateCheckoutSessionAsync(int bookingId, decimal amount, string tourTitle)

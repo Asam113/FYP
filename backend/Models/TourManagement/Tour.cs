@@ -21,7 +21,14 @@ public class Tour
 
     [Required]
     [MaxLength(200)]
+    public string DepartureCity { get; set; } = string.Empty;
+
+    [Required]
+    [MaxLength(200)]
     public string DepartureLocation { get; set; } = string.Empty;
+
+    public double? DepartureLatitude { get; set; }
+    public double? DepartureLongitude { get; set; }
 
     [Required]
     [MaxLength(200)]

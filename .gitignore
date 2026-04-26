@@ -46,6 +46,7 @@ backend/wwwroot/uploads
 
 # Environment Variables
 frontend/.env
+backend/.env
 
 # Local Testing Suite
 /testing_suite/

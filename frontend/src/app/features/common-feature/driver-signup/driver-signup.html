@@ -209,9 +209,14 @@
                 </div>
 
                 <div class="nav-buttons">
-                    <button type="button" class="btn-back" (click)="prevStep()">Back</button>
-                    <button type="button" class="btn-next" (click)="nextStep()">Continue <i
-                            class="bi bi-arrow-right"></i></button>
+                    <button type="button" class="btn-back" (click)="prevStep()" [disabled]="isVerifyingAI">Back</button>
+                    <button type="button" class="btn-next" (click)="nextStep()" [disabled]="isVerifyingAI">
+                        <span *ngIf="!isVerifyingAI">Continue <i class="bi bi-arrow-right"></i></span>
+                        <span *ngIf="isVerifyingAI">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Verifying...
+                        </span>
+                    </button>
                 </div>
             </form>
         </div>

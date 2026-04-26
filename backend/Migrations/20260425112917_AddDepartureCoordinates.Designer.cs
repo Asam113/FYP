@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Data;
 
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260425112917_AddDepartureCoordinates")]
+    partial class AddDepartureCoordinates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1136,11 +1139,6 @@ namespace backend.Migrations
                     b.Property<int>("CurrentBookings")
                         .HasColumnType("int");
 
-                    b.Property<string>("DepartureCity")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<double?>("DepartureLatitude")
                         .HasColumnType("float");
 
@@ -1301,12 +1299,12 @@ namespace backend.Migrations
                         .HasColumnType("nvarchar(15)");
 
                     b.Property<string>("CnicBack")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("CnicFront")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Licence")
                         .HasMaxLength(50)
@@ -1316,8 +1314,8 @@ namespace backend.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("LicenceImage")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<bool>("PayoutsEnabled")
                         .HasColumnType("bit");
@@ -1356,8 +1354,8 @@ namespace backend.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("BusinessLicense")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("BusinessType")
                         .HasMaxLength(100)

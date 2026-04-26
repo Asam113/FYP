@@ -11,7 +11,8 @@ const targetPath = path.resolve(__dirname, '../src/environments/environment.ts')
 const envConfigFile = `
 export const environment = {
   production: false,
-  apiUrl: '${envConfig.BACKEND_URL || 'http://localhost:5238'}'
+  apiUrl: '${envConfig.BACKEND_URL || 'http://localhost:5238'}',
+  geminiApiKey: '${envConfig.GEMINI_API_KEY || ''}'
 };
 `;
 

@@ -16,10 +16,11 @@ public class EmailService : IEmailService
 
     public async Task SendEmailAsync(string to, string subject, string body)
     {
-        var smtpHost = _configuration["Smtp:Host"];
-        var smtpPort = int.Parse(_configuration["Smtp:Port"] ?? "587");
-        var smtpUser = _configuration["Smtp:User"];
-        var smtpPass = _configuration["Smtp:Password"];
+        var smtpHost = _configuration["SMTP_HOST"] ?? _configuration["Smtp:Host"];
+        var smtpPortStr = _configuration["SMTP_PORT"] ?? _configuration["Smtp:Port"];
+        var smtpPort = int.Parse(smtpPortStr ?? "587");
+        var smtpUser = _configuration["SMTP_USER"] ?? _configuration["Smtp:User"];
+        var smtpPass = _configuration["SMTP_PASS"] ?? _configuration["Smtp:Password"];
 
         if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser))
         {

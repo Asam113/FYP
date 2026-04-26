@@ -8,8 +8,13 @@ using backend.Services;
 using backend.Models.UserManagement;
 using backend.Models.Enums;
 using BCrypt.Net;
+using dotenv.net;
 
+DotEnv.Load();
 var builder = WebApplication.CreateBuilder(args);
+
+// Ensure Environment Variables are loaded into Configuration
+builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -34,8 +39,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Configure DbContext with SQL Server
+var connectionString = builder.Configuration["DB_CONNECTION"] ?? builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString));
 
 // Register services
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -47,9 +53,9 @@ builder.Services.AddScoped<IPaymentService, PaymentService>(); // Registering Pa
 builder.Services.AddScoped<IStripeService, StripeService>();
 
 // Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key not configured");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
+var jwtKey = builder.Configuration["JWT_KEY"] ?? builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key not configured");
+var jwtIssuer = builder.Configuration["JWT_ISSUER"] ?? builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["JWT_AUDIENCE"] ?? builder.Configuration["Jwt:Audience"];
 
 builder.Services.AddAuthentication(options =>
 {
@@ -72,11 +78,12 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Configure CORS for Angular frontend
+var frontendUrl = builder.Configuration["FRONTEND_URL"] ?? "http://localhost:4200";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200") // Angular dev server
+        policy.WithOrigins(frontendUrl) // Angular dev server
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

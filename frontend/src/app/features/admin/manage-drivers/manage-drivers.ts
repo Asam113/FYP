@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { DriverService } from '../../../core/services/driver.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { environment } from '../../../../environments/environment';
@@ -37,10 +37,22 @@ export class ManageDrivers implements OnInit {
   activeTab: 'all' | 'verified' | 'pending' | 'rejected' = 'all';
   drivers: Driver[] = [];
 
-  constructor(private driverService: DriverService, private toastService: ToastService) { }
+  constructor(
+    private driverService: DriverService, 
+    private toastService: ToastService,
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit() {
     this.loadDrivers();
+    this.route.queryParams.subscribe(params => {
+      if (params['filter']) {
+        const filter = params['filter'] as 'all' | 'verified' | 'pending' | 'rejected';
+        if (['all', 'verified', 'pending', 'rejected'].includes(filter)) {
+          this.activeTab = filter;
+        }
+      }
+    });
   }
 
   loadDrivers() {
@@ -55,14 +67,14 @@ export class ManageDrivers implements OnInit {
           license: d.license,
           vehicle: d.vehicle,
           documents: {
-            cnicFront: d.documents.cnicFront ? `${environment.apiUrl}${d.documents.cnicFront}` : 'assets/images/placeholder_cnic_front.jpg',
-            cnicBack: d.documents.cnicBack ? `${environment.apiUrl}${d.documents.cnicBack}` : 'assets/images/placeholder_cnic_back.jpg',
-            license: d.documents.license ? `${environment.apiUrl}${d.documents.license}` : 'assets/images/placeholder_license.jpg',
+            cnicFront: this.getImageUrl(d.documents?.cnicFront) || 'assets/images/placeholder_cnic_front.jpg',
+            cnicBack: this.getImageUrl(d.documents?.cnicBack) || 'assets/images/placeholder_cnic_back.jpg',
+            license: this.getImageUrl(d.documents?.license) || 'assets/images/placeholder_license.jpg',
           },
           rating: d.rating || null,
           totalTrips: d.totalTrips,
-          status: d.accountStatus === 'Active' ? 'Verified' : d.accountStatus, // Map Backend 'Active' to Frontend 'Verified' if needed, or stick to Pending/Verified/Rejected
-          avatar: d.avatar && d.avatar.startsWith('http') ? d.avatar : `${environment.apiUrl}${d.avatar}`
+          status: d.accountStatus === 'Active' ? 'Verified' : d.accountStatus,
+          avatar: this.getImageUrl(d.avatar) || 'assets/images/default-avatar.png'
         }));
       },
       error: (err) => {
@@ -70,6 +82,12 @@ export class ManageDrivers implements OnInit {
         this.toastService.show('Failed to load drivers', 'error');
       }
     });
+  }
+
+  getImageUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `${environment.apiUrl}${path}`;
   }
 
   get filteredDrivers() {

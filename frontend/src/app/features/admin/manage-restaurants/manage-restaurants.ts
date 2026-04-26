@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { AdminService, RestaurantDto, RestaurantStatsDto } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { environment } from '../../../../environments/environment';
@@ -23,7 +24,7 @@ interface Partner {
 @Component({
   selector: 'app-manage-restaurants',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './manage-restaurants.html',
   styleUrl: './manage-restaurants.css'
 })
@@ -55,12 +56,21 @@ export class ManageRestaurants implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit(): void {
     this.loadRestaurants();
     this.loadStats();
+    this.route.queryParams.subscribe(params => {
+      if (params['filter']) {
+        const filter = params['filter'] as 'all' | 'verified' | 'pending' | 'rejected';
+        if (['all', 'verified', 'pending', 'rejected'].includes(filter)) {
+          this.activeTab = filter;
+        }
+      }
+    });
   }
 
   loadRestaurants(): void {
