@@ -33,7 +33,6 @@
         <!-- Left Column: Tour List -->
         <div class="col-md-3">
             <!-- Filters -->
-            <!-- Filters -->
             <div class="d-flex gap-2 mb-3 overflow-auto pb-2">
                 <button type="button" class="btn btn-sm rounded-pill" [class.btn-dark]="currentFilter === 'All'"
                     [class.btn-outline-dark]="currentFilter !== 'All'" (click)="setFilter('All')">All</button>
@@ -261,26 +260,26 @@
                                             </div>
                                         </div>
                                         <div class="text-end">
+                                            <!-- Payout Section -->
                                             <div *ngIf="req.assignment && !req.assignment.isServed && selectedTour.status === 'InProgress'" class="d-flex flex-column gap-2 align-items-end">
-                                                <div class="d-flex gap-2">
+                                                <!-- If not paid yet, show initiation buttons -->
+                                                <div *ngIf="!req.assignment.isPaid" class="d-flex flex-column gap-1">
+                                                    <button class="btn btn-sm btn-warning rounded-pill" (click)="payRestaurantViaCash(req)" title="Pay via Cash">
+                                                        <i class="bi bi-cash me-1"></i> Pay Cash
+                                                    </button>
+                                                </div>
+
+                                                <!-- If already paid but not marked as served, show serving options -->
+                                                <div *ngIf="req.assignment.isPaid" class="d-flex gap-2">
                                                     <button class="btn btn-sm btn-outline-success rounded-pill" (click)="markAsServed(req, 'Cash')">
                                                         <i class="bi bi-cash me-1"></i> Cash
                                                     </button>
-                                                    <button class="btn btn-sm btn-outline-primary rounded-pill" 
-                                                            [disabled]="!req.assignment.isPaid"
-                                                            (click)="markAsServed(req, 'Online')">
+                                                    <button class="btn btn-sm btn-outline-primary rounded-pill" (click)="markAsServed(req, 'Online')">
                                                         <i class="bi bi-credit-card me-1"></i> Online
                                                     </button>
                                                 </div>
-                                                <div *ngIf="!req.assignment.isPaid" class="d-flex gap-2">
-                                                    <button class="btn btn-xs btn-primary rounded-pill" (click)="initiatePayout(req)">
-                                                        Initiate Payout
-                                                    </button>
-                                                    <button class="btn btn-xs btn-success rounded-pill" (click)="confirmPayout(req)">
-                                                        Confirm Payout
-                                                    </button>
-                                                </div>
                                             </div>
+
                                             <div *ngIf="req.assignment?.isServed">
                                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
                                                     <i class="bi bi-check2-circle me-1"></i> Served ({{req.assignment?.paymentMethod}})

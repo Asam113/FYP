@@ -28,7 +28,7 @@ public class PayoutsController : ControllerBase
     // --- Restaurant Payouts ---
 
     [HttpPost("restaurant/{assignmentId}/initiate")]
-    public async Task<IActionResult> InitiateRestaurantPayout(int assignmentId)
+    public async Task<IActionResult> InitiateRestaurantPayout(int assignmentId, [FromQuery] bool manual = false)
     {
         var assignment = await _context.RestaurantAssignments
             .Include(a => a.Restaurant)
@@ -36,16 +36,30 @@ public class PayoutsController : ControllerBase
 
         if (assignment == null) return NotFound("Assignment not found");
 
-        // The actual payout logic (e.g. Stripe) is triggered here
-        // For now, we'll just return success as the "payout process" is initiated
-        // In a real scenario, this might call _paymentService.ProcessRestaurantPayoutAsync
+        if (manual)
+        {
+            // Bypass Stripe, just create a "Manual" earning record
+            var earning = new Earning
+            {
+                TourId = assignment.TourId,
+                RestaurantId = assignment.RestaurantId,
+                Amount = assignment.FinalPrice,
+                Type = "RestaurantPayout",
+                Status = "Processing",
+                PaymentMethod = "Manual Online",
+                EarnedAt = DateTime.UtcNow
+            };
+            _context.Earnings.Add(earning);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Manual payout initiated. Please confirm completion after manual transfer." });
+        }
         
-        // Let's use the existing service but modify it to not mark as paid immediately if we want manual confirmation
-        // But the requirement says "trigger the payout process... then allow marking as served"
-        
+        if (string.IsNullOrEmpty(assignment.Restaurant?.StripeAccountId))
+            return BadRequest("This restaurant has not set up their Stripe account yet. Please ask them to complete onboarding.");
+
         var result = await _paymentService.ProcessRestaurantPayoutAsync(assignmentId, "Online");
         
-        if (!result) return BadRequest("Failed to initiate payout. Check Stripe connection.");
+        if (!result) return BadRequest("Stripe Transfer failed. Please check your platform's Stripe balance.");
 
         return Ok(new { message = "Payout initiated successfully. Please confirm completion." });
     }
@@ -64,6 +78,18 @@ public class PayoutsController : ControllerBase
         assignment.PaidAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
+        // Update Earning status to Paid
+        var earning = await _context.Earnings.FirstOrDefaultAsync(e => 
+            e.RestaurantId == assignment.RestaurantId && 
+            e.TourId == assignment.TourId && 
+            e.Status == "Processing");
+        
+        if (earning != null)
+        {
+            earning.Status = "Paid";
+            await _context.SaveChangesAsync();
+        }
+
         // Notify Restaurant
         await _notificationService.CreateNotificationAsync(
             assignment.Restaurant.UserId,
@@ -76,6 +102,46 @@ public class PayoutsController : ControllerBase
         return Ok(new { message = "Payout marked as completed." });
     }
 
+    [HttpPost("restaurant/{assignmentId}/cash-pay")]
+    public async Task<IActionResult> RestaurantCashPay(int assignmentId)
+    {
+        var assignment = await _context.RestaurantAssignments
+            .Include(a => a.Restaurant)
+            .Include(a => a.Tour)
+            .FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
+            
+        if (assignment == null) return NotFound("Assignment not found");
+
+        assignment.IsPaid = true;
+        assignment.PaidAt = DateTime.UtcNow;
+        assignment.PaymentMethod = "Cash";
+        
+        // Record as Paid Earning
+        var earning = new Earning
+        {
+            TourId = assignment.TourId,
+            RestaurantId = assignment.RestaurantId,
+            Amount = assignment.FinalPrice,
+            Type = "RestaurantPayout",
+            Status = "Paid",
+            PaymentMethod = "Cash",
+            EarnedAt = DateTime.UtcNow
+        };
+        _context.Earnings.Add(earning);
+        await _context.SaveChangesAsync();
+
+        // Notify Restaurant
+        await _notificationService.CreateNotificationAsync(
+            assignment.Restaurant.UserId,
+            "Payment Received (Cash) 💵",
+            $"You have received a cash payment of {assignment.FinalPrice:N0} PKR for the tour '{assignment.Tour.Title}'.",
+            "PayoutReceived",
+            "/restaurant/earnings"
+        );
+
+        return Ok(new { message = "Cash payout recorded successfully." });
+    }
+
     // --- Accommodation Payouts ---
 
     [HttpPost("accommodation/{accommodationId}/initiate")]
@@ -84,10 +150,7 @@ public class PayoutsController : ControllerBase
         var accommodation = await _context.Accommodations.FindAsync(accommodationId);
         if (accommodation == null) return NotFound("Accommodation not found");
 
-        // Similar logic for accommodation payout
         accommodation.PaymentMethod = "Online";
-        // Assuming we add a method to IPaymentService for Accommodation payouts if needed
-        // For now, manual payout simulation
         
         return Ok(new { message = "Accommodation payout initiated." });
     }
@@ -104,9 +167,6 @@ public class PayoutsController : ControllerBase
         accommodation.IsPaid = true;
         accommodation.PaidAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
-
-        // Note: Accommodations might need their own notification logic if they have a dedicated user account
-        // For now, we'll assume they are part of the tour requirements
 
         return Ok(new { message = "Accommodation payout marked as completed." });
     }
@@ -188,5 +248,44 @@ public class PayoutsController : ControllerBase
         );
 
         return Ok(new { message = "Driver payout marked as completed." });
+    }
+
+    [HttpPost("driver/{offerId}/cash-pay")]
+    public async Task<IActionResult> DriverCashPay(int offerId)
+    {
+        var offer = await _context.DriverOffers
+            .Include(o => o.Driver)
+            .Include(o => o.Tour)
+            .FirstOrDefaultAsync(o => o.OfferId == offerId);
+            
+        if (offer == null) return NotFound("Driver offer not found");
+
+        offer.IsPaid = true;
+        offer.PaidAt = DateTime.UtcNow;
+        
+        // Record as Paid Earning
+        var earning = new Earning
+        {
+            TourId = offer.TourId,
+            DriverId = offer.DriverId,
+            Amount = offer.TransportationFare,
+            Type = "DriverPayout",
+            Status = "Paid",
+            PaymentMethod = "Cash",
+            EarnedAt = DateTime.UtcNow
+        };
+        _context.Earnings.Add(earning);
+        await _context.SaveChangesAsync();
+
+        // Notify Driver
+        await _notificationService.CreateNotificationAsync(
+            offer.Driver.UserId,
+            "Payment Received (Cash) 💵",
+            $"You have received a cash payment of {offer.TransportationFare:N0} PKR for the tour '{offer.Tour?.Title}'.",
+            "PayoutReceived",
+            "/driver/earnings"
+        );
+
+        return Ok(new { message = "Cash payout recorded successfully." });
     }
 }

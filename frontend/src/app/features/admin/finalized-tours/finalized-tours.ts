@@ -226,14 +226,15 @@ export class FinalizedTours implements OnInit {
         return `${h12}:${m < 10 ? '0' + m : m} ${ampm}`;
     }
 
-    initiatePayout(req: ServiceRequirement): void {
+    initiatePayout(req: ServiceRequirement, manual: boolean = false): void {
         if (!req.assignment) return;
-        this.http.post(`${environment.apiUrl}/api/payouts/restaurant/${req.assignment.assignmentId}/initiate`, {})
+        const url = `${environment.apiUrl}/api/payouts/restaurant/${req.assignment.assignmentId}/initiate${manual ? '?manual=true' : ''}`;
+        this.http.post(url, {})
             .subscribe({
                 next: (res: any) => {
                     alert(res.message);
                 },
-                error: (err) => alert('Failed to initiate payout')
+                error: (err) => alert(err.error || 'Failed to initiate payout')
             });
     }
 
@@ -246,6 +247,22 @@ export class FinalizedTours implements OnInit {
                     req.assignment!.paidAt = new Date().toISOString();
                 },
                 error: (err) => alert('Failed to confirm payout')
+            });
+    }
+
+    payRestaurantViaCash(req: ServiceRequirement): void {
+        if (!req.assignment) return;
+        
+        if (!confirm(`Record a CASH payment of ${req.assignment.isServed ? 'the full amount' : 'the amount'} to this restaurant?`)) return;
+        
+        this.http.post(`${environment.apiUrl}/api/payouts/restaurant/${req.assignment!.assignmentId}/cash-pay`, {})
+            .subscribe({
+                next: (res: any) => {
+                    req.assignment!.isPaid = true;
+                    req.assignment!.paidAt = new Date().toISOString();
+                    req.assignment!.paymentMethod = 'Cash';
+                },
+                error: (err) => alert(err.error || 'Failed to record cash payment')
             });
     }
 

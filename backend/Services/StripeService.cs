@@ -122,10 +122,6 @@ public class StripeService : IStripeService
                 Mcc = "7011", // Hotels and lodging / travel related MCC
                 Url = "https://safarnama.com",
             },
-            TosAcceptance = new AccountTosAcceptanceOptions
-            {
-                ServiceAgreement = "recipient",
-            },
             Settings = new AccountSettingsOptions
             {
                 Payouts = new AccountSettingsPayoutsOptions
@@ -225,11 +221,7 @@ public class StripeService : IStripeService
                     Name = businessName,
                     Url = "https://safarnama.com",
                     Mcc = "7011",
-                },
-                TosAcceptance = new AccountTosAcceptanceOptions
-                {
-                    ServiceAgreement = "recipient",
-                },
+                }
             };
             var service = new AccountService();
             await service.UpdateAsync(stripeAccountId, options);

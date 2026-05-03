@@ -114,7 +114,23 @@ public class BookingsController : ControllerBase
                             tour.CurrentBookings += numPeople;
                             _context.Bookings.Add(booking);
                             await _context.SaveChangesAsync();
-                            Console.WriteLine($"✅ SUCCESS: Booking {booking.BookingId} created via Webhook.");
+
+                            // Create formal Payment record
+                            var payment = new Payment
+                            {
+                                BookingId = booking.BookingId,
+                                Amount = booking.TotalAmount,
+                                PaymentMethod = "Stripe",
+                                TransactionId = session.Id,
+                                Status = PaymentStatus.Completed,
+                                PaymentType = "Inbound",
+                                Description = $"Payment for Tour: {tour.Title}",
+                                PaymentDate = DateTime.UtcNow
+                            };
+                            _context.Payments.Add(payment);
+                            await _context.SaveChangesAsync();
+
+                            Console.WriteLine($"✅ SUCCESS: Booking {booking.BookingId} and Payment {payment.PaymentId} created via Webhook.");
 
                             // Notify Tourist
                             var tourist = await _context.Tourists.FindAsync(touristId);
@@ -144,6 +160,25 @@ public class BookingsController : ControllerBase
                     {
                         booking.Status = BookingStatus.Confirmed;
                         booking.PaymentIntentId = session?.PaymentIntentId;
+                        
+                        // Create formal Payment record if it doesn't exist
+                        var existingPayment = await _context.Payments.FirstOrDefaultAsync(p => p.BookingId == booking.BookingId);
+                        if (existingPayment == null)
+                        {
+                            var payment = new Payment
+                            {
+                                BookingId = booking.BookingId,
+                                Amount = booking.TotalAmount,
+                                PaymentMethod = "Stripe",
+                                TransactionId = session?.Id,
+                                Status = PaymentStatus.Completed,
+                                PaymentType = "Inbound",
+                                Description = $"Payment for Tour: {booking.Tour?.Title}",
+                                PaymentDate = DateTime.UtcNow
+                            };
+                            _context.Payments.Add(payment);
+                        }
+
                         await _context.SaveChangesAsync();
 
                         // Notify Tourist
@@ -261,6 +296,21 @@ public class BookingsController : ControllerBase
 
                 tour.CurrentBookings += numPeople;
                 _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                // Create formal Payment record
+                var payment = new Payment
+                {
+                    BookingId = booking.BookingId,
+                    Amount = booking.TotalAmount,
+                    PaymentMethod = "Stripe",
+                    TransactionId = session.Id,
+                    Status = PaymentStatus.Completed,
+                    PaymentType = "Inbound",
+                    Description = $"Payment for Tour: {tour.Title}",
+                    PaymentDate = DateTime.UtcNow
+                };
+                _context.Payments.Add(payment);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { success = true, bookingId = booking.BookingId, status = booking.Status.ToString() });

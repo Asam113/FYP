@@ -20,7 +20,7 @@ export class AiTest {
   private apiKey: string = 'AIzaSyASMS94WELok0ajiQ3DFsv0OIAU9k8dRZM';
   
   private get apiUrl(): string {
-    return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+    return `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
   }
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}

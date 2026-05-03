@@ -55,7 +55,7 @@ export class DriverSignup implements OnDestroy {
     // AI Verification State
     isVerifyingAI = false;
     private apiKey: string = environment.geminiApiKey;
-    private aiUrl: string = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+    private aiUrl: string = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
 
     constructor(
         private router: Router,

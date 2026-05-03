@@ -1,20 +1,56 @@
-.bg-success-subtle-custom {
-    background-color: #ecfdf5;
+.earnings-container {
+    min-height: 80vh;
+    background-color: #fafafa;
 }
 
-.card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+.stat-card {
+    transition: transform 0.2s;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
+.stat-card:hover {
+    transform: translateY(-5px);
 }
 
-.hover-shadow:hover {
-    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
+.stat-card.total {
+    background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
+}
+
+.stat-card.pending {
+    background: linear-gradient(135deg, #17a2b8 0%, #0c5460 100%);
+}
+
+.stat-card.paid {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
 }
 
 .badge {
-    font-weight: 500;
+    font-weight: 600;
 }

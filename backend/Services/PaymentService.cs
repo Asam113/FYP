@@ -1,7 +1,11 @@
-using backend.Data;
-using backend.Models.Enums;
-using backend.Models.Supporting;
 using Microsoft.EntityFrameworkCore;
+using backend.Data;
+using backend.Models.BookingPayment;
+using backend.Models.Enums;
+using backend.Models.TourManagement;
+using backend.Models.UserManagement;
+using backend.Models.OfferSystem;
+using backend.Models.Supporting;
 
 namespace backend.Services;
 
@@ -16,77 +20,37 @@ public class PaymentService : IPaymentService
         _stripeService = stripeService;
     }
 
-    public async Task<bool> ProcessTourEarningsAsync(int tourId)
+    public async Task<bool> ProcessBookingPaymentAsync(int bookingId, string transactionId, decimal amount)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Process Driver Earnings
-            var driverOffers = await _context.DriverOffers
-                .Where(o => o.TourId == tourId && o.Status == OfferStatus.Confirmed)
-                .Include(o => o.Driver)
-                .ToListAsync();
+            var booking = await _context.Bookings
+                .Include(b => b.Tour)
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
 
-            foreach (var offer in driverOffers)
+            if (booking == null) return false;
+
+            // 1. Create formal Payment record for Inbound revenue
+            var payment = new Payment
             {
-                // Check if earning already exists to prevent duplicates
-                var existingEarning = await _context.Earnings
-                    .AnyAsync(e => e.TourId == tourId && e.DriverId == offer.Driver.DriverId);
+                BookingId = bookingId,
+                Amount = amount,
+                TransactionId = transactionId,
+                PaymentMethod = "Stripe",
+                Status = PaymentStatus.Completed,
+                PaymentType = "Inbound",
+                Description = $"Booking for Tour: {booking.Tour?.Title}",
+                PaymentDate = DateTime.UtcNow
+            };
+            _context.Payments.Add(payment);
 
-                if (!existingEarning)
-                {
-                    var earning = new Earning
-                    {
-                        TourId = tourId,
-                        DriverId = offer.Driver.DriverId,
-                        Amount = offer.OfferedAmount,
-                        Type = "TourPayment",
-                        Status = "Pending",
-                        EarnedAt = DateTime.UtcNow
-                    };
-
-                    _context.Earnings.Add(earning);
-                    
-                    // Update Driver Total Earnings
-                    offer.Driver.TotalEarnings += offer.OfferedAmount;
-                    _context.Entry(offer.Driver).State = EntityState.Modified;
-                }
-            }
-
-            // 2. Process Restaurant Earnings
-            // We use RestaurantAssignments because they contain the FinalPrice and are created upon confirmation
-            var restaurantAssignments = await _context.RestaurantAssignments
-                .Where(a => a.TourId == tourId)
-                .Include(a => a.Restaurant)
-                .ToListAsync();
-
-            foreach (var assignment in restaurantAssignments)
-            {
-                // Check if earning already exists
-                var existingEarning = await _context.Earnings
-                    .AnyAsync(e => e.TourId == tourId && e.RestaurantId == assignment.RestaurantId && e.Type == "TourPayment");
-
-                if (!existingEarning)
-                {
-                    var earning = new Earning
-                    {
-                        TourId = tourId,
-                        RestaurantId = assignment.RestaurantId,
-                        Amount = assignment.FinalPrice,
-                        Type = "TourPayment",
-                        Status = "Pending",
-                        EarnedAt = DateTime.UtcNow
-                    };
-
-                    _context.Earnings.Add(earning);
-                    
-                    // Note: Restaurant model currently doesn't have TotalEarnings property exposed or used broadly, 
-                    // skipping update to that property for now to match model definition.
-                }
-            }
-
+            // 2. Update Booking status
+            booking.Status = BookingStatus.Confirmed;
+            
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
             return true;
         }
         catch (Exception)
@@ -94,6 +58,19 @@ public class PaymentService : IPaymentService
             await transaction.RollbackAsync();
             throw;
         }
+    }
+
+    public async Task<bool> ProcessTourEarningsAsync(int tourId)
+    {
+        // This is usually triggered when a tour is completed
+        // Marks all related bookings as Completed
+        var bookings = await _context.Bookings.Where(b => b.TourId == tourId).ToListAsync();
+        foreach (var booking in bookings)
+        {
+            booking.Status = BookingStatus.Completed;
+        }
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> ProcessRestaurantPayoutAsync(int assignmentId, string? paymentMethod)
@@ -106,8 +83,8 @@ public class PaymentService : IPaymentService
         if (assignment == null)
             return false;
 
-        // If online payment and no stripe account, return false
-        if (paymentMethod == "Online" && string.IsNullOrEmpty(assignment.Restaurant.StripeAccountId))
+        // Safety check for Online payouts
+        if (paymentMethod == "Online" && string.IsNullOrEmpty(assignment.Restaurant?.StripeAccountId))
             return false;
 
         // Create Earning record
@@ -132,7 +109,7 @@ public class PaymentService : IPaymentService
         // Trigger Stripe Transfer for Online payments
         if (string.IsNullOrEmpty(assignment.Restaurant?.StripeAccountId))
         {
-            return false; // Cannot payout if restaurant has no stripe account
+            return false; 
         }
 
         var success = await _stripeService.TransferToConnectedAccountAsync(
@@ -143,6 +120,19 @@ public class PaymentService : IPaymentService
         if (success)
         {
             earning.Status = "Paid";
+            
+            // Create formal Payment record for the Outbound payout
+            var payment = new Payment
+            {
+                Amount = assignment.FinalPrice,
+                PaymentMethod = paymentMethod ?? "Stripe",
+                Status = PaymentStatus.Completed,
+                PaymentType = "Outbound",
+                Description = $"Payout to Restaurant: {assignment.Restaurant.RestaurantName} for Tour: {assignment.Tour?.Title}",
+                PaymentDate = DateTime.UtcNow
+            };
+            _context.Payments.Add(payment);
+            
             await _context.SaveChangesAsync();
         }
 
@@ -190,6 +180,18 @@ public class PaymentService : IPaymentService
             {
                 earning.Status = "Paid";
                 offer.Driver.TotalEarnings += offer.OfferedAmount;
+
+                // Create formal Payment record for the Outbound payout
+                var payment = new Payment
+                {
+                    Amount = offer.OfferedAmount,
+                    PaymentMethod = "Stripe",
+                    Status = PaymentStatus.Completed,
+                    PaymentType = "Outbound",
+                    Description = $"Payout to Driver: {offer.Driver.User?.Name} for Tour: {tour.Title}",
+                    PaymentDate = DateTime.UtcNow
+                };
+                _context.Payments.Add(payment);
             }
             else
             {
@@ -226,14 +228,26 @@ public class PaymentService : IPaymentService
 
         // Trigger Stripe Transfer
         var success = await _stripeService.TransferToConnectedAccountAsync(
-            offer.Driver.StripeAccountId,
+            offer.Driver.StripeAccountId!,
             offer.OfferedAmount,
-            $"Payout for Tour: {offer.Tour?.Title} - Individual Driver Payout");
+            $"Payout for Tour: {offer.Tour?.Title ?? "Unknown"} - Service Completed");
 
         if (success)
         {
             earning.Status = "Paid";
             offer.Driver.TotalEarnings += offer.OfferedAmount;
+
+            // Create formal Payment record for the Outbound payout
+            var payment = new Payment
+            {
+                Amount = offer.OfferedAmount,
+                PaymentMethod = "Stripe",
+                Status = PaymentStatus.Completed,
+                PaymentType = "Outbound",
+                Description = $"Payout to Driver: {offer.Driver.User?.Name} for Tour: {offer.Tour?.Title}",
+                PaymentDate = DateTime.UtcNow
+            };
+            _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
         }
 

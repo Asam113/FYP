@@ -93,6 +93,24 @@ export class DriverPayouts implements OnInit {
             });
     }
 
+    payViaCash(driver: DriverPayout): void {
+        if (!confirm(`Record a CASH payment of ${driver.transportationFare} PKR to ${driver.driverName}?`)) return;
+
+        this.processingPayoutId = driver.offerId;
+        this.http.post(`${environment.apiUrl}/api/payouts/driver/${driver.offerId}/cash-pay`, {})
+            .subscribe({
+                next: () => {
+                    driver.isPaid = true;
+                    driver.paidAt = new Date().toISOString();
+                    this.processingPayoutId = null;
+                },
+                error: (err: any) => {
+                    alert(err.error || 'Failed to record cash payment');
+                    this.processingPayoutId = null;
+                }
+            });
+    }
+
     get allPaid(): boolean {
         return this.drivers.length > 0 && this.drivers.every(d => d.isPaid);
     }

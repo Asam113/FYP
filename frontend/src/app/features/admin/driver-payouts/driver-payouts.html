@@ -54,13 +54,9 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="d-flex gap-2 justify-content-end">
-                                        <button *ngIf="!driver.isPaid" class="btn btn-sm btn-primary rounded-pill" 
-                                                (click)="initiatePayout(driver)" [disabled]="processingPayoutId === driver.offerId || driver.payoutInitiated">
-                                            <i class="bi bi-credit-card me-1"></i> Payout
-                                        </button>
-                                        <button *ngIf="!driver.isPaid" class="btn btn-sm btn-success rounded-pill" 
-                                                (click)="confirmPayout(driver)" [disabled]="processingPayoutId === driver.offerId || !driver.payoutInitiated">
-                                            <i class="bi bi-check2 me-1"></i> Confirm
+                                        <button *ngIf="!driver.isPaid" class="btn btn-sm btn-warning rounded-pill" 
+                                                (click)="payViaCash(driver)" [disabled]="processingPayoutId === driver.offerId">
+                                            <i class="bi bi-cash me-1"></i> Pay Cash
                                         </button>
                                     </div>
                                     <div *ngIf="driver.isPaid" class="small text-muted">

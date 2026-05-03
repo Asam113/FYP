@@ -1,0 +1,155 @@
+.landing-page {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
+  background-color: #ffffff;
+}
+
+/* Hero Section */
+.hero-img {
+  height: 85vh;
+  object-fit: cover;
+  filter: brightness(0.7);
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.6) 100%);
+  z-index: 1;
+}
+
+.carousel-caption {
+  z-index: 2;
+  bottom: 15%;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Navbar Customization */
+.navbar {
+  transition: all 0.3s ease;
+}
+
+.nav-link {
+  color: #4a5568 !important;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #0d6efd !important;
+}
+
+/* Animations */
+.animate-fade-in-up {
+  animation: fadeInUp 1s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Role Cards */
+.role-card {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.hover-lift:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important;
+}
+
+.bg-primary-light {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.border-primary-subtle {
+    border-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+/* Advantage Section Styling */
+.advantage-box {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    box-shadow: 0 25px 50px -12px rgba(13, 110, 253, 0.25);
+}
+
+.advantage-icon-wrapper {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.highlight-text {
+    color: #ffd43b; /* Vibrant Yellow/Gold for emphasis on blue */
+}
+
+.icon-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.25rem;
+}
+
+.advantage-item {
+    transition: transform 0.3s ease;
+}
+
+.advantage-item:hover {
+    transform: translateX(5px);
+}
+
+
+/* Utilities */
+.tracking-widest {
+  letter-spacing: 0.2em;
+}
+
+.hover-white:hover {
+  color: #ffffff !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-img {
+    height: 60vh;
+  }
+  
+  .display-3 {
+    font-size: 2.5rem;
+  }
+}
+
+/* Custom Primary Color adjustments to match existing UI if needed */
+.text-primary {
+    color: #0d6efd !important; /* Standard Bootstrap Primary Blue */
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}

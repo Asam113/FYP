@@ -650,5 +650,161 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = "Deletion failed", error = ex.Message });
         }
     }
-}
 
+    // --- Payment Management ---
+
+    [HttpGet("payments/stats")]
+    public async Task<ActionResult<PaymentStatsDto>> GetPaymentStats()
+    {
+        try
+        {
+            var payments = await _context.Payments.ToListAsync();
+            var earnings = await _context.Earnings.ToListAsync();
+
+            var stats = new PaymentStatsDto
+            {
+                TotalRevenue = payments.Where(p => p.PaymentType == "Inbound" && p.Status == PaymentStatus.Completed).Sum(p => p.Amount),
+                PendingPayments = payments.Where(p => p.PaymentType == "Inbound" && p.Status == PaymentStatus.Pending).Sum(p => p.Amount) 
+                                 + earnings.Where(e => e.Status != "Paid").Sum(e => e.Amount),
+                TotalRefunded = payments.Where(p => p.PaymentType == "Refund" || (p.PaymentType == "Inbound" && p.Status == PaymentStatus.Refunded)).Sum(p => p.Amount),
+                FailedAttempts = payments.Where(p => p.Status == PaymentStatus.Failed).Sum(p => p.Amount)
+            };
+            return Ok(stats);
+        }
+        catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("payments/ledger")]
+    public async Task<ActionResult<IEnumerable<PaymentLedgerDto>>> GetPaymentLedger()
+    {
+        try
+        {
+            var payments = await _context.Payments
+                .Select(p => new PaymentLedgerDto
+                {
+                    Id = "PAY-" + p.PaymentId,
+                    Type = p.PaymentType,
+                    Description = p.Description ?? "Tour Booking Payment",
+                    Amount = p.Amount,
+                    Date = p.PaymentDate.ToString("yyyy-MM-dd HH:mm"),
+                    Method = p.PaymentMethod,
+                    Status = p.Status.ToString()
+                })
+                .ToListAsync();
+
+            var earnings = await _context.Earnings
+                .Include(e => e.Restaurant)
+                .Include(e => e.Driver)
+                .Select(e => new PaymentLedgerDto
+                {
+                    Id = "ERN-" + e.EarningId,
+                    Type = "Outbound",
+                    Description = (e.Restaurant != null ? "Restaurant Payout: " + e.Restaurant.RestaurantName : "Driver Payout"),
+                    Amount = -e.Amount, // Negative for outbound
+                    Date = e.EarnedAt.ToString("yyyy-MM-dd HH:mm"),
+                    Method = e.PaymentMethod ?? "Stripe",
+                    Status = e.Status
+                })
+                .ToListAsync();
+
+            var combined = payments.Concat(earnings)
+                .OrderByDescending(x => x.Date)
+                .ToList();
+
+            return Ok(combined);
+        }
+        catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+    }
+
+    [HttpGet("reports/summary")]
+    public async Task<ActionResult<AdminReportDto>> GetAdminReports()
+    {
+        try
+        {
+            // 1. Basic Stats
+            var totalTours = await _context.Tours.CountAsync();
+            var totalBookings = await _context.Bookings.CountAsync();
+            var totalRevenue = await _context.Payments
+                .Where(p => p.PaymentType == "Inbound" && p.Status == PaymentStatus.Completed)
+                .SumAsync(p => p.Amount);
+
+            var avgTourValue = totalTours > 0 ? totalRevenue / totalTours : 0;
+
+            var report = new AdminReportDto();
+
+            report.Metrics = new List<SummaryMetricDto>
+            {
+                new() { Title = "Total Tours", Value = totalTours.ToString(), Icon = "fa-map-marker-alt", ColorClass = "cyan" },
+                new() { Title = "Total Bookings", Value = totalBookings.ToString(), Icon = "fa-users", ColorClass = "blue" },
+                new() { Title = "Total Revenue", Value = $"PKR {totalRevenue / 1000000:N1}M", Icon = "fa-chart-line", ColorClass = "green" },
+                new() { Title = "Avg. Tour Value", Value = $"PKR {avgTourValue:N0}", Icon = "fa-file-invoice", ColorClass = "orange" }
+            };
+
+            // 2. Performance Data (Last 6 Months)
+            var sixMonthsAgo = DateTime.UtcNow.AddMonths(-5);
+            var monthlyData = await _context.Bookings
+                .Where(b => b.BookingDate >= new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1))
+                .GroupBy(b => new { b.BookingDate.Year, b.BookingDate.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Customers = g.Sum(x => x.NumberOfPeople),
+                    Revenue = g.Sum(x => x.TotalAmount),
+                    Tours = g.Select(x => x.TourId).Distinct().Count()
+                })
+                .ToListAsync();
+
+            for (int i = 0; i < 6; i++)
+            {
+                var date = sixMonthsAgo.AddMonths(i);
+                var match = monthlyData.FirstOrDefault(m => m.Year == date.Year && m.Month == date.Month);
+                report.PerformanceData.Add(new ChartPointDto
+                {
+                    Label = date.ToString("MMM"),
+                    Customers = match?.Customers ?? 0,
+                    Revenue = match?.Revenue ?? 0,
+                    Tours = match?.Tours ?? 0
+                });
+            }
+
+            // 3. Top Destinations
+            var topDestinations = await _context.Tours
+                .GroupBy(t => t.Destination)
+                .OrderByDescending(g => g.Count())
+                .Take(5)
+                .Select(g => new DestinationStatDto
+                {
+                    Label = g.Key,
+                    Value = g.Count(),
+                    ColorClass = "teal"
+                })
+                .ToListAsync();
+            report.TopDestinations = topDestinations;
+
+            // 4. Driver Performance
+            var driverPerf = await _context.Earnings
+                .Where(e => e.DriverId != null && e.Type == "DriverPayout")
+                .Include(e => e.Driver)
+                    .ThenInclude(d => d.User)
+                .GroupBy(e => e.Driver.User.Name)
+                .Select(g => new DriverPerformanceDto
+                {
+                    Name = g.Key,
+                    Tours = g.Select(x => x.TourId).Distinct().Count(),
+                    Revenue = g.Sum(x => x.Amount),
+                    Rating = 4.8 // Mock rating
+                })
+                .OrderByDescending(d => d.Revenue)
+                .Take(5)
+                .ToListAsync();
+            report.DriverPerformance = driverPerf;
+
+            return Ok(report);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+}

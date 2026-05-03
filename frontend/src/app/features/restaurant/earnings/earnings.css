@@ -1,0 +1,63 @@
+.earnings-container {
+    min-height: 80vh;
+    background-color: #f8f9fa;
+}
+
+.stat-card {
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card.total {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+}
+
+.stat-card.pending {
+    background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);
+}
+
+.stat-card.paid {
+    background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.table thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.table tbody tr {
+    transition: background-color 0.1s;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.badge {
+    font-weight: 600;
+    font-size: 0.75rem;
+}

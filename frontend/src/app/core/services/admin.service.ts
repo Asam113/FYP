@@ -28,6 +28,23 @@ export interface RestaurantStatsDto {
     hotelGrowthThisMonth: number;
 }
 
+export interface PaymentStatsDto {
+    totalRevenue: number;
+    pendingPayments: number;
+    totalRefunded: number;
+    failedAttempts: number;
+}
+
+export interface PaymentLedgerDto {
+    id: string;
+    type: string;
+    description: string;
+    amount: number;
+    date: string;
+    method: string;
+    status: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -63,6 +80,26 @@ export class AdminService {
 
     rejectRestaurant(id: number): Observable<RestaurantDto> {
         return this.http.put<RestaurantDto>(`${this.apiUrl}/restaurants/${id}/reject`, {}, {
+            headers: this.getAuthHeaders()
+        });
+    }
+
+    // --- Payment Management ---
+
+    getPaymentStats(): Observable<PaymentStatsDto> {
+        return this.http.get<PaymentStatsDto>(`${this.apiUrl}/payments/stats`, {
+            headers: this.getAuthHeaders()
+        });
+    }
+
+    getPaymentLedger(): Observable<PaymentLedgerDto[]> {
+        return this.http.get<PaymentLedgerDto[]>(`${this.apiUrl}/payments/ledger`, {
+            headers: this.getAuthHeaders()
+        });
+    }
+
+    getAdminReports(): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/reports/summary`, {
             headers: this.getAuthHeaders()
         });
     }

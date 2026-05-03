@@ -2,3 +2,19 @@
 .object-fit-cover {
     object-fit: cover;
 }
+
+.booking-details-card {
+    background: #fff;
+    border-radius: 1rem;
+}
+
+.uppercase {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.booking-info-item span:first-child {
+    color: #6c757d;
+}

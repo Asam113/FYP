@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AdminService } from '../../../core/services/admin.service';
 
 interface SummaryMetric {
   title: string;
@@ -123,8 +124,26 @@ export class Reports implements OnInit {
   pathRevenue: string = '';
   pathTours: string = '';
 
+  constructor(private adminService: AdminService) {}
+
   ngOnInit() {
-    this.generateChartPaths();
+    this.fetchReports();
+  }
+
+  fetchReports() {
+    this.adminService.getAdminReports().subscribe({
+      next: (data) => {
+        this.metrics = data.metrics;
+        this.performanceData = data.performanceData;
+        this.destinations = data.topDestinations;
+        this.drivers = data.driverPerformance.map((d: any) => ({
+          ...d,
+          revenue: `PKR ${(d.revenue / 1000).toFixed(0)}K`
+        }));
+        this.generateChartPaths();
+      },
+      error: (err) => console.error('Failed to load reports', err)
+    });
   }
 
   generateChartPaths() {

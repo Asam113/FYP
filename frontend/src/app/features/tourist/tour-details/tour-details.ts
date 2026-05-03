@@ -22,6 +22,7 @@ export class TourDetailsComponent implements OnInit {
     isBooking: boolean = false;
     seatsRemaining: number = 0;
     isAlreadyBooked: boolean = false;
+    booking: any | undefined;
 
     // Booking Fields
     selectedBookingType: string = 'Individual';
@@ -95,7 +96,8 @@ export class TourDetailsComponent implements OnInit {
         if (user && user.roleSpecificId) {
             this.bookingService.getTouristBookings(user.roleSpecificId).subscribe({
                 next: (bookings) => {
-                    this.isAlreadyBooked = bookings.some(b => b.tourId === this.tour?.id && b.status !== 'Cancelled');
+                    this.booking = bookings.find(b => b.tourId === this.tour?.id && b.status !== 'Cancelled');
+                    this.isAlreadyBooked = !!this.booking;
                 }
             });
         }
